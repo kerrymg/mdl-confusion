@@ -665,7 +665,7 @@ int mdl_read_atom(std::FILE *f, atom_t **ap, mdl_symbol_table_t *global, mdl_loc
     sym.atom = a;
     sym.binding = (mdl_value_t *)objnum;
     if (objnum != 0)
-        global->insert(std::pair<const atom_t *, mdl_symbol_t>(a, sym));
+        global->emplace(a, sym);
 
     if (mdl_read_intptr(f, &objnum) != 0) return -1;
 
@@ -673,7 +673,7 @@ int mdl_read_atom(std::FILE *f, atom_t **ap, mdl_symbol_table_t *global, mdl_loc
     lsym.atom = a;
     lsym.binding = (mdl_value_t *)objnum;
     if (objnum != 0)
-        local->insert(std::pair<const atom_t *, mdl_local_symbol_t>(a, lsym));
+        local->emplace(a, lsym);
     return 0;
 }
 

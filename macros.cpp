@@ -1664,7 +1664,7 @@ mdl_value_t *mdl_bind_local_symbol(atom_t *atom, mdl_value_t *val, mdl_frame_t *
 #ifdef CACHE_LOCAL_SYMBOLS
         sym.prev_binding = oldsym;
 #endif
-        auto insresult = frame->syms->insert({ atom, sym });
+        auto insresult = frame->syms->emplace(atom, sym);
 #ifdef CACHE_LOCAL_SYMBOLS
         if (fixbind)
         {

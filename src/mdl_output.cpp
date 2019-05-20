@@ -923,10 +923,11 @@ void mdl_quote_string(counted_string_t *d, const counted_string_t *s)
 {
     const char *sp;
     char *dp;
+    int i;
     bool needsquote = false;
 
     *d = *s;
-    for (int i = 0, sp = s->p; i < s->l; i++, sp++)
+    for (i = 0, sp = s->p; i < s->l; i++, sp++)
     {
         if (*sp == '"' || *sp == '\\') 
         {
@@ -938,7 +939,7 @@ void mdl_quote_string(counted_string_t *d, const counted_string_t *s)
     if (needsquote)
     {
         d->p = (char *)GC_MALLOC_ATOMIC(d->l + 1);
-        for (int i = 0, sp = s->p, dp = d->p; i < s->l; i++, sp++, dp++)
+        for (i = 0, sp = s->p, dp = d->p; i < s->l; i++, sp++, dp++)
         {
             if (*sp == '"' || *sp == '\\') *dp++ = '\\';
             *dp = *sp;

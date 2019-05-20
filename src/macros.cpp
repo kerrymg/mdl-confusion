@@ -3790,14 +3790,65 @@ void mdl_internal_erret(mdl_value_t *result, mdl_value_t *frame)
 // Sequential access to args
 #define ARGSETUP(args) mdl_value_t *args##cursor = args->v.p.cdr
 
-#define GETNEXTARG(a, args) do { if (args##cursor) { (a) = args##cursor->v.p.car; args##cursor = args##cursor->v.p.cdr; } else { (a) = nullptr; } } while(0)
-#define GETNEXTREQARG(a, args) do { if (args##cursor) { (a) = args##cursor->v.p.car; args##cursor = args##cursor->v.p.cdr; } else { return mdl_call_error("TOO-FEW-ARGUMENTS-SUPPLIED", nullptr);  } } while(0)
+#define GETNEXTARG(a, args)                                                 \
+    do                                                                      \
+    {                                                                       \
+        if (args##cursor)                                                   \
+        {                                                                   \
+            (a) = args##cursor->v.p.car;                                    \
+            args##cursor = args##cursor->v.p.cdr;                           \
+        }                                                                   \
+        else                                                                \
+        {                                                                   \
+            (a) = nullptr;                                                  \
+        }                                                                   \
+    }                                                                       \
+    while(0)
+
+#define GETNEXTREQARG(a, args)                                              \
+    do                                                                      \
+    {                                                                       \
+        if (args##cursor)                                                   \
+        {                                                                   \
+            (a) = args##cursor->v.p.car;                                    \
+            args##cursor = args##cursor->v.p.cdr;                           \
+        }                                                                   \
+        else                                                                \
+        {                                                                   \
+            return mdl_call_error("TOO-FEW-ARGUMENTS-SUPPLIED", nullptr);   \
+        }                                                                   \
+    }                                                                       \
+    while(0)
+
 #define REMAINING_ARGS(args) (args##cursor)
-#define NOMOREARGS(args) do { if (args##cursor) { return mdl_call_error("TOO-MANY-ARGUMENTS-SUPPLIED", nullptr); }} while(0)
+
+#define NOMOREARGS(args)                                                    \
+    do                                                                      \
+    {                                                                       \
+        if (args##cursor)                                                   \
+        {                                                                   \
+            return mdl_call_error("TOO-MANY-ARGUMENTS-SUPPLIED", nullptr);  \
+        }                                                                   \
+    }                                                                       \
+    while(0)
 
 // old ones
 #define OARGSETUP(args, cursor) (cursor) = (args)->v.p.cdr
-#define OGETNEXTARG(arg, cursor) do {if (cursor) { (arg) = (cursor)->v.p.car; (cursor) = (cursor)->v.p.cdr; } else { (arg) = nullptr; } } while (0)
+
+#define OGETNEXTARG(arg, cursor)                                            \
+    do                                                                      \
+    {                                                                       \
+        if (cursor)                                                         \
+        {                                                                   \
+            (arg) = (cursor)->v.p.car;                                      \
+            (cursor) = (cursor)->v.p.cdr;                                   \
+        }                                                                   \
+        else                                                                \
+        {                                                                   \
+            (arg) = nullptr;                                                \
+        }                                                                   \
+    }                                                                       \
+    while (0)
 
 // below this point are built-ins
 // BEGIN BUILT-INS (do not remove this line)

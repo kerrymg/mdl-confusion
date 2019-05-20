@@ -108,11 +108,11 @@ mdl_charclass_t mdl_get_charclass(MDL_INT ch)
             return MDL_C_BANGANY;
         }
     }
-    if (isalpha(ch))
+    if (std::isalpha(ch))
     {
         return MDL_C_ALPHA;
     }
-    if (isdigit(ch))
+    if (std::isdigit(ch))
     {
         return MDL_C_DIGIT;
     }
@@ -755,7 +755,7 @@ mdl_value_t *mdl_advance_readstate(mdl_value_t *chan, readstate_t **rdstatep, MD
         mdl_readstate_buf_append(rdstate, ch);
         rdstate->statenum = READSTATE_INSTRING_LIT;
         break;
-        
+
     case READSTATE_INATOM_OCTAL_FIX:
         mdl_readstate_buf_append(rdstate, ch);
         if (ch < '0'  || ch > '7')
@@ -853,7 +853,7 @@ mdl_value_t *mdl_advance_readstate(mdl_value_t *chan, readstate_t **rdstatep, MD
         else
             rdstate->statenum = READSTATE_INLVALATOM;
         break;
-        
+
     case READSTATE_INLVALATOM_SCIFLOAT:
         mdl_readstate_buf_append(rdstate, ch);
         if (cinfo.charclass == MDL_C_MINUS)
@@ -895,7 +895,6 @@ mdl_value_t *mdl_advance_readstate(mdl_value_t *chan, readstate_t **rdstatep, MD
         (rdstate->statenum >= READSTATE_INLVALATOM_FLOAT &&
          rdstate->statenum <= READSTATE_INLVALATOM)
         )
-        
     {
         if (IS_BANGCHAR(ch))
         {
@@ -918,7 +917,9 @@ mdl_value_t *mdl_advance_readstate(mdl_value_t *chan, readstate_t **rdstatep, MD
         if (cinfolook.separator)
         {
             if (rdstate->buflen == 0)
+            {
                 mdl_error("ATOM with null PNAME not permitted");
+            }
             mdl_readstate_buf_append(rdstate, '\0');
             switch (rdstate->statenum)
             {
@@ -1047,7 +1048,7 @@ mdl_value_t *mdl_advance_readstate(mdl_value_t *chan, readstate_t **rdstatep, MD
                 // Thus they are .ATOM = <LVAL ATOM>
                 obj = mdl_create_or_get_atom(&rdstate->buf[1]);
                 obj = mdl_make_localvar_ref(obj);
-                break;                
+                break;
             }
             mdl_readstate_buf_clear(rdstate);
             if (rdstate->seqtype == SEQTYPE_SINGLE)
@@ -1079,10 +1080,12 @@ mdl_value_t *mdl_advance_readstate(mdl_value_t *chan, readstate_t **rdstatep, MD
         obj = nullptr;
 
         lookahead = mdl_read_chan_lookahead(chan);
-        if (rdstate->statenum == READSTATE_INITIAL && 
+        if (rdstate->statenum == READSTATE_INITIAL &&
             rdstate->seqtype == SEQTYPE_SINGLE &&
             lookahead == -1)
+        {
             rdstate->statenum = READSTATE_FINAL;
+        }
 
         if (rdstate->statenum == READSTATE_FINAL && rdstate->prev)
         {
@@ -1133,7 +1136,9 @@ mdl_value_t *mdl_advance_readstate(mdl_value_t *chan, readstate_t **rdstatep, MD
                     case READSTATE_TYPECODE:
                         rdstate->prev->typecode = mdl_get_typenum(rdstate->objects);
                         if (rdstate->prev->typecode == MDL_TYPE_NOTATYPE)
+                        {
                             mdl_call_error("#ATOM does not name a type", rdstate->objects, nullptr);
+                        }
                         break;
                     case READSTATE_COMMENT:
                         // print comments to aid debugging
@@ -1169,17 +1174,22 @@ mdl_value_t *mdl_advance_readstate(mdl_value_t *chan, readstate_t **rdstatep, MD
                 }
                 obj = nullptr;
             }
-            if (rdstate->statenum == READSTATE_TYPECODE ||
-                rdstate->statenum == READSTATE_COMMENT )
+            if (rdstate->statenum == READSTATE_TYPECODE || rdstate->statenum == READSTATE_COMMENT)
+            {
                 rdstate->statenum = READSTATE_INITIAL;
+            }
             else if (rdstate->seqtype == SEQTYPE_SINGLE)
+            {
                 rdstate->statenum = READSTATE_FINAL;
+            }
         }
     }
     while (obj);
 
     if (rdstate->statenum == READSTATE_FINAL)
+    {
         return rdstate->objects;
+    }
     return nullptr;
 }
 
@@ -1205,7 +1215,9 @@ mdl_value_t *mdl_read_object(mdl_value_t *chan)
         result = mdl_advance_readstate(chan, &readstate, curchar);
     }
     if (!result)
+    {
         return mdl_exec_chan_eof_object(chan);
+    }
     return result;
 }
 
@@ -1213,7 +1225,9 @@ mdl_value_t *mdl_read_character(mdl_value_t *chan)
 {
     int ch = mdl_read_from_chan(chan);
     if (ch == -1)
+    {
         return mdl_exec_chan_eof_object(chan);
+    }
     return mdl_new_word(ch, MDL_TYPE_CHARACTER);
 }
 
@@ -1221,7 +1235,9 @@ mdl_value_t *mdl_next_character(mdl_value_t *chan)
 {
     int ch = mdl_read_chan_lookahead(chan);
     if (ch == -1)
+    {
         return mdl_exec_chan_eof_object(chan);
+    }
     return mdl_new_word(ch, MDL_TYPE_CHARACTER);
 }
 

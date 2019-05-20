@@ -499,14 +499,19 @@ mdl_strbuf_t *mdl_unparse_atom(const atom_t *a, bool princ, bool nonnum, bool *b
     *breakable = false;
     mdl_strbuf_t *r = mdl_new_strbuf(40);
 
-    if (!a) return mdl_strbuf_append_cstr(r,"#ATOM 0"); // should never happen, but GROW and CHUTYPE can do it
+    if (!a)
+    {
+        return mdl_strbuf_append_cstr(r,"#ATOM 0"); // should never happen, but GROW and CHUTYPE can do it
+    }
     if (princ)
     {
         r = mdl_strbuf_append_cstr(r, a->pname);
         return r;
     }
     else
+    {
         r = mdl_strbuf_append_cstr(r, mdl_quote_atomname(a->pname, &nonnum));
+    }
 
     if (!a->oblist) 
     {
@@ -550,7 +555,9 @@ void mdl_print_atom_to_chan(mdl_value_t *chan, const atom_t *a, bool princ, bool
         mdl_print_string_to_chan(chan, ps + len - 2, 2, 0, true, true);
     }
     else
+    {
         mdl_print_string_to_chan(chan, ps, len, 0, true, prespace);
+    }
 }
 
 int mdl_int_to_string(MDL_INT mi, char *buf, int buflen, int radix)
@@ -602,13 +609,17 @@ void mdl_print_hashtype(mdl_value_t *chan, int type, bool princ, bool prespace, 
         mdl_print_string_to_chan(chan, rstr + rlen - 2, 2, 0, true, true);
     }
     else
+    {
         mdl_print_string_to_chan(chan, rstr, rlen, 0, true, prespace);
+    }
 }
 
 void mdl_print_nonstructured_to_chan(mdl_value_t *chan, const mdl_value_t *a, int print_as_type, bool princ, bool prespace, mdl_value_t *oblists)
 {
     if (print_as_type == MDL_TYPE_NOTATYPE)
+    {
         print_as_type = a->type;
+    }
     if (a == nullptr)
     {
         mdl_print_string_to_chan(chan, "nil!", 4, 0, true, prespace);
@@ -912,11 +923,10 @@ void mdl_quote_string(counted_string_t *d, const counted_string_t *s)
 {
     const char *sp;
     char *dp;
-    int i;
     bool needsquote = false;
 
     *d = *s;
-    for (i = 0, sp = s->p; i < s->l; i++, sp++)
+    for (int i = 0, sp = s->p; i < s->l; i++, sp++)
     {
         if (*sp == '"' || *sp == '\\') 
         {
@@ -928,7 +938,7 @@ void mdl_quote_string(counted_string_t *d, const counted_string_t *s)
     if (needsquote)
     {
         d->p = (char *)GC_MALLOC_ATOMIC(d->l + 1);
-        for (i = 0, sp = s->p, dp = d->p; i < s->l; i++, sp++, dp++)
+        for (int i = 0, sp = s->p, dp = d->p; i < s->l; i++, sp++, dp++)
         {
             if (*sp == '"' || *sp == '\\') *dp++ = '\\';
             *dp = *sp;
@@ -936,6 +946,7 @@ void mdl_quote_string(counted_string_t *d, const counted_string_t *s)
         *dp = 0;
     }
 }
+
 void mdl_print_stringval_to_chan(mdl_value_t *chan, const mdl_value_t *v, int print_as_type, bool princ, bool prespace, mdl_value_t *oblists)
 {
     if (v->type != MDL_TYPE_STRING)
@@ -965,23 +976,24 @@ void mdl_print_value_to_chan(mdl_value_t *chan, mdl_value_t *v, bool princ,
                              bool prespace, mdl_value_t *oblists)
 {
     int print_as_type = MDL_TYPE_NOTATYPE;
-    mdl_value_t *printtype;
 
     if (v == nullptr)
     {
-    // this should never happen
+        // this should never happen
         mdl_print_string_to_chan(chan, "nil", 3, 0, true, prespace);
         return;
     }
 
-    printtype = mdl_get_printtype(v->type);
+    mdl_value_t *printtype = mdl_get_printtype(v->type);
     if (printtype && printtype->type != MDL_TYPE_ATOM)
     {
         mdl_value_t *arglist = mdl_cons_internal(v, nullptr);
         arglist = mdl_cons_internal(printtype, arglist);
         arglist = mdl_make_list(arglist);
         if (prespace)
+        {
             mdl_print_string_to_chan(chan, "", 0, 0, true, true);
+        }
 
         mdl_internal_apply(printtype, arglist, true);
         return;
@@ -993,7 +1005,7 @@ void mdl_print_value_to_chan(mdl_value_t *chan, mdl_value_t *v, bool princ,
     }
     else
     {
-        switch(v->pt)
+        switch (v->pt)
         {
         case PRIMTYPE_LIST:
             mdl_print_list_to_chan(chan, v, print_as_type, princ, prespace, oblists);
@@ -1013,10 +1025,10 @@ void mdl_print_value_to_chan(mdl_value_t *chan, mdl_value_t *v, bool princ,
         default:
             mdl_print_hashtype(chan, v->type, princ, prespace, oblists);
             mdl_print_string_to_chan(chan, "UNPRINTABLE", 11, 0, true, true);
+            break;
         }
     }
 }
-
 
 void mdl_print_value(std::FILE *f, mdl_value_t *v)
 {

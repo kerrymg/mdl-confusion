@@ -16,6 +16,7 @@
 /*****************************************************************************/
 #include <gc/gc.h>
 #include <string.h>
+#include <unistd.h>
 #include "macros.hpp"
 #include "mdl_assoc.hpp"
 #include "mdl_internal_defs.h"
@@ -28,16 +29,16 @@
 #define MDL_ASSOC_NBUCKETS 293
 
 static inline
-bool mdl_assoc_key_equals(const mdl_assoc_key_t *a, const mdl_assoc_key_t *b)
+bool mdl_assoc_key_equals(const mdl_assoc_key_t &a, const mdl_assoc_key_t &b)
 {
-    return mdl_value_double_equal(a->item, b->item) &&
-        mdl_value_double_equal(a->indicator, b->indicator);
+    return mdl_value_double_equal(a.item, b.item) &&
+           mdl_value_double_equal(a.indicator, b.indicator);
 }
 
-static size_t mdl_hash_assoc_key(const mdl_assoc_key_t *h)
+static size_t mdl_hash_assoc_key(const mdl_assoc_key_t &h)
 {
-    size_t hitem = mdl_hash_value(h->item);
-    size_t hindic = mdl_hash_value(h->indicator);
+    size_t hitem = mdl_hash_value(h.item);
+    size_t hindic = mdl_hash_value(h.indicator);
     size_t tmp;
     swab(&hindic, &tmp, sizeof(size_t));
 //            printf("Hash: %lx %lx %lx %lx\n", hitem, hindic, tmp, hitem + tmp);
@@ -49,97 +50,77 @@ mdl_create_assoc_table()
 {
     mdl_assoc_table_t *result = (mdl_assoc_table_t *)GC_MALLOC(sizeof(mdl_assoc_table_t) + sizeof(mdl_assoc_t *) * (MDL_ASSOC_NBUCKETS - 1));
     result->nbuckets = (MDL_ASSOC_NBUCKETS - 1);
-    result->last_clean = GC_gc_no;
+    result->last_clean = GC_get_gc_no();
     return result;
 }
 
 void mdl_clear_assoc_table(mdl_assoc_table_t *table)
 {
     // Garbage collection does make some things easier...
-    memset(table->buckets, 0, sizeof(table->buckets[0])*table->nbuckets);
-    table->last_clean = GC_gc_no;
+    memset(table->buckets, 0, sizeof(table->buckets[0]) * table->nbuckets);
+    table->last_clean = GC_get_gc_no();
     table->size = 0;
 }
 
 int mdl_swap_assoc_table(mdl_assoc_table_t *t1, mdl_assoc_table_t *t2)
 {
-    int i;
-    mdl_assoc_t *tmp;
-    mdl_assoc_t **t1p, **t2p;
-    int tsize;
-    GC_word tlast_clean;
-
     if (t1->nbuckets != t2->nbuckets) return -1;
-    t1p = t1->buckets;
-    t2p = t2->buckets;
-    for (i = 0; i < t1->nbuckets; i++)
+
+    mdl_assoc_t **t1p = t1->buckets;
+    mdl_assoc_t **t2p = t2->buckets;
+    for (int i = 0; i < t1->nbuckets; i++)
     {
-        tmp = *t2p;
-        *t2p = *t1p;
-        *t1p = tmp;
-        t1p++;
-        t2p++;
+        std::swap(*t2p, *t1p);
+        ++t1p;
+        ++t2p;
     }
-    tsize = t2->size;
-    t2->size = t1->size;
-    t1->size = tsize;
 
-    tlast_clean = t2->last_clean;
-    t2->last_clean = t1->last_clean;
-    t1->last_clean = tlast_clean;
-
+    std::swap(t2->size, t1->size);
+    std::swap(t2->last_clean, t1->last_clean);
 
     return 0;
 }
 
-static mdl_assoc_t *mdl_find_assoc(mdl_assoc_table_t *table, mdl_assoc_key_t *inkey)
+static mdl_assoc_t *mdl_find_assoc(mdl_assoc_table_t *table, const mdl_assoc_key_t &inkey)
 {
-    mdl_assoc_t *cursor;
-    int bucketnum;
-
-    if (table->last_clean != GC_gc_no) mdl_assoc_clean(table);
-    bucketnum = mdl_hash_assoc_key(inkey) % table->nbuckets;
-    cursor = table->buckets[bucketnum];
+    if (table->last_clean != GC_get_gc_no()) mdl_assoc_clean(table);
+    int bucketnum = mdl_hash_assoc_key(inkey) % table->nbuckets;
+    mdl_assoc_t *cursor = table->buckets[bucketnum];
     while (cursor)
     {
-        if (mdl_assoc_key_equals(cursor->key, inkey))
+        if (mdl_assoc_key_equals(*cursor->key, inkey))
             return cursor;
         cursor = cursor->next;
     }
-    return NULL;
+    return nullptr;
 }
 
-mdl_value_t *mdl_assoc_find_value(mdl_assoc_table_t *table, mdl_assoc_key_t *inkey)
+mdl_value_t *mdl_assoc_find_value(mdl_assoc_table_t *table, const mdl_assoc_key_t &inkey)
 {
-    mdl_assoc_t *assoc;
-
-    assoc = mdl_find_assoc(table, inkey);
-    if (!assoc) return NULL;
+    mdl_assoc_t *assoc = mdl_find_assoc(table, inkey);
+    if (!assoc) return nullptr;
     return assoc->value;
 }
 
-mdl_value_t *mdl_delete_assoc(mdl_assoc_table_t *table, mdl_assoc_key_t *inkey)
+mdl_value_t *mdl_delete_assoc(mdl_assoc_table_t *table, const mdl_assoc_key_t &inkey)
 {
-    mdl_assoc_t *cursor, *lastcursor;
-    int bucketnum;
-
-    if (table->last_clean != GC_gc_no) mdl_assoc_clean(table);
-    bucketnum = mdl_hash_assoc_key(inkey) % table->nbuckets;
-    cursor = table->buckets[bucketnum];
-    if (!cursor) return NULL; // no bucket means there was no such association
+    if (table->last_clean != GC_get_gc_no()) mdl_assoc_clean(table);
+    int bucketnum = mdl_hash_assoc_key(inkey) % table->nbuckets;
+    mdl_assoc_t *cursor = table->buckets[bucketnum];
+    if (!cursor) return nullptr; // no bucket means there was no such association
     // 1st item is special
-    if (mdl_assoc_key_equals(cursor->key, inkey))
+    if (mdl_assoc_key_equals(*cursor->key, inkey))
     {
         table->buckets[bucketnum] = cursor->next;
         table->size--;
         return cursor->value;
     }
-    lastcursor = cursor;
+    mdl_assoc_t *lastcursor = cursor;
     cursor = cursor->next;
 
     while (cursor)
     {
-        if (mdl_assoc_key_equals(cursor->key, inkey))
+        if (mdl_assoc_key_equals(*cursor->key, inkey))
         {
             lastcursor->next = cursor->next;
             table->size--;
@@ -148,28 +129,24 @@ mdl_value_t *mdl_delete_assoc(mdl_assoc_table_t *table, mdl_assoc_key_t *inkey)
         lastcursor = cursor;
         cursor = cursor->next;
     }
-    return NULL;
+    return nullptr;
 }
 
-bool mdl_add_assoc(mdl_assoc_table_t *table, mdl_assoc_key_t *inkey, mdl_value_t *value)
+bool mdl_add_assoc(mdl_assoc_table_t *table, const mdl_assoc_key_t &inkey, mdl_value_t *value)
 {
-    mdl_assoc_key_t *key;
-    mdl_assoc_t *assoc;
-    int bucketnum;
-
-    assoc = mdl_find_assoc(table, inkey);
+    mdl_assoc_t *assoc = mdl_find_assoc(table, inkey);
     if (!assoc)
     {
-        key = (struct mdl_assoc_key_t *)GC_MALLOC_ATOMIC(sizeof(mdl_assoc_key_t));
-        *key = *inkey;
-        assoc = (mdl_assoc_t *)GC_MALLOC(sizeof(mdl_assoc_t));
+        mdl_assoc_key_t *key = GC_NEW_ATOMIC(mdl_assoc_key_t);
+        *key = inkey;
+        assoc = GC_NEW(mdl_assoc_t);
         assoc->key = key;
         assoc->value = value;
         assoc->item_exists = (void *)1;//&key->item;
         assoc->indicator_exists = (void *)1;//&key->indicator;
         GC_GENERAL_REGISTER_DISAPPEARING_LINK(&assoc->item_exists, key->item);
         GC_GENERAL_REGISTER_DISAPPEARING_LINK(&assoc->indicator_exists, key->indicator);
-        bucketnum = mdl_hash_assoc_key(key) % table->nbuckets;
+        int bucketnum = mdl_hash_assoc_key(*key) % table->nbuckets;
         assoc->next = table->buckets[bucketnum];
         table->buckets[bucketnum] = assoc;
         table->size++;
@@ -182,8 +159,7 @@ bool mdl_add_assoc(mdl_assoc_table_t *table, mdl_assoc_key_t *inkey, mdl_value_t
     }
 }
 
-bool
-mdl_assoc_clean(mdl_assoc_table_t *table)
+bool mdl_assoc_clean(mdl_assoc_table_t *table)
 {
     mdl_assoc_iterator_t *iter = mdl_assoc_iterator_first(table);
     bool result = false;
@@ -198,21 +174,22 @@ mdl_assoc_clean(mdl_assoc_table_t *table)
             result = true;
         }
         else
+        {
             mdl_assoc_iterator_increment(iter);
+        }
     }
-    table->last_clean = GC_gc_no;
+    table->last_clean = GC_get_gc_no();
 //    fprintf(stderr, "ASSOC cleaning done %d\n", table->size);
     return result;
 }
 
 mdl_assoc_iterator_t *mdl_assoc_iterator_first(mdl_assoc_table_t *table)
 {
-    mdl_assoc_iterator_t *iter = (mdl_assoc_iterator_t *)GC_MALLOC(sizeof(mdl_assoc_iterator_t));
-    int i;
+    mdl_assoc_iterator_t *iter = GC_NEW(mdl_assoc_iterator_t);
 
-    for (i = 0; i < table->nbuckets; i++)
+    for (int i = 0; i < table->nbuckets; i++)
     {
-        if ((iter->assoc = table->buckets[i]) != NULL)
+        if ((iter->assoc = table->buckets[i]) != nullptr)
         {
             iter->bucket = i;
             break;
@@ -224,10 +201,12 @@ mdl_assoc_iterator_t *mdl_assoc_iterator_first(mdl_assoc_table_t *table)
 
 bool mdl_assoc_iterator_increment(mdl_assoc_iterator_t *iter)
 {
-    if (iter->assoc == NULL) return false; // iter's already dead, dude
+    if (iter->assoc == nullptr) return false; // iter's already dead, dude
     iter->assoc = iter->assoc->next;
-    while (iter->assoc == NULL && (++iter->bucket < iter->table->nbuckets))
+    while (iter->assoc == nullptr && (++iter->bucket < iter->table->nbuckets))
+    {
         iter->assoc = iter->table->buckets[iter->bucket];
+    }
     return true;
 }
 
@@ -236,12 +215,11 @@ bool mdl_assoc_iterator_increment(mdl_assoc_iterator_t *iter)
 // have been GCed.
 bool mdl_assoc_iterator_delete(mdl_assoc_iterator_t *iter)
 {
-    mdl_assoc_t *cursor, *lastcursor;
     bool result = false;
 
-    if (iter->assoc == NULL) return false; // iter's already dead, dude
+    if (iter->assoc == nullptr) return false; // iter's already dead, dude
 
-    cursor = iter->table->buckets[iter->bucket];
+    mdl_assoc_t *cursor = iter->table->buckets[iter->bucket];
     // 1st item is special
     if (cursor == iter->assoc)
     {
@@ -251,9 +229,9 @@ bool mdl_assoc_iterator_delete(mdl_assoc_iterator_t *iter)
     }
     else
     {
-        lastcursor = cursor;
+        mdl_assoc_t *lastcursor = cursor;
         cursor = cursor->next;
-        
+
         while (cursor)
         {
             if (cursor == iter->assoc)

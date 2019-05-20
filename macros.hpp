@@ -14,6 +14,10 @@
 /*    You should have received a copy of the GNU General Public License     */
 /*    along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 /*****************************************************************************/
+
+#ifndef MACROS_HPP_
+#define MACROS_HPP_
+
 #include <gc/gc.h>
 #include <gc/gc_allocator.h>
 #include <gc/gc_cpp.h>
@@ -27,7 +31,7 @@
 // PRIMTYPES and TYPES must be specified in order, with
 // naming and commenting convention as below, or
 // make_types perl script will fail
-typedef enum prim_type_t
+enum primtype_t
 {
     PRIMTYPE_ATOM,
     PRIMTYPE_WORD,
@@ -59,9 +63,9 @@ typedef enum prim_type_t
     PRIMTYPE_STORAGE,
     PRIMTYPE_TEMPLATE,
     PRIMTYPE_MAX,
-} primtype_t;
+};
 
-typedef enum mdl_type_t
+enum mdl_type_t
 {
     // all the elements of primtype_t are implicitly members also
     MDL_TYPE_ACTIVATION = PRIMTYPE_MAX,   // FRAME
@@ -102,7 +106,7 @@ typedef enum mdl_type_t
     MDL_TYPE_TYPE_C,                      // WORD (unimpl)
     MDL_TYPE_TYPE_W,                      // WORD (unimpl)
     MDL_TYPE_UNBOUND,                     // WORD
-} mdl_type_t;
+};
 #define MDL_BUILTIN_TYPE_LAST MDL_TYPE_UNBOUND
 #define MDL_TYPE_NOTATYPE -1
 
@@ -126,9 +130,9 @@ typedef uint64_t  MDL_UINT; // for internal use
 typedef double MDL_FLOAT;
 #endif
 
-typedef struct mdl_value_t mdl_value_t;
+struct mdl_value_t;
 
-typedef enum
+enum mdl_charclass_t
 {
     MDL_C_BACKSLASH,
     MDL_C_WHITESPACE,
@@ -161,9 +165,9 @@ typedef enum
     MDL_C_BANGSQUOTE,
     MDL_C_BANGANY,
     MDL_C_EOF,
-} mdl_charclass_t;
+};
 
-typedef struct atom_t atom_t;
+struct atom_t;
 // convenience macro
 #define mdl_new_fix(f) mdl_new_word(f, MDL_TYPE_FIX)
 //*************************************
@@ -196,5 +200,7 @@ mdl_value_t *mdl_get_default_outchan();
 bool mdl_chan_at_eof(mdl_value_t *chan);
 mdl_charclass_t mdl_get_charclass(MDL_INT ch);
 int mdl_read_from_chan(mdl_value_t *chan);
-void mdl_error(const char *err)  __attribute__((noreturn));
+[[noreturn]] void mdl_error(const char *err);
 void mdl_toplevel(FILE *restorefile);
+
+#endif  // MACROS_HPP_

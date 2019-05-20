@@ -14,30 +14,34 @@
 /*    You should have received a copy of the GNU General Public License     */
 /*    along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 /*****************************************************************************/
+
+#ifndef MDL_INTERNAL_DEFS_H_
+#define MDL_INTERNAL_DEFS_H_
+
 // This forward declaration is necessary
 struct atom_t;
 
 // INTERNAL PROTOTYPES, definitions, etc
-typedef struct mdl_symbol_t
+struct mdl_symbol_t
 {
-    struct atom_t *atom;
+    atom_t *atom;
     mdl_value_t *binding;
-} mdl_symbol_t;
+};
 
-typedef struct mdl_local_symbol_t
+struct mdl_local_symbol_t
 {
-    struct atom_t *atom;
+    atom_t *atom;
     mdl_value_t *binding;
 #ifdef CACHE_LOCAL_SYMBOLS
     mdl_local_symbol_t *prev_binding;
 #endif
-} mdl_local_symbol_t;
+};
 
 #define ALIGN_MDL_INT(x) (((((intptr_t)x) + sizeof(MDL_INT) - 1)/sizeof(MDL_INT)) * sizeof(MDL_INT))
-typedef std::basic_string<char, std::char_traits<char>, gc_allocator<char> > gc_string;
-
 
 #if 0
+typedef std::basic_string<char, std::char_traits<char>, gc_allocator<char> > gc_string;
+
 struct hash_gc_string
 {
     size_t operator()(const gc_string __s) const
@@ -60,18 +64,25 @@ typedef hash_map<const struct atom_t *, mdl_symbol_t,hash_atom_ptr, std::equal_t
     mdl_symbol_table_t;
 #endif
 
-typedef std::map<const struct atom_t *, mdl_symbol_t,std::less<const struct atom_t *>, 
-		 gc_allocator<std::pair<const struct atom_t * const, mdl_symbol_t> > >
-		 mdl_symbol_table_t;
-typedef std::map<const struct atom_t *, mdl_local_symbol_t,std::less<const struct atom_t *>, 
-		 gc_allocator<std::pair<const struct atom_t * const, mdl_local_symbol_t> > >
-		 mdl_local_symbol_table_t;
+namespace mdl
+{
 
-typedef struct mdl_assoc_key_t
+template<typename SymbolType>
+using symbol_table = std::map<const atom_t *, SymbolType,
+    std::less<const atom_t *>,
+    gc_allocator<std::pair<const atom_t * const, SymbolType>>
+>;
+
+}   // namesapce mdl
+
+using mdl_symbol_table_t = mdl::symbol_table<mdl_symbol_t>;
+using mdl_local_symbol_table_t = mdl::symbol_table<mdl_local_symbol_t>;
+
+struct mdl_assoc_key_t
 {
     mdl_value_t *item;
     mdl_value_t *indicator;
-} mdl_assoc_key_t;
+};
 
 extern struct mdl_assoc_table_t *mdl_assoc_table;
 
@@ -86,7 +97,7 @@ typedef mdl_value_t *(*mdl_evaluator_t)(mdl_value_t *cdr);
 #define mdl_setjmp _setjmp
 #define mdl_longjmp _longjmp
 
-typedef struct mdl_frame_t
+struct mdl_frame_t
 {
     struct mdl_frame_t *prev_frame;
     jmp_buf interp_frame;
@@ -95,33 +106,36 @@ typedef struct mdl_frame_t
     mdl_value_t *subr; // the atom containing the subroutine being applied
     mdl_value_t *args; // Argument tuple
     unsigned frame_flags;
-} mdl_frame_t;
+};
 
 typedef mdl_value_t *mdl_built_in_proc_t(mdl_value_t *form, mdl_value_t *args);
-typedef struct mdl_built_in_t
+struct mdl_built_in_t
 {
     mdl_built_in_proc_t *proc;
     mdl_value_t *a;
     mdl_value_t *v;
-} mdl_built_in_t;
+};
 
-typedef struct mdl_type_table_entry_t
+struct mdl_type_table_entry_t
 {
     primtype_t pt;   // primtype for type
     atom_t *a;       // atom for type
     mdl_value_t *printtype; 
     mdl_value_t *evaltype; 
     mdl_value_t *applytype; 
-} mdl_type_table_entry_t;
+};
 
-typedef std::vector<mdl_built_in_t, traceable_allocator<mdl_built_in_t> > mdl_built_in_table_t;
+template<typename Element>
+using traceable_vector = std::vector<Element, traceable_allocator<Element>>;
 
-typedef std::vector<mdl_type_table_entry_t, traceable_allocator<mdl_type_table_entry_t> > mdl_type_table_t;
+using mdl_built_in_table_t = traceable_vector<mdl_built_in_t>;
+
+using mdl_type_table_t = traceable_vector<mdl_type_table_entry_t>;
 
 extern mdl_type_table_t mdl_type_table;
 
 
-typedef struct atom_t
+struct atom_t
 {
     mdl_value_t *oblist;
     int typenum;
@@ -131,16 +145,16 @@ typedef struct atom_t
     int bindid;
     mdl_local_symbol_t *binding; // LOCAL binding
 #endif
-} atom_t;
+};
 
 // welcome to hell... err, I mean LISP
-typedef struct cons_pair_t
+struct cons_pair_t
 {
     struct mdl_value_t *car;
     struct mdl_value_t *cdr;
-} cons_pair_t;
+};
 
-struct counted_string_t 
+struct counted_string_t
 {
     int l;
     char *p;
@@ -151,84 +165,84 @@ struct counted_string_t
 // work properly despite lacking the fine control over GC.
 // it may break locatives however
 
-typedef struct mdl_vector_block_t
+struct mdl_vector_block_t
 {
     int size;
     int startoffset; // for GROW from beginning -- number of elements added to beginning since vector instantiation
     mdl_value_t *elements;
-} mdl_vector_block_t;
+};
 
-typedef struct mdl_vector_t
+struct mdl_vector_t
 {
-    struct mdl_vector_block_t *p;
+    mdl_vector_block_t *p;
     int offset;
-} mdl_vector_t;
+};
 
-typedef struct mdl_uvector_t
+struct mdl_uvector_t
 {
     struct mdl_uvector_block_t *p;
     int offset;
-} mdl_uvector_t;
+};
 
 
-typedef union uvector_element_t
+union uvector_element_t
 {
-    struct atom_t *a;
-    struct mdl_value_t *l; // Lists stored in a uvector have no car
+    atom_t *a;
+    mdl_value_t *l; // Lists stored in a uvector have no car
     MDL_INT w;
     MDL_FLOAT fl;
     // allowing vectors and uvectors into the game reduces storage
     // efficiency.  Given this, there's no reason not to allow
     // strings as well, but I don't (for documented MDL compatibility)
-    struct mdl_vector_t   v;
-    struct mdl_uvector_t uv;
-} uvector_element_t;
+    mdl_vector_t   v;
+    mdl_uvector_t uv;
+};
 
-typedef struct mdl_uvector_block_t
+struct mdl_uvector_block_t
 {
     int size;
     int startoffset; // for GROW from beginning
     int type;
     uvector_element_t *elements;
-} mdl_uvector_block_t;
+};
 
 // defined after value
 struct mdl_tuple_block_t;
 
-typedef struct mdl_tuple_t
+struct mdl_tuple_t
 {
-    struct mdl_tuple_block_t *p;
+    mdl_tuple_block_t *p;
     int offset;
-} mdl_tuple_t;
+};
 
 union mdl_value_union; // for SORT
-typedef union mdl_value_union
-    {
-        struct atom_t *a;
-        cons_pair_t p;
-        MDL_INT w;
-        MDL_FLOAT fl;
-        counted_string_t s;
-        mdl_vector_t v;
-        mdl_uvector_t uv;
-        struct mdl_tuple_t tp;
-        struct mdl_frame_t *f;
-} mdl_value_union;
+union mdl_value_union
+{
+    atom_t *a;
+    cons_pair_t p;
+    MDL_INT w;
+    MDL_FLOAT fl;
+    counted_string_t s;
+    mdl_vector_t v;
+    mdl_uvector_t uv;
+    mdl_tuple_t tp;
+    mdl_frame_t *f;
+};
 
-typedef struct mdl_value_t
+struct mdl_value_t
 {
     primtype_t pt;
     int type;
     mdl_value_union v;
-} mdl_value_t;
+};
 
 // A tuple is simple array with length on the beginning, since it
 // can't be subject to GROW
-typedef struct mdl_tuple_block_t
+struct mdl_tuple_block_t
 {
     int size;
     mdl_value_t elements[1];
-} mdl_tuple_block_t;
+};
 
 extern mdl_symbol_table_t global_syms;
 
@@ -340,15 +354,15 @@ enum
     ICHANNEL_HAS_LOOKAHEAD = 2,
 };
 
-typedef struct charinfo_t
+struct charinfo_t
 {
     mdl_charclass_t charclass;
     bool closebracket;
     bool openbracket;
     bool separator;
-} charinfo_t;
+};
 
-typedef enum
+enum seqtype_t
 {
     SEQTYPE_SINGLE,
     SEQTYPE_LIST,
@@ -356,7 +370,7 @@ typedef enum
     SEQTYPE_SEGMENT,
     SEQTYPE_VECTOR,
     SEQTYPE_UVECTOR,
-} seqtype_t;
+};
 
 
 #define mdl_primtype_structured(P) (!mdl_primtype_nonstructured(P))
@@ -481,3 +495,5 @@ mdl_value_t *mdl_boolean_value(bool v);
 bool mdl_is_true(mdl_value_t *item);
 bool mdl_internal_struct_is_empty(mdl_value_t *arg);
 mdl_value_t *mdl_check_decl(mdl_value_t *val, mdl_value_t *decl, bool *error);
+
+#endif  // MDL_INTERNAL_DEFS_H_

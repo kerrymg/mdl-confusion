@@ -21,18 +21,12 @@
 #include "mdl_assoc.hpp"
 #include <vector>
 #include <map>
-#include <ext/hash_set>
+#include <unordered_set>
 #include <string.h>
-
-using __gnu_cxx::hash_set;
-using __gnu_cxx::hash;
-using std::vector;
-using std::map;
-using std::pair;
 
 //#define MDL_DEBUG_BINARY_IO
 
-typedef enum objtype_t
+enum objtype_t
 {
     OBJTYPE_MDL_VALUE = 0,
     OBJTYPE_MDL_ROOT_OBLIST, // a MDL_VALUE
@@ -47,35 +41,34 @@ typedef enum objtype_t
     OBJTYPE_SAVE_ARG
     // no frames-- frames are to be dropped on the floor
     // no tuples for a similar reason
-} objtype_t;
+};
 
 #define OBJTYPE_IS_VALUE(ot) ((ot == OBJTYPE_MDL_VALUE) || (ot == OBJTYPE_MDL_ROOT_OBLIST) || (ot == OBJTYPE_MDL_INITIAL_OBLIST) || (ot == OBJTYPE_SAVE_ARG))
 
-typedef struct obj_in_image_t
+struct obj_in_image_t
 {
     void *ptr;
     objtype_t objtype;
     int objnum;
     int len; // needed for strings
 
-    bool operator == (const obj_in_image_t &that) const
-        {
-            return this->ptr == that.ptr;
-        }
-} obj_in_image_t;
+    friend bool operator==(const obj_in_image_t &lhs, const obj_in_image_t &rhs)
+    {
+        return lhs.ptr == rhs.ptr;
+    }
+};
 
-class hash_obj_in_image
+struct hash_obj_in_image
 {
-public:
     size_t operator () (const obj_in_image_t &o) const
     {
         return (size_t)o.ptr;
     }
 };
 
-typedef hash_set<struct obj_in_image_t, hash_obj_in_image> obj_image_hash_t;
-typedef vector<struct obj_in_image_t, traceable_allocator<struct obj_in_image_t> > obj_image_list_t;
-typedef map<intptr_t, struct mdl_value_t *> chan_map_t;
+using obj_image_hash_t = std::unordered_set<obj_in_image_t, hash_obj_in_image>;
+using obj_image_list_t = std::vector<obj_in_image_t, traceable_allocator<obj_in_image_t>>;
+using chan_map_t = std::map<intptr_t, mdl_value_t *>;
 
 obj_image_hash_t image_objects;
 obj_image_list_t image_object_list;
@@ -83,16 +76,16 @@ chan_map_t chanmap;
 
 // it is not possible to do fixups in a hash table as the keys are const
 // So read into this temporary vector, do fixups, then put in hash table
-typedef struct mdl_tmp_assoc_entry_t
+struct mdl_tmp_assoc_entry_t
 {
     mdl_value_t *item;
     mdl_value_t *indicator;
     mdl_value_t *value;
-} mdl_tmp_assoc_entry_t;
+};
 
-typedef std::vector<mdl_tmp_assoc_entry_t, traceable_allocator<mdl_tmp_assoc_entry_t> > mdl_tmp_assoc_table_t;
+using mdl_tmp_assoc_table_t = std::vector<mdl_tmp_assoc_entry_t, traceable_allocator<mdl_tmp_assoc_entry_t>>;
 
-static obj_in_image_t null_obj = {0, OBJTYPE_MDL_VALUE,0};
+static obj_in_image_t null_obj{nullptr, OBJTYPE_MDL_VALUE, 0};
 static obj_in_image_t builtin_obj;
 
 static obj_in_image_t *find_obj_by_num(int objnum, objtype_t objtype)
@@ -100,7 +93,7 @@ static obj_in_image_t *find_obj_by_num(int objnum, objtype_t objtype)
     if (objnum == 0) return &null_obj;
     if (objnum < 0)
     {
-        if (!OBJTYPE_IS_VALUE(objtype)) return NULL;
+        if (!OBJTYPE_IS_VALUE(objtype)) return nullptr;
         builtin_obj.objtype = OBJTYPE_MDL_VALUE;
         builtin_obj.ptr = built_in_table[-objnum-1].v;
         builtin_obj.objnum = objnum;
@@ -112,7 +105,7 @@ static obj_in_image_t *find_obj_by_num(int objnum, objtype_t objtype)
     {
         return &image_object_list[objnum - 1];
     }
-    return NULL;
+    return nullptr;
 }
 
 int mdl_write_encint(FILE *f, intmax_t val, bool is_signed)
@@ -136,7 +129,9 @@ int mdl_write_encint(FILE *f, intmax_t val, bool is_signed)
         }
     }
     else
+    {
         uval = (uintmax_t)val;
+    }
 
     if (uval < 128)
     {
@@ -148,7 +143,7 @@ int mdl_write_encint(FILE *f, intmax_t val, bool is_signed)
         uintmax_t mask = ~(uintmax_t)0x7F;
         int shift;
         len = 1;
-        while(uval & mask)
+        while (uval & mask)
         {
             len++;
             mask <<= 7;
@@ -212,9 +207,8 @@ static int mdl_read_primtype(FILE *f, primtype_t *primtype)
         return -1;
 #else
     intmax_t tmp;
-    int err;
 
-    err = mdl_read_encint(f, &tmp, false);
+    int err = mdl_read_encint(f, &tmp, false);
     *primtype = (primtype_t)tmp;
     return err;
 //    return fread(primtype, sizeof(primtype), 1, f) != 1;
@@ -244,9 +238,8 @@ static int mdl_read_objtype(FILE *f, objtype_t *objtype)
         return -1;
 #else
     intmax_t tmp;
-    int err;
 
-    err = mdl_read_encint(f, &tmp, false);
+    int err = mdl_read_encint(f, &tmp, false);
     *objtype = (objtype_t)tmp;
     return err;
 //    return fread((void *)objtype, sizeof(objtype), 1, f) != 1;
@@ -272,9 +265,8 @@ static int mdl_read_intptr(FILE *f, intptr_t *val)
     // anyway I don't expect to leave this text stuff around
     return (fscanf(f, "IP %td\n", (ptrdiff_t *)val) != 1);
 #else
-    int err;
     intmax_t tmp;
-    err = mdl_read_encint(f, &tmp, false);
+    int err = mdl_read_encint(f, &tmp, false);
     *val = (intptr_t)tmp;
     return err;
 //    return fread((void *)val, sizeof(intptr_t), 1, f) != 1;
@@ -320,7 +312,6 @@ static int mdl_write_MDL_INT(FILE *f, MDL_INT val)
     return mdl_write_encint(f, (intmax_t)val, true);
 //    return fwrite((void *)&val, sizeof(MDL_INT), 1, f);
 #endif
-
 }
 
 static int mdl_read_MDL_INT(FILE *f, MDL_INT *val)
@@ -332,23 +323,19 @@ static int mdl_read_MDL_INT(FILE *f, MDL_INT *val)
     return (fscanf(f, "MI64 %lld\n", val) != 1);
  #endif
 #else
-    int err;
     intmax_t tmp;
 
-    err = mdl_read_encint(f, &tmp, true);
+    int err = mdl_read_encint(f, &tmp, true);
     *val = (MDL_INT)tmp;
     return err;
 //    return fread((void *)val, sizeof(MDL_INT), 1, f) != 1;
 #endif
-
 }
 
 int mdl_schedule_for_write(obj_in_image_t &obj)
 {
-    pair<obj_image_hash_t::iterator, bool> oldval;
-
     obj.objnum = image_object_list.size() + 1;
-    oldval = image_objects.insert(obj);
+    auto const oldval = image_objects.insert(obj);
     if (oldval.second)
     {
         image_object_list.push_back(obj);
@@ -358,9 +345,9 @@ int mdl_schedule_for_write(obj_in_image_t &obj)
 
 int mdl_schedule_atom_for_write(atom_t *atom)
 {
-    obj_in_image_t obj;
-    
     if (!atom) return 0;
+
+    obj_in_image_t obj;
     obj.ptr = (void *)atom;
     obj.objtype = OBJTYPE_ATOM;
     return mdl_schedule_for_write(obj);
@@ -369,9 +356,9 @@ int mdl_schedule_atom_for_write(atom_t *atom)
 int mdl_schedule_value_for_write(const mdl_value_t *val, objtype_t objtype = OBJTYPE_MDL_VALUE);
 int mdl_schedule_value_for_write(const mdl_value_t *val, objtype_t objtype)
 {
-    obj_in_image_t obj;
-
     if (!val) return 0;
+
+    obj_in_image_t obj;
     obj.ptr = (void *)val;
     obj.objtype = objtype;
     return mdl_schedule_for_write(obj);
@@ -379,12 +366,11 @@ int mdl_schedule_value_for_write(const mdl_value_t *val, objtype_t objtype)
 
 int mdl_schedule_string_for_write(counted_string_t *s)
 {
-    obj_in_image_t obj;
-    MDL_INT truelen;
-
     if (!s->p) return 0; // shouldn't happen
-    truelen = *(MDL_INT *)ALIGN_MDL_INT(s->p + s->l + 1);
+
+    MDL_INT truelen = *(MDL_INT *)ALIGN_MDL_INT(s->p + s->l + 1);
     if (truelen < 0) truelen = ~truelen;
+    obj_in_image_t obj;
     obj.ptr = (void *)(s->p + s->l - truelen);
     obj.objtype = OBJTYPE_RAWSTRING;
     obj.len = truelen;
@@ -401,9 +387,9 @@ int mdl_schedule_pname_for_write(char *s)
 
 int mdl_schedule_vector_block_for_write(mdl_vector_block_t *blk)
 {
-    obj_in_image_t obj;
-
     if (!blk) return 0;
+
+    obj_in_image_t obj;
     obj.ptr = (void *)blk;
     obj.objtype = OBJTYPE_VECTOR_BLOCK;
     return mdl_schedule_for_write(obj);
@@ -411,9 +397,9 @@ int mdl_schedule_vector_block_for_write(mdl_vector_block_t *blk)
 
 int mdl_schedule_uvector_block_for_write(mdl_uvector_block_t *blk)
 {
-    obj_in_image_t obj;
-
     if (!blk) return 0;
+
+    obj_in_image_t obj;
     obj.ptr = (void *)blk;
     obj.objtype = OBJTYPE_UVECTOR_BLOCK;
     return mdl_schedule_for_write(obj);
@@ -451,13 +437,12 @@ void mdl_write_mdl_value(FILE *f, mdl_value_t *v, objtype_t objtype)
     case PRIMTYPE_VECTOR:
         if (v->type == MDL_TYPE_CHANNEL)
         {
-            FILE *f;
             int channum = mdl_get_chan_channum(v);
             if (channum > 1)
             {
-                f = mdl_get_channum_file(channum);
-                
-                VITEM(v,CHANNEL_SLOT_PTR)->v.w = (MDL_INT)ftell(f);
+                FILE *chanf = mdl_get_channum_file(channum);
+
+                VITEM(v, CHANNEL_SLOT_PTR)->v.w = (MDL_INT)ftell(chanf);
             }
         }
         onum = mdl_schedule_vector_block_for_write(v->v.v.p);
@@ -484,7 +469,7 @@ int mdl_read_mdl_value(FILE *f, mdl_value_t **vp)
     mdl_value_t *v;
 
     // evil kludge for vectors...
-    if (*vp == NULL)
+    if (*vp == nullptr)
         *vp = v = mdl_new_mdl_value();
     else
         v = *vp;
@@ -545,7 +530,7 @@ int mdl_fixup_mdl_value(FILE *f, mdl_value_t *v)
     case PRIMTYPE_ATOM:
         onum = (intptr_t)v->v.a;
         obj = find_obj_by_num(onum, OBJTYPE_ATOM);
-        if (obj == NULL)  return -1;
+        if (!obj) return -1;
         v->v.a = (atom_t *)obj->ptr;
         break;
     case PRIMTYPE_WORD:
@@ -563,14 +548,13 @@ int mdl_fixup_mdl_value(FILE *f, mdl_value_t *v)
         break;
     case PRIMTYPE_STRING:
     {
-        int truelen;
         // strings need extra fix-up on read, basically 
         // adjusting the pointer so the length is right
         onum = (intptr_t)v->v.s.p;
         obj = find_obj_by_num(onum, OBJTYPE_RAWSTRING);
         if (!obj) return -1;
         v->v.s.p = (char *)obj->ptr;
-        truelen = obj->len;
+        int truelen = obj->len;
         v->v.s.p = v->v.s.p + truelen - v->v.s.l;
         break;
     }
@@ -580,7 +564,7 @@ int mdl_fixup_mdl_value(FILE *f, mdl_value_t *v)
         if (!obj) return -1;
         v->v.v.p = (mdl_vector_block_t *)obj->ptr;
         if (v->type == MDL_TYPE_CHANNEL)
-            chanmap.insert(pair<intptr_t,mdl_value_t *>(onum, v));
+            chanmap.emplace(onum, v);
         break;
     case PRIMTYPE_UVECTOR:
         onum = (intptr_t)v->v.uv.p;
@@ -599,11 +583,11 @@ int mdl_fixup_mdl_value(FILE *f, mdl_value_t *v)
     return 0;
 }
 
-void mdl_write_rawstring(FILE *f, char *raw, int len)
+void mdl_write_rawstring(FILE *f, const char *raw, int len)
 {
     mdl_write_objtype(f, OBJTYPE_RAWSTRING);
     int truelen = *(MDL_INT *)ALIGN_MDL_INT(raw + len + 1);
-    
+
     mdl_write_int(f, truelen);
     if (truelen < 0) truelen = ~truelen;
     fputc('%', f);
@@ -615,10 +599,9 @@ int mdl_read_rawstring(FILE *f, char **rawp, int *lenp)
     // objtype is already read
     int len;
     bool immut = false;
-    char pct;
 
     if (mdl_read_int(f, &len) != 0) return -1;
-    pct = fgetc(f);
+    char pct = fgetc(f);
     if (pct != '%') return -1;
     *lenp = len;
     if (len < 0) 
@@ -640,11 +623,9 @@ int mdl_fixup_rawstring(FILE *f, char *rawp)
 void mdl_write_atom(FILE *f, atom_t *a)
 {
     // atom is pname(obj), type, oblist(obj), globalsym(obj), localsym(obj)
-    int objnum;
-    mdl_value_t *binding;
     mdl_write_objtype(f, OBJTYPE_ATOM);
 
-    objnum = mdl_schedule_pname_for_write(a->pname);
+    int objnum = mdl_schedule_pname_for_write(a->pname);
     mdl_write_intptr(f, objnum);
 
     mdl_write_int(f, a->typenum);
@@ -652,7 +633,7 @@ void mdl_write_atom(FILE *f, atom_t *a)
     objnum = mdl_schedule_value_for_write(a->oblist);
     mdl_write_intptr(f, objnum);
 
-    binding = mdl_global_symbol_lookup(a);
+    mdl_value_t *binding = mdl_global_symbol_lookup(a);
     objnum = mdl_schedule_value_for_write(binding);
     mdl_write_intptr(f, objnum);
 
@@ -667,11 +648,9 @@ int mdl_read_atom(FILE *f, atom_t **ap, mdl_symbol_table_t *global, mdl_local_sy
     // atom is pname(obj), type, oblist(obj), globalsym(obj), localsym(obj)
     intptr_t objnum;
     //OBJTYPE will have been read already
-    mdl_symbol_t sym;
-    mdl_local_symbol_t lsym;
     atom_t *a;
 
-    *ap = a = (atom_t *)GC_MALLOC(sizeof(atom_t));
+    *ap = a = GC_NEW(atom_t);
 
     if (mdl_read_intptr(f, &objnum) != 0) return -1;
     a->pname = (char *)objnum;
@@ -682,6 +661,7 @@ int mdl_read_atom(FILE *f, atom_t **ap, mdl_symbol_table_t *global, mdl_local_sy
 
     if (mdl_read_intptr(f, &objnum) != 0) return -1;
 
+    mdl_symbol_t sym;
     sym.atom = a;
     sym.binding = (mdl_value_t *)objnum;
     if (objnum != 0)
@@ -689,6 +669,7 @@ int mdl_read_atom(FILE *f, atom_t **ap, mdl_symbol_table_t *global, mdl_local_sy
 
     if (mdl_read_intptr(f, &objnum) != 0) return -1;
 
+    mdl_local_symbol_t lsym;
     lsym.atom = a;
     lsym.binding = (mdl_value_t *)objnum;
     if (objnum != 0)
@@ -699,13 +680,8 @@ int mdl_read_atom(FILE *f, atom_t **ap, mdl_symbol_table_t *global, mdl_local_sy
 int mdl_fixup_atom(FILE *f, atom_t *a, mdl_symbol_table_t *global, mdl_local_symbol_table_t *local)
 {
     // atom is pname(obj), type, oblist(obj), globalsym(obj), localsym(obj)
-    intptr_t objnum;
-    mdl_symbol_table_t::iterator iter;
-    mdl_local_symbol_table_t::iterator liter;
-    obj_in_image_t *obj;
-
-    objnum = (intptr_t)a->pname;
-    obj = find_obj_by_num(objnum, OBJTYPE_RAWSTRING);
+    intptr_t objnum = (intptr_t)a->pname;
+    obj_in_image_t *obj = find_obj_by_num(objnum, OBJTYPE_RAWSTRING);
     if (!obj) return -1;
     a->pname = (char *)obj->ptr; // pnames don't need length adjustment
 
@@ -714,7 +690,7 @@ int mdl_fixup_atom(FILE *f, atom_t *a, mdl_symbol_table_t *global, mdl_local_sym
     if (!obj) return -1;
     a->oblist = (mdl_value_t *)obj->ptr; // pnames don't need length adjustment
 
-    iter = global->find(a);
+    auto iter = global->find(a);
     if (iter != global->end())
     {
         objnum = (intptr_t)iter->second.binding;
@@ -723,7 +699,7 @@ int mdl_fixup_atom(FILE *f, atom_t *a, mdl_symbol_table_t *global, mdl_local_sym
         iter->second.binding = (mdl_value_t *)obj->ptr;
     }
 
-    liter = local->find(a);
+    auto liter = local->find(a);
     if (liter != local->end())
     {
         objnum = (intptr_t)liter->second.binding;
@@ -735,36 +711,28 @@ int mdl_fixup_atom(FILE *f, atom_t *a, mdl_symbol_table_t *global, mdl_local_sym
     return 0;
 }
 
-void mdl_write_vector_block(FILE *f, mdl_vector_block_t *blk)
+void mdl_write_vector_block(FILE *f, const mdl_vector_block_t &blk)
 {
-    int i;
-    mdl_value_t *elems;
-
     mdl_write_objtype(f, OBJTYPE_VECTOR_BLOCK);
-    mdl_write_int(f, blk->size);
-    mdl_write_int(f, blk->startoffset);
+    mdl_write_int(f, blk.size);
+    mdl_write_int(f, blk.startoffset);
     // write elements directly in the block
-    elems = blk->elements;
-    for (i = 0; i < blk->size; i++)
+    for (int i = 0; i < blk.size; i++)
     {
-        mdl_write_mdl_value(f, elems++);
+        mdl_write_mdl_value(f, &blk.elements[i]);
     }
 }
 
 int mdl_read_vector_block(FILE *f, mdl_vector_block_t **blkp)
 {
-    int i;
-    mdl_value_t *elems;
-    mdl_vector_block_t *blk;
-
     // objtype has already been read
-    *blkp = blk = (mdl_vector_block_t *)GC_MALLOC(sizeof(mdl_vector_block_t));
+    mdl_vector_block_t *blk = GC_NEW(mdl_vector_block_t);
     if (mdl_read_int(f, &blk->size) != 0) return -1;
     if (mdl_read_int(f, &blk->startoffset) != 0) return -1;
     // write elements directly in the block
     blk->elements = (mdl_value_t *)GC_MALLOC(sizeof(mdl_value_t) * blk->size);
-    elems = blk->elements;
-    for (i = 0; i < blk->size; i++)
+    mdl_value_t *elems = blk->elements;
+    for (int i = 0; i < blk->size; i++)
     {
         objtype_t objtype;
 
@@ -777,78 +745,76 @@ int mdl_read_vector_block(FILE *f, mdl_vector_block_t **blkp)
             return i+1;
         }
         if (mdl_read_mdl_value(f, &elems) != 0) return (i+1);
-        elems++;
+        ++elems;
     }
+    *blkp = blk;
     return 0;
 }
 
 int mdl_fixup_vector_block(FILE *f, mdl_vector_block_t *blk)
 {
-    int i;
-    mdl_value_t *elems;
-
-    elems = blk->elements;
-    for (i = 0; i < blk->size; i++)
+    for (int i = 0; i < blk->size; i++)
     {
-        mdl_fixup_mdl_value(f, elems++);
+        mdl_fixup_mdl_value(f, &blk->elements[i]);
     }
     return 0;
 }
 
-void mdl_write_uvector_element(FILE *f, primtype_t pt, uvector_element_t *elem)
+void mdl_write_uvector_element(FILE *f, primtype_t pt, const uvector_element_t &elem)
 {
     int onum;
-    switch(pt)
+    switch (pt)
     {
     case PRIMTYPE_ATOM:
-        onum = mdl_schedule_atom_for_write(elem->a);
+        onum = mdl_schedule_atom_for_write(elem.a);
         mdl_write_intptr(f, onum);
         break;
     case PRIMTYPE_WORD:
-        mdl_write_MDL_INT(f, elem->w);
+        mdl_write_MDL_INT(f, elem.w);
         break;
     case PRIMTYPE_LIST:
-        onum = mdl_schedule_value_for_write(elem->l);
+        onum = mdl_schedule_value_for_write(elem.l);
         mdl_write_intptr(f, onum);
         break;
     case PRIMTYPE_VECTOR:
-        onum = mdl_schedule_vector_block_for_write(elem->v.p);
+        onum = mdl_schedule_vector_block_for_write(elem.v.p);
         mdl_write_intptr(f, onum);
-        mdl_write_int(f, elem->v.offset);
+        mdl_write_int(f, elem.v.offset);
         break;
     case PRIMTYPE_UVECTOR:
-        onum = mdl_schedule_uvector_block_for_write(elem->uv.p);
+        onum = mdl_schedule_uvector_block_for_write(elem.uv.p);
         mdl_write_intptr(f, onum);
-        mdl_write_int(f, elem->uv.offset);
+        mdl_write_int(f, elem.uv.offset);
         break;
     default:
         fprintf(stderr, " BOGUS UVECTOR PRIMTYPE %d\n", pt);
+        break;
     }
 }
 
 int mdl_read_uvector_element(FILE *f, primtype_t pt, uvector_element_t *elem)
 {
     intptr_t onum;
-    switch(pt)
+    switch (pt)
     {
     case PRIMTYPE_ATOM:
-        if(mdl_read_intptr(f, &onum) != 0) return -1;
+        if (mdl_read_intptr(f, &onum) != 0) return -1;
         elem->a = (atom_t *)onum;
         break;
     case PRIMTYPE_WORD:
         if (mdl_read_MDL_INT(f, &elem->w) != 0) return -1;
         break;
     case PRIMTYPE_LIST:
-        if(mdl_read_intptr(f, &onum) != 0) return -1;
+        if (mdl_read_intptr(f, &onum) != 0) return -1;
         elem->l = (mdl_value_t *)onum;
         break;
     case PRIMTYPE_VECTOR:
-        if(mdl_read_intptr(f, &onum) != 0) return -1;
+        if (mdl_read_intptr(f, &onum) != 0) return -1;
         elem->v.p = (mdl_vector_block_t *)onum;
         if (mdl_read_int(f, &elem->v.offset) != 0) return -1;
         break;
     case PRIMTYPE_UVECTOR:
-        if(mdl_read_intptr(f, &onum) != 0) return -1;
+        if (mdl_read_intptr(f, &onum) != 0) return -1;
         elem->uv.p = (mdl_uvector_block_t *)onum;
         if (mdl_read_int(f, &elem->uv.offset) != 0) return -1;
         break;
@@ -863,7 +829,7 @@ int mdl_fixup_uvector_element(FILE *f, primtype_t pt, uvector_element_t *elem)
 {
     int onum;
     obj_in_image_t *obj;
-    switch(pt)
+    switch (pt)
     {
     case PRIMTYPE_ATOM:
         onum = (intptr_t)elem->a;
@@ -899,81 +865,70 @@ int mdl_fixup_uvector_element(FILE *f, primtype_t pt, uvector_element_t *elem)
     return 0;
 }
 
-void mdl_write_uvector_block(FILE *f, mdl_uvector_block_t *blk)
+void mdl_write_uvector_block(FILE *f, const mdl_uvector_block_t &blk)
 {
-    int i;
-    uvector_element_t *elems;
-    primtype_t pt = mdl_type_primtype(blk->type);
-
-    if (blk->type == MDL_TYPE_CHANNEL)
+    if (blk.type == MDL_TYPE_CHANNEL)
     {
         mdl_error("Can't handle UVECTOR of channels just yet");
     }
     mdl_write_objtype(f, OBJTYPE_UVECTOR_BLOCK);
-    mdl_write_int(f, blk->type);
-    mdl_write_int(f, blk->size);
-    mdl_write_int(f, blk->startoffset);
+    mdl_write_int(f, blk.type);
+    mdl_write_int(f, blk.size);
+    mdl_write_int(f, blk.startoffset);
     // write elements directly in the block
-    elems = blk->elements;
-    for (i = 0; i < blk->size; i++)
+    primtype_t pt = mdl_type_primtype(blk.type);
+    for (int i = 0; i < blk.size; i++)
     {
-        mdl_write_uvector_element(f, pt, elems++);
+        mdl_write_uvector_element(f, pt, blk.elements[i]);
     }
 }
 
-int mdl_read_uvector_block(FILE *f, mdl_uvector_block_t **blkp, mdl_type_table_t *tt)
+int mdl_read_uvector_block(FILE *f, mdl_uvector_block_t **blkp, const mdl_type_table_t &tt)
 {
-    int i;
-    uvector_element_t *elems;
-    primtype_t pt;
-    mdl_uvector_block_t *blk;
-
     //objtype has already been read
-    *blkp = blk = (mdl_uvector_block_t *)GC_MALLOC(sizeof(mdl_uvector_block_t));
+    mdl_uvector_block_t *blk = GC_NEW(mdl_uvector_block_t);
     if (mdl_read_int(f, &blk->type) != 0) return -1;
     if (mdl_read_int(f, &blk->size) != 0) return -1;
     if (mdl_read_int(f, &blk->startoffset) != 0) return -1;
     // read elements directly into the block
     blk->elements = (uvector_element_t *)GC_MALLOC(sizeof(uvector_element_t) * blk->size);
-    elems = blk->elements;
-    pt = (*tt)[blk->type].pt;
-    for (i = 0; i < blk->size; i++)
+    primtype_t pt = tt[blk->type].pt;
+    for (int i = 0; i < blk->size; i++)
     {
-        mdl_read_uvector_element(f, pt, elems++);
+        mdl_read_uvector_element(f, pt, &blk->elements[i]);
     }
+    *blkp = blk;
     return 0;
 }
 
-int mdl_fixup_uvector_block(FILE *f, mdl_uvector_block_t *blk, mdl_type_table_t *tt)
+int mdl_fixup_uvector_block(FILE *f, mdl_uvector_block_t *blk, const mdl_type_table_t &tt)
 {
-    int i;
-    uvector_element_t *elems;
-    primtype_t pt = (*tt)[blk->type].pt;
+    primtype_t pt = tt[blk->type].pt;
 
-    elems = blk->elements;
-    for (i = 0; i < blk->size; i++)
+    uvector_element_t *elems = blk->elements;
+    for (int i = 0; i < blk->size; i++)
     {
         if (mdl_fixup_uvector_element(f, pt, elems++) != 0) return -1;
     }
     return 0;
 }
 
-void mdl_write_type_table_entry(FILE *f, struct mdl_type_table_entry_t *tt)
+void mdl_write_type_table_entry(FILE *f, const mdl_type_table_entry_t& tt)
 {
     int objnum;
 
-    mdl_write_primtype(f, tt->pt);
-    objnum = mdl_schedule_atom_for_write(tt->a);
+    mdl_write_primtype(f, tt.pt);
+    objnum = mdl_schedule_atom_for_write(tt.a);
     mdl_write_intptr(f, objnum);
-    objnum = mdl_schedule_value_for_write(tt->printtype);
+    objnum = mdl_schedule_value_for_write(tt.printtype);
     mdl_write_intptr(f, objnum);
-    objnum = mdl_schedule_value_for_write(tt->evaltype);
+    objnum = mdl_schedule_value_for_write(tt.evaltype);
     mdl_write_intptr(f, objnum);
-    objnum = mdl_schedule_value_for_write(tt->applytype);
+    objnum = mdl_schedule_value_for_write(tt.applytype);
     mdl_write_intptr(f, objnum);
 }
 
-int mdl_read_type_table_entry(FILE *f, struct mdl_type_table_entry_t *tte)
+int mdl_read_type_table_entry(FILE *f, mdl_type_table_entry_t *tte)
 {
     intptr_t objnum;
     int err;
@@ -990,13 +945,10 @@ int mdl_read_type_table_entry(FILE *f, struct mdl_type_table_entry_t *tte)
     return 0;
 }
 
-int mdl_fixup_type_table_entry(struct mdl_type_table_entry_t *tte)
+int mdl_fixup_type_table_entry(mdl_type_table_entry_t *tte)
 {
-    intptr_t objnum;
-    obj_in_image_t *obj;
-
-    objnum = (intptr_t)tte->a;
-    obj = find_obj_by_num(objnum, OBJTYPE_ATOM);
+    intptr_t objnum = (intptr_t)tte->a;
+    obj_in_image_t *obj = find_obj_by_num(objnum, OBJTYPE_ATOM);
     if (!obj) return -1;
     tte->a = (atom_t *)obj->ptr;
 
@@ -1018,25 +970,19 @@ int mdl_fixup_type_table_entry(struct mdl_type_table_entry_t *tte)
     return 0;
 }
 
-void mdl_write_type_table(FILE *f, mdl_type_table_t *tt)
+void mdl_write_type_table(FILE *f, const mdl_type_table_t &tt)
 {
-    int size = tt->size();
-    mdl_type_table_t::iterator iter;
-
     mdl_write_objtype(f, OBJTYPE_TYPE_TABLE);
-    mdl_write_int(f, size);
-    for (iter = tt->begin(); iter != tt->end(); iter++)
+    mdl_write_int(f, tt.size());
+    for (auto const& entry : tt)
     {
-        mdl_write_type_table_entry(f, &*iter);
+        mdl_write_type_table_entry(f, entry);
     }
 }
 
 int mdl_read_type_table(FILE *f, mdl_type_table_t *tt)
 {
-    int size;
-    int i;
     objtype_t objtype;
-
     if (mdl_read_objtype(f, &objtype) != 0)
     {
         return -1;
@@ -1047,13 +993,14 @@ int mdl_read_type_table(FILE *f, mdl_type_table_t *tt)
         return -1;
     }
 
+    int size;
     if (mdl_read_int(f, &size) != 0)
     {
         return -1;
     }
     if (size < 0) return -1;
     tt->reserve(size);
-    for (i = 0; i < size; i++)
+    for (int i = 0; i < size; i++)
     {
         mdl_type_table_entry_t tte;
         if (mdl_read_type_table_entry(f, &tte) != 0)
@@ -1067,12 +1014,11 @@ int mdl_read_type_table(FILE *f, mdl_type_table_t *tt)
 
 int mdl_fixup_type_table(mdl_type_table_t *tt)
 {
-    mdl_type_table_t::iterator iter;
-    int i;
-
-    for (i = 0, iter = tt->begin(); iter != tt->end(); iter++, i++)
+    int i = 1;
+    for (auto& tte : *tt)
     {
-        if (mdl_fixup_type_table_entry(&*iter) != 0) return i+1;
+        if (mdl_fixup_type_table_entry(&tte) != 0) return i;
+        ++i;
     }
     return 0;
 }
@@ -1105,7 +1051,6 @@ void mdl_write_asoc_table(FILE *f)
 int mdl_read_asoc_table(FILE *f, mdl_tmp_assoc_table_t *tmptable)
 {
     int size;
-    int i;
     objtype_t objtype;
 
     if (mdl_read_objtype(f, &objtype) != 0)
@@ -1122,7 +1067,7 @@ int mdl_read_asoc_table(FILE *f, mdl_tmp_assoc_table_t *tmptable)
     mdl_read_int(f, &size);
 
     tmptable->reserve(size);
-    for (i = 0; i < size; i++)
+    for (int i = 0; i < size; i++)
     {
         intptr_t onum;
         mdl_tmp_assoc_entry_t entry;
@@ -1195,9 +1140,8 @@ int mdl_read_built_in_table(FILE *f, mdl_built_in_table_t *new_table)
 {
     mdl_built_in_table_t::iterator biter;
     int valueobjnum = -1;
-    int tablesize;
-    objtype_t objtype;
 
+    objtype_t objtype;
     if (mdl_read_objtype(f, &objtype) != 0)
     {
         return -1;
@@ -1209,6 +1153,7 @@ int mdl_read_built_in_table(FILE *f, mdl_built_in_table_t *new_table)
         return -1;
     }
 
+    int tablesize;
     if (mdl_read_int(f, &tablesize) != 0) return -1;
     if (tablesize != (int)built_in_table.size())
     {
@@ -1249,14 +1194,11 @@ int mdl_fixup_built_in_table(mdl_built_in_table_t *new_table)
 
     for (i = 0, biter = new_table->begin(); biter != new_table->end(); biter++, i++)
     {
-        obj_in_image_t *obj;
-        intptr_t objnum;
-
         // fixup just the atom -- proc and value are from the current table
-        
-        objnum = (intptr_t)biter->a;
-        obj = find_obj_by_num(objnum, OBJTYPE_MDL_VALUE);
-        if (!obj) return (i+1);
+
+        intptr_t objnum = (intptr_t)biter->a;
+        obj_in_image_t *obj = find_obj_by_num(objnum, OBJTYPE_MDL_VALUE);
+        if (!obj) return (i + 1);
         biter->a = (mdl_value_t *)obj->ptr;
     }
     return 0;
@@ -1273,12 +1215,9 @@ int mdl_fixup_built_in_table(mdl_built_in_table_t *new_table)
 // built-in SUBR/FSUBRS (not written, considered immutable)
 void mdl_write_image(FILE *f, mdl_value_t *save_arg)
 {
-    size_t index;
-    obj_in_image_t *obj;
-
     image_objects.clear();
     image_object_list.clear();
-    
+
     // must schedule these first, lest they get scheduled without their
     // tags
     mdl_schedule_value_for_write(mdl_value_root_oblist, OBJTYPE_MDL_ROOT_OBLIST);
@@ -1286,22 +1225,22 @@ void mdl_write_image(FILE *f, mdl_value_t *save_arg)
     mdl_schedule_value_for_write(save_arg, OBJTYPE_SAVE_ARG);
 
     mdl_write_built_in_table(f);
-    mdl_write_type_table(f, &mdl_type_table);
+    mdl_write_type_table(f, mdl_type_table);
     mdl_write_asoc_table(f);
 
     mdl_schedule_value_for_write(mdl_value_oblist);
-    
-    for (index = 0; index < image_object_list.size(); index++)
+
+    for (size_t index = 0; index < image_object_list.size(); index++)
     {
         // note iterators cannot be used because they can be invalidated
         // at any time.  could check if capacity has changed but.. meh
 #ifdef MDL_DEBUG_BINARY_IO
         fprintf(f, "\n-----OBJECT %zu-----\n\n", index + 1);
 #else
-        mdl_write_int(f, (int)index+1);
+        mdl_write_int(f, (int)index + 1);
 #endif
-        obj = &image_object_list[index];
-        switch(obj->objtype)
+        obj_in_image_t *obj = &image_object_list[index];
+        switch (obj->objtype)
         {
         case OBJTYPE_SAVE_ARG:
         case OBJTYPE_MDL_INITIAL_OBLIST:
@@ -1316,10 +1255,10 @@ void mdl_write_image(FILE *f, mdl_value_t *save_arg)
             mdl_write_rawstring(f, (char *)obj->ptr, obj->len);
             break;
         case OBJTYPE_VECTOR_BLOCK:
-            mdl_write_vector_block(f, (mdl_vector_block_t *)obj->ptr);
+            mdl_write_vector_block(f, *(mdl_vector_block_t *)obj->ptr);
             break;
         case OBJTYPE_UVECTOR_BLOCK:
-            mdl_write_uvector_block(f, (mdl_uvector_block_t *)obj->ptr);
+            mdl_write_uvector_block(f, *(mdl_uvector_block_t *)obj->ptr);
             break;
        }
     }
@@ -1329,41 +1268,39 @@ void mdl_write_image(FILE *f, mdl_value_t *save_arg)
 
 bool mdl_read_image(FILE *f)
 {
-    size_t index;
     obj_in_image_t obj;
-    mdl_built_in_table_t new_built_ins;
-    mdl_type_table_t new_types;
-    mdl_tmp_assoc_table_t new_assocs;
-    mdl_assoc_table_t *new_assoc_hash;
     mdl_symbol_table_t newglobal;
     mdl_local_symbol_table_t newlocal;
-    mdl_value_t *new_root_oblist = NULL;
-    mdl_value_t *new_initial_oblist = NULL;
-    mdl_value_t *save_arg = NULL;
+    mdl_value_t *new_root_oblist = nullptr;
+    mdl_value_t *new_initial_oblist = nullptr;
+    mdl_value_t *save_arg = nullptr;
     int err;
 
     image_object_list.clear();
     chanmap.clear();
-    
+
+    mdl_built_in_table_t new_built_ins;
     if ((err = mdl_read_built_in_table(f, &new_built_ins)) != 0)
     {
         fprintf(stderr, "Unable to read built_in table %d\n", err);
         return false;
     }
 
+    mdl_type_table_t new_types;
     if ((err = mdl_read_type_table(f, &new_types)) !=0 )
     {
         fprintf(stderr, "Unable to read type table %d\n", err);
         return false;
     }
-    
+
+    mdl_tmp_assoc_table_t new_assocs;
     if ((err = mdl_read_asoc_table(f, &new_assocs)) != 0)
     {
         fprintf(stderr, "Unable to read assoc table %d\n", err);
         return false;
     }
 
-    index = 0;
+    size_t index = 0;
     while (!feof(f))
     {
 #ifdef MDL_DEBUG_BINARY_IO
@@ -1379,7 +1316,6 @@ bool mdl_read_image(FILE *f)
         size_t check_index;
         int tmp;
 
-
         if (mdl_read_int(f, &tmp) != 0)
         {
             if (feof(f)) break;
@@ -1393,7 +1329,6 @@ bool mdl_read_image(FILE *f)
         {
             fprintf(stderr, "Wrong object index %zd != %zd\n", check_index, index + 1);
             return false;
-            
         }
         obj.objnum = check_index;
 
@@ -1403,28 +1338,28 @@ bool mdl_read_image(FILE *f)
             return false;
         }
 
-        switch(obj.objtype)
+        switch (obj.objtype)
         {
         case OBJTYPE_SAVE_ARG:
         case OBJTYPE_MDL_INITIAL_OBLIST:
         case OBJTYPE_MDL_ROOT_OBLIST:
         case OBJTYPE_MDL_VALUE:
         {
-            mdl_value_t *v = NULL;
+            mdl_value_t *v = nullptr;
             mdl_read_mdl_value(f, &v);
             obj.ptr = (void *)v;
             break;
         }
         case OBJTYPE_ATOM:
         {
-            atom_t *a = NULL;
+            atom_t *a = nullptr;
             mdl_read_atom(f, &a, &newglobal, &newlocal);
             obj.ptr = (void *)a;
             break;
         }
         case OBJTYPE_RAWSTRING:
         {
-            char *str = NULL;
+            char *str = nullptr;
             int len;
 
             mdl_read_rawstring(f, &str, &len);
@@ -1434,20 +1369,20 @@ bool mdl_read_image(FILE *f)
         }
         case OBJTYPE_VECTOR_BLOCK:
         {
-            mdl_vector_block_t *vb = NULL;
+            mdl_vector_block_t *vb = nullptr;
             mdl_read_vector_block(f, &vb);
             obj.ptr = (void *)vb;
             break;
         }
         case OBJTYPE_UVECTOR_BLOCK:
         {
-            mdl_uvector_block_t *uvb = NULL;
-            mdl_read_uvector_block(f, &uvb, &new_types);
+            mdl_uvector_block_t *uvb = nullptr;
+            mdl_read_uvector_block(f, &uvb, new_types);
             obj.ptr = (void *)uvb;
             break;
         }
         }
-        if (obj.ptr == NULL)
+        if (!obj.ptr)
         {
             fprintf(stderr, "Failed to read object %zd\n", index);
             return false;
@@ -1459,8 +1394,9 @@ bool mdl_read_image(FILE *f)
             return false;
         }
 
-        index++;
+        ++index;
     }
+
 // Everything's read, now restore the pointers
     if ((err = mdl_fixup_built_in_table(&new_built_ins)) != 0)
     {
@@ -1468,7 +1404,7 @@ bool mdl_read_image(FILE *f)
         return false;
     }
 
-    if ((err = mdl_fixup_type_table(&new_types)) !=0 )
+    if ((err = mdl_fixup_type_table(&new_types)) != 0)
     {
         fprintf(stderr, "Unable to fixup type table %d\n", err);
         return false;
@@ -1480,60 +1416,59 @@ bool mdl_read_image(FILE *f)
         return false;
     }
 
-
-    obj_image_list_t::iterator iter;
-    for (index = 0, iter = image_object_list.begin();
-         iter != image_object_list.end();
-         iter++, index++)
+    index = 0;
+    for (const auto& obj : image_object_list)
     {
-        switch(iter->objtype)
+        switch (obj.objtype)
         {
         case OBJTYPE_SAVE_ARG:
         case OBJTYPE_MDL_INITIAL_OBLIST:
         case OBJTYPE_MDL_ROOT_OBLIST:
         case OBJTYPE_MDL_VALUE:
         {
-            err = mdl_fixup_mdl_value(f, (mdl_value_t *)iter->ptr);
-            if (iter->objtype == OBJTYPE_MDL_ROOT_OBLIST)
+            err = mdl_fixup_mdl_value(f, (mdl_value_t *)obj.ptr);
+            if (obj.objtype == OBJTYPE_MDL_ROOT_OBLIST)
             {
-                new_root_oblist = (mdl_value_t *)iter->ptr;
+                new_root_oblist = (mdl_value_t *)obj.ptr;
             }
-            else if (iter->objtype == OBJTYPE_MDL_INITIAL_OBLIST)
+            else if (obj.objtype == OBJTYPE_MDL_INITIAL_OBLIST)
             {
-                new_initial_oblist = (mdl_value_t *)iter->ptr;
+                new_initial_oblist = (mdl_value_t *)obj.ptr;
             }
-            else if (iter->objtype == OBJTYPE_SAVE_ARG)
+            else if (obj.objtype == OBJTYPE_SAVE_ARG)
             {
-                save_arg = (mdl_value_t *)iter->ptr;
+                save_arg = (mdl_value_t *)obj.ptr;
             }
             break;
         }
         case OBJTYPE_ATOM:
         {
-            err = mdl_fixup_atom(f, (atom_t *)iter->ptr, &newglobal, &newlocal);
+            err = mdl_fixup_atom(f, (atom_t *)obj.ptr, &newglobal, &newlocal);
             break;
         }
         case OBJTYPE_RAWSTRING:
         {
-            err = mdl_fixup_rawstring(f, (char *)iter->ptr);
+            err = mdl_fixup_rawstring(f, (char *)obj.ptr);
             break;
         }
         case OBJTYPE_VECTOR_BLOCK:
         {
-            err = mdl_fixup_vector_block(f, (mdl_vector_block_t *)iter->ptr);
+            err = mdl_fixup_vector_block(f, (mdl_vector_block_t *)obj.ptr);
             break;
         }
         case OBJTYPE_UVECTOR_BLOCK:
         {
-            err = mdl_fixup_uvector_block(f, (mdl_uvector_block_t *)iter->ptr, &new_types);
+            err = mdl_fixup_uvector_block(f, (mdl_uvector_block_t *)obj.ptr, new_types);
             break;
         }
         }
         if (err != 0)
         {
-            fprintf(stderr, "Failed to fixup object %zd (type %d)\n", index, (int) iter->objtype);
+            fprintf(stderr, "Failed to fixup object %zd (type %d)\n", index, (int)obj.objtype);
             return false;
         }
+
+        ++index;
     }
 
     mdl_value_t *new_mdl_value_atom_oblist = mdl_get_atom_from_oblist("OBLIST", new_root_oblist);
@@ -1550,22 +1485,17 @@ bool mdl_read_image(FILE *f)
     }
 
     // Build the new association table
-    mdl_tmp_assoc_table_t::iterator aiter;
-    mdl_assoc_key_t key;
-    
-    new_assoc_hash = mdl_create_assoc_table();
+    mdl_assoc_table_t *new_assoc_hash = mdl_create_assoc_table();
 
-    for (aiter = new_assocs.begin(); aiter != new_assocs.end(); aiter++)
+    for (auto const &elem : new_assocs)
     {
-        key.item = aiter->item;
-        key.indicator = aiter->indicator;
-        mdl_add_assoc(new_assoc_hash, &key, aiter->value);
+        mdl_add_assoc(new_assoc_hash, {elem.item, elem.indicator}, elem.value);
     }
     // find the interrupts oblist
-    key.item = mdl_value_atom_interrupts;
-    key.indicator = new_mdl_value_atom_oblist;
-    mdl_value_t *mdl_value_interrupts_oblist = mdl_assoc_find_value(new_assoc_hash, &key);
-    if (mdl_value_interrupts_oblist == NULL)
+    mdl_value_t *mdl_value_interrupts_oblist = mdl_assoc_find_value(new_assoc_hash,
+        { mdl_value_atom_interrupts, new_mdl_value_atom_oblist }
+    );
+    if (!mdl_value_interrupts_oblist)
     {
         fprintf(stderr, "INTERRUPTS!- oblist missing in save image");
         return -1;
@@ -1603,14 +1533,14 @@ bool mdl_read_image(FILE *f)
     image_object_list.clear();
 
     // fix up the channels
-    chan_map_t::iterator citer;
-    for (citer = chanmap.begin(); citer != chanmap.end(); citer++)
+    for (auto &entry : chanmap)
     {
-        mdl_value_t *chan = citer->second;
+        mdl_value_t *chan = entry.second;
         if (mdl_get_chan_channum(chan) > 2) // 0 is internal/closed, 1/2 are standard ttys
             mdl_internal_reopen_channel(chan);
     }
     chanmap.clear();
+
     cur_frame = initial_frame;
     initial_frame->result = save_arg;
     fclose(f); // no one else will do it, until channel GC is implemented

@@ -58,7 +58,7 @@ mdl_value_t *mdl_check_decl(mdl_value_t *val, mdl_value_t *decl, bool *error)
                 {
                     // FIXME: no fancy falses
                     mdl_value_t *f;
-                    f = mdl_cons_internal(decl, NULL);
+                    f = mdl_cons_internal(decl, nullptr);
                     f = mdl_cons_internal(val, f);
                     return mdl_make_list(f, MDL_TYPE_FALSE);
                 }
@@ -75,7 +75,7 @@ mdl_value_t *mdl_check_decl(mdl_value_t *val, mdl_value_t *decl, bool *error)
     if (decl->type == MDL_TYPE_FORM)
     {
         mdl_value_t *firstitem = LITEM(decl, 0);
-        if (firstitem == NULL)
+        if (firstitem == nullptr)
             DECL_ERROR("BAD-TYPE-SPECIFICATION2");
 
         // quoted value
@@ -106,9 +106,7 @@ mdl_value_t *mdl_check_decl(mdl_value_t *val, mdl_value_t *decl, bool *error)
         // OR
         if (mdl_value_equal(firstitem, RATOM(OR)))
         {
-            mdl_value_t *typecursor;
-
-            typecursor = LREST(decl, 1);
+            mdl_value_t *typecursor = LREST(decl, 1);
             if (!typecursor)
                 DECL_ERROR("EMPTY-OR/PRIMTYPE_FORM");
             do
@@ -117,7 +115,8 @@ mdl_value_t *mdl_check_decl(mdl_value_t *val, mdl_value_t *decl, bool *error)
                 if (*error || mdl_is_true(result))
                     return result;
                 typecursor = typecursor->v.p.cdr;
-            } while (typecursor);
+            }
+            while (typecursor);
             return result;
         }
         if (firstitem->type == MDL_TYPE_ATOM &&
@@ -161,8 +160,7 @@ mdl_check_struct_decl(mdl_value_t *val, mdl_value_t *decl, bool *error)
     mdl_value_t *result = mdl_value_T;
     mdl_value_t *firstitem;
     bool optfound = false;
-    int i,j;
-    
+
     while (declcursor)
     {
         curdecl = declcursor->v.p.car;
@@ -175,14 +173,14 @@ mdl_check_struct_decl(mdl_value_t *val, mdl_value_t *decl, bool *error)
             {
                 if (optfound || firstitem->v.w <= 0)
                     DECL_ERROR("BAD-TYPE-SPECIFICATION4");
-                for (i = 0; i < firstitem->v.w; i++)
+                for (int i = 0; i < firstitem->v.w; i++)
                 {
                     curidecl = VITEM(curdecl, 1);
-                    for (j = 1; j < VLENGTH(curdecl); j++)
+                    for (int j = 1; j < VLENGTH(curdecl); j++)
                     {
                         if (mdl_internal_struct_is_empty(valcursor))
                             return &mdl_value_false;
-                        curval = mdl_internal_eval_nth(valcursor, NULL);
+                        curval = mdl_internal_eval_nth(valcursor, nullptr);
                         result = mdl_check_decl(curval, curidecl, error);
                         if (*error || mdl_is_false(result)) return result;
                         valcursor = mdl_internal_eval_rest_i(valcursor, 1);
@@ -197,11 +195,11 @@ mdl_check_struct_decl(mdl_value_t *val, mdl_value_t *decl, bool *error)
                 while (1)
                 {
                     curidecl = VITEM(curdecl, 1);
-                    for (j = 1; j < VLENGTH(curdecl); j++)
+                    for (int j = 1; j < VLENGTH(curdecl); j++)
                     {
                         if (mdl_internal_struct_is_empty(valcursor))
                             return result;
-                        curval = mdl_internal_eval_nth(valcursor, NULL);
+                        curval = mdl_internal_eval_nth(valcursor, nullptr);
                         result = mdl_check_decl(curval, curidecl, error);
                         if (*error || mdl_is_false(result)) return result;
                         valcursor = mdl_internal_eval_rest_i(valcursor, 1);
@@ -217,12 +215,12 @@ mdl_check_struct_decl(mdl_value_t *val, mdl_value_t *decl, bool *error)
                 optfound = true;
                 curidecl = VITEM(curdecl, 1);
                 fprintf(stderr, "O1\n");
-                for (j = 1; j < VLENGTH(curdecl); j++)
+                for (int j = 1; j < VLENGTH(curdecl); j++)
                 {
                     if (mdl_internal_struct_is_empty(valcursor))
                         break;
                     fprintf(stderr, "O2 %d\n", j);
-                    curval = mdl_internal_eval_nth(valcursor, NULL);
+                    curval = mdl_internal_eval_nth(valcursor, nullptr);
                     result = mdl_check_decl(curval, curidecl, error);
                     if (*error || mdl_is_false(result)) return result;
                     valcursor = mdl_internal_eval_rest_i(valcursor, 1);
@@ -234,7 +232,7 @@ mdl_check_struct_decl(mdl_value_t *val, mdl_value_t *decl, bool *error)
         {
             if (mdl_internal_struct_is_empty(valcursor))
                 return &mdl_value_false;
-            curval = mdl_internal_eval_nth(valcursor, NULL); // nth(1) by default
+            curval = mdl_internal_eval_nth(valcursor, nullptr); // nth(1) by default
             if (optfound)
                 DECL_ERROR("BAD-TYPE-SPECIFICATION7");
             result = mdl_check_decl(curval, curdecl, error);

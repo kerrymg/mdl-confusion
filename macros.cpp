@@ -22,6 +22,7 @@
 #include <string.h>
 #include <errno.h>
 #include <math.h>
+#include <unistd.h>
 #include "macros.hpp"
 #include "mdl_internal_defs.h"
 #include "mdl_builtin_types.h"
@@ -172,15 +173,13 @@ mdl_value_t *mdl_set_applytype(int typenum, mdl_value_t *how)
 mdl_value_t *mdl_typevector()
 {
     mdl_value_t * result = mdl_new_empty_vector(mdl_type_table.size(), MDL_TYPE_VECTOR);
-    mdl_type_table_t::iterator iter;
-    mdl_value_t *iptr;
 
-    iptr = VREST(result, 0);
-    for (iter = mdl_type_table.begin(); iter != mdl_type_table.end(); iter++)
+    mdl_value_t *iptr = VREST(result, 0);
+    for (auto const& tte : mdl_type_table)
     {
         iptr->type = MDL_TYPE_ATOM;
         iptr->pt = PRIMTYPE_ATOM;
-        iptr->v.a = iter->a;
+        iptr->v.a = tte.a;
         iptr++;
     }
     return result;
@@ -607,9 +606,8 @@ bool mdl_oblists_are_reasonable(mdl_value_t *oblists)
 // do what READ does with atoms
 mdl_value_t *mdl_get_atom(const char *pname, bool insert_allowed, mdl_value_t *default_oblists)
 {
-
-    char *trailer = strstr(pname, "!-");
-    if (trailer == NULL)
+    const char *trailer = strstr(pname, "!-");
+    if (!trailer)
     {
         return mdl_get_atom_default_oblist(pname, insert_allowed, default_oblists);
     }
@@ -627,7 +625,7 @@ mdl_value_t *mdl_get_atom(const char *pname, bool insert_allowed, mdl_value_t *d
     else
     {
         mdl_value_t *oblist_name = mdl_get_atom(trailer + 2, insert_allowed, default_oblists);
-        mdl_value_t *oblist = NULL;
+        mdl_value_t *oblist = nullptr;
         if (oblist_name)
         {
             oblist = mdl_internal_eval_getprop(oblist_name, mdl_value_oblist);
@@ -1598,26 +1596,22 @@ mdl_value_t *mdl_parse_string(mdl_value_t *str, int radix, mdl_value_t *lookahea
 
 mdl_value_t *mdl_global_symbol_lookup(const atom_t *atom)
 {
-    mdl_symbol_table_t::iterator iter;
-
-    iter = global_syms.find(atom);
-    if (iter == global_syms.end()) return NULL;
+    auto iter = global_syms.find(atom);
+    if (iter == global_syms.end()) return nullptr;
     return iter->second.binding;
 }
 
 mdl_value_t *mdl_local_symbol_lookup_1_activation_only_please(const atom_t *atom, mdl_frame_t *frame)
 {
-    mdl_local_symbol_table_t::iterator iter;
-
     while (frame)
     {
-        iter = frame->syms->find(atom);
+        auto iter = frame->syms->find(atom);
         if (iter != frame->syms->end())
             return iter->second.binding;
-        if (frame->frame_flags & MDL_FRAME_FLAGS_ACTIVATION) return NULL;
+        if (frame->frame_flags & MDL_FRAME_FLAGS_ACTIVATION) return nullptr;
         frame = frame->prev_frame;
     }
-    return NULL;
+    return nullptr;
 }
 
 mdl_local_symbol_t *mdl_local_symbol_slot(atom_t *atom, mdl_frame_t *frame)
@@ -1664,15 +1658,14 @@ mdl_local_symbol_t *mdl_local_symbol_slot(atom_t *atom, mdl_frame_t *frame)
 
 mdl_value_t *mdl_bind_local_symbol(atom_t *atom, mdl_value_t *val, mdl_frame_t *frame, bool allow_replacement)
 {
-    mdl_local_symbol_table_t::iterator iter;
 #ifdef CACHE_LOCAL_SYMBOLS
     bool fixbind = frame == cur_frame;
 #endif
 
-    iter = frame->syms->find(atom);
+    auto iter = frame->syms->find(atom);
     if (iter != frame->syms->end())
     {
-        if (!allow_replacement) return NULL;
+        if (!allow_replacement) return nullptr;
         iter->second.binding = val;
     }
     else
@@ -1681,13 +1674,12 @@ mdl_value_t *mdl_bind_local_symbol(atom_t *atom, mdl_value_t *val, mdl_frame_t *
         mdl_local_symbol_t *oldsym = mdl_local_symbol_slot(atom, frame);
 #endif
         mdl_local_symbol_t sym;
-        std::pair<mdl_local_symbol_table_t::iterator, bool> insresult;
         sym.atom = atom;
         sym.binding = val;
 #ifdef CACHE_LOCAL_SYMBOLS
         sym.prev_binding = oldsym;
 #endif
-        insresult = frame->syms->insert(std::pair<const atom_t *, mdl_local_symbol_t>(atom, sym));
+        auto insresult = frame->syms->insert({ atom, sym });
 #ifdef CACHE_LOCAL_SYMBOLS
         if (fixbind)
         {
@@ -1704,14 +1696,14 @@ mdl_value_t *mdl_bind_local_symbol(atom_t *atom, mdl_value_t *val, mdl_frame_t *
 mdl_value_t *mdl_local_symbol_lookup(atom_t *atom, mdl_frame_t *frame)
 {
     mdl_local_symbol_t *sym = mdl_local_symbol_slot(atom, frame);
-    if (!sym) return NULL;
+    if (!sym) return nullptr;
     return sym->binding;
 }
 
 mdl_value_t *mdl_local_symbol_lookup_pname(const char *pname, mdl_frame_t *frame)
 {
     mdl_value_t *av = mdl_get_atom(pname, true, NULL);
-    if (!av) return NULL;
+    if (!av) return nullptr;
     return mdl_local_symbol_lookup(av->v.a, frame);
 }
 
@@ -1719,11 +1711,10 @@ mdl_value_t *mdl_local_symbol_lookup_pname(const char *pname, mdl_frame_t *frame
 // UNBOUND
 mdl_value_t *mdl_both_symbol_lookup(atom_t *atom, mdl_frame_t *frame)
 {
-    mdl_value_t *result;
-    result = mdl_local_symbol_lookup(atom, frame);
+    mdl_value_t *result = mdl_local_symbol_lookup(atom, frame);
     if (!result || result->type == MDL_TYPE_UNBOUND)
         result = mdl_global_symbol_lookup(atom);
-    if (!result || result->type == MDL_TYPE_UNBOUND) return NULL;
+    if (!result || result->type == MDL_TYPE_UNBOUND) return nullptr;
     return result;
 }
 
@@ -2013,8 +2004,6 @@ mdl_value_t *mdl_internal_prog_repeat_bind(mdl_value_t *orig_form, bool bind_to_
     mdl_value_t *fargsp = LREST(orig_form, 1);
     mdl_value_t *fargs;
     mdl_value_t *act_atom = NULL;
-    int jumpval;
-    bool first;
     frame->prev_frame = prev_frame;
     
     if (fargsp->v.p.car->type == MDL_TYPE_ATOM)
@@ -2040,9 +2029,9 @@ mdl_value_t *mdl_internal_prog_repeat_bind(mdl_value_t *orig_form, bool bind_to_
                   false /* not called from apply */,
                   true /* AUX arguments only */);
 
-    jumpval = mdl_setjmp(frame->interp_frame);
+    int jumpval = mdl_setjmp(frame->interp_frame);
     // RETURN and AGAIN come here
-    first = (jumpval == 0) || (jumpval == LONGJMP_AGAIN);
+    bool first = (jumpval == 0) || (jumpval == LONGJMP_AGAIN);
     while (first || (repeat && !frame->result))
     {
         first = false;
@@ -2342,10 +2331,12 @@ int mdl_apply_type(int t)
     return t;
 }
 
-typedef mdl_value_t *mdl_walker_next_t(struct mdl_struct_walker_t *w);
-typedef mdl_value_t *mdl_walker_rest_t(struct mdl_struct_walker_t *w);
+struct mdl_struct_walker_t;
 
-typedef struct mdl_struct_walker_t
+typedef mdl_value_t *mdl_walker_next_t(mdl_struct_walker_t *w);
+typedef mdl_value_t *mdl_walker_rest_t(mdl_struct_walker_t *w);
+
+struct mdl_struct_walker_t
 {
     mdl_walker_next_t *next;
     mdl_walker_rest_t *rest;
@@ -2354,7 +2345,7 @@ typedef struct mdl_struct_walker_t
     uvector_element_t *uve; // uvector element
     char *se;   // string element
     int length; // remaining length vector/uvector/string
-} mdl_struct_walker_t;
+};
 
 mdl_value_t *mdl_next_list_element(mdl_struct_walker_t *w)
 {
@@ -2940,14 +2931,7 @@ void mdl_interp_init()
 {
     extern void mdl_create_builtins();
 
-    if (sizeof(MDL_FLOAT) != sizeof(MDL_INT))
-    {
-        // math and UVECTORS don't work right if this isn't true
-        // could fix it by making FLOAT its own primtype, but
-        // that might break MDL
-        printf("sizeof(MDL_FLOAT) %zd != sizeof(MDL_INT) %zd\n", sizeof(MDL_FLOAT), sizeof(MDL_INT));
-        exit(-1);
-    }
+    static_assert(sizeof(MDL_FLOAT) == sizeof(MDL_INT), "sizeof(MDL_FLOAT) != sizeof(MDL_INT)");
 
     srand48(1);
     mdl_assoc_table = mdl_create_assoc_table();
@@ -3018,8 +3002,8 @@ void mdl_interp_init()
     mdl_value_t *def_outchan = mdl_create_default_outchan();
     mdl_set_lval(mdl_value_atom_outchan->v.a, def_outchan, initial_frame);
     mdl_set_gval(mdl_value_atom_outchan->v.a, def_outchan);
-    
-    last_assoc_clean = GC_gc_no;
+
+    last_assoc_clean = GC_get_gc_no();
 }
 
 bool mdl_is_true(mdl_value_t *item)
@@ -3417,22 +3401,16 @@ mdl_value_t *mdl_internal_eval_put(mdl_value_t *arg, mdl_value_t *indexval, mdl_
 
 mdl_value_t *mdl_internal_eval_putprop(mdl_value_t *item, mdl_value_t *indicator, mdl_value_t *val)
 {
-    struct mdl_assoc_key_t key;
-
-    key.item = item;
-    key.indicator = indicator;
-    if (val == NULL)
-        mdl_delete_assoc(mdl_assoc_table, &key);
+    if (val == nullptr)
+        mdl_delete_assoc(mdl_assoc_table, { item, indicator });
     else
-        mdl_add_assoc(mdl_assoc_table, &key, val);
+        mdl_add_assoc(mdl_assoc_table, { item, indicator }, val);
     return item;
 }
 
 mdl_value_t *mdl_internal_eval_getprop(mdl_value_t *item, mdl_value_t *indicator)
 {
-    struct mdl_assoc_key_t key = {item, indicator};
-
-    return mdl_assoc_find_value(mdl_assoc_table, &key);
+    return mdl_assoc_find_value(mdl_assoc_table, { item, indicator });
 }
 
 mdl_value_t *mdl_internal_eval_mapfr(mdl_value_t *form, mdl_value_t *args, bool is_mapr)
@@ -6184,7 +6162,7 @@ mdl_value_t *mdl_builtin_eval_abs(mdl_value_t *form, mdl_value_t *args)
 #ifdef MDL32
         return mdl_new_float(fabsf(num->v.fl));
 #else
-        return mdl_new_float(fabs(num->v.w));
+        return mdl_new_float(fabs(num->v.fl));
 #endif
     }
     else if (num->type == MDL_TYPE_FIX)

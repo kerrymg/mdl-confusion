@@ -20,13 +20,14 @@
 #include <string.h>
 #include <ctype.h>
 #include <errno.h>
+#include <unistd.h>
 
 #define BANGCHAR(ch) (('!' << 8) | (ch))
 #define IS_BANGCHAR(ch) (((ch) >> 8) == '!')
 #define STRIPBANG(ch) (ch & 0xFF)
 #define FASTVITEM(val, skip) ((val)->v.v.p->elements + (val)->v.v.offset + (val)->v.v.p->startoffset + (skip))
 
-typedef enum read_statenum_t
+enum read_statenum_t
 {
     READSTATE_INITIAL,
     READSTATE_COMMENT,
@@ -64,11 +65,11 @@ typedef enum read_statenum_t
     READSTATE_INLVALATOM,
     READSTATE_INLVALATOM_BS,
     READSTATE_FINAL,
-} read_statenum_t;
+};
 
-typedef struct readstate_t
+struct readstate_t
 {
-    struct readstate_t *prev;
+    readstate_t *prev;
     read_statenum_t statenum;
     seqtype_t seqtype;
     char *buf; // buffer for current whatever is being built up
@@ -77,7 +78,7 @@ typedef struct readstate_t
     mdl_value_t *objects; // objects found so far
     mdl_value_t *lastitem; // for building the list faster
     int typecode;
-} readstate_t;
+};
 
 mdl_charclass_t mdl_get_charclass(MDL_INT ch)
 {
@@ -167,7 +168,7 @@ void mdl_get_charinfo(MDL_INT ch, charinfo_t *info)
 {
     info->charclass = mdl_get_charclass(ch);
     info->separator = info->openbracket = info->closebracket = false;
-    switch(info->charclass)
+    switch (info->charclass)
     {
     case MDL_C_OPENLIST:
     case MDL_C_OPENFORM:
@@ -227,7 +228,7 @@ inline void mdl_readstate_buf_clear(readstate_t *rdstate)
 
 readstate_t *mdl_new_readstate(readstate_t *prev_readstate, seqtype_t seqtype)
 {
-    readstate_t *result = (readstate_t *)GC_MALLOC(sizeof(readstate_t));
+    readstate_t *result = GC_NEW(readstate_t);
     result->statenum = READSTATE_INITIAL;
     result->bufsize = 256;
     result->buf = (char *)GC_MALLOC_ATOMIC(result->bufsize);
@@ -239,31 +240,31 @@ readstate_t *mdl_new_readstate(readstate_t *prev_readstate, seqtype_t seqtype)
 
 mdl_value_t *mdl_get_chan_eof_object(mdl_value_t *chan)
 {
-    return FASTVITEM(chan,CHANNEL_SLOT_EOFOBJ);
+    return FASTVITEM(chan, CHANNEL_SLOT_EOFOBJ);
 }
 
 mdl_value_t *mdl_set_chan_eof_object(mdl_value_t *chan, mdl_value_t *obj)
 {
-    if (obj == NULL)
+    if (!obj)
     {
-        FASTVITEM(chan,CHANNEL_SLOT_EOFOBJ)->pt = PRIMTYPE_WORD;
-        FASTVITEM(chan,CHANNEL_SLOT_EOFOBJ)->type = MDL_TYPE_LOSE;
+        FASTVITEM(chan, CHANNEL_SLOT_EOFOBJ)->pt = PRIMTYPE_WORD;
+        FASTVITEM(chan, CHANNEL_SLOT_EOFOBJ)->type = MDL_TYPE_LOSE;
     }
     else
     {
-        *FASTVITEM(chan,CHANNEL_SLOT_EOFOBJ) = *obj;
+        *FASTVITEM(chan, CHANNEL_SLOT_EOFOBJ) = *obj;
     }
     return obj;
 }
 
 mdl_value_t *mdl_get_chan_input_source(mdl_value_t *chan)
 {
-    return FASTVITEM(chan,CHANNEL_SLOT_IBUFFER);
+    return FASTVITEM(chan, CHANNEL_SLOT_IBUFFER);
 }
 
 void mdl_set_chan_input_source(mdl_value_t *chan, mdl_value_t *source)
 {
-    *FASTVITEM(chan,CHANNEL_SLOT_IBUFFER) = *source;
+    *FASTVITEM(chan, CHANNEL_SLOT_IBUFFER) = *source;
 }
 
 mdl_value_t *mdl_exec_chan_eof_object(mdl_value_t *chan)
@@ -278,29 +279,28 @@ mdl_value_t *mdl_exec_chan_eof_object(mdl_value_t *chan)
 
 FILE *mdl_get_chan_file(mdl_value_t *chan)
 {
-    int chnum = FASTVITEM(chan,CHANNEL_SLOT_CHNUM)->v.w;
+    int chnum = FASTVITEM(chan, CHANNEL_SLOT_CHNUM)->v.w;
     return mdl_get_channum_file(chnum);
 }
 
 int mdl_get_chan_radix(mdl_value_t *chan)
 {
-    int radix = FASTVITEM(chan,CHANNEL_SLOT_RADIX)->v.w;
-    return radix;
+    return FASTVITEM(chan, CHANNEL_SLOT_RADIX)->v.w;
 }
 
-inline 
+inline
 MDL_INT mdl_get_chan_status(mdl_value_t *chan)
 {
     return FASTVITEM(chan, CHANNEL_SLOT_STATUS)->v.w;
 }
 
-inline 
+inline
 void mdl_set_chan_status(mdl_value_t *chan, MDL_INT status)
 {
     FASTVITEM(chan, CHANNEL_SLOT_STATUS)->v.w = status;
 }
 
-inline 
+inline
 bool mdl_chan_flags_are_set(mdl_value_t *chan, MDL_INT flags)
 {
     return ((FASTVITEM(chan, CHANNEL_SLOT_STATUS)->v.w) & flags) == flags;
@@ -311,13 +311,13 @@ bool mdl_chan_at_eof(mdl_value_t *chan)
     return mdl_chan_flags_are_set(chan, ICHANNEL_AT_EOF);
 }
 
-inline 
+inline
 bool mdl_chan_flags_are_clear(mdl_value_t *chan, MDL_INT flags)
 {
     return (FASTVITEM(chan, CHANNEL_SLOT_STATUS)->v.w & flags) == 0;
 }
 
-inline 
+inline
 MDL_INT mdl_set_chan_flags(mdl_value_t *chan, MDL_INT flags)
 {
     return (FASTVITEM(chan, CHANNEL_SLOT_STATUS)->v.w |= flags);
@@ -328,7 +328,7 @@ MDL_INT mdl_clear_chan_flags(mdl_value_t *chan, MDL_INT flags)
     return (FASTVITEM(chan, CHANNEL_SLOT_STATUS)->v.w &= ~flags);
 }
 
-inline 
+inline
 MDL_INT mdl_get_chan_lookahead(mdl_value_t *chan)
 {
     if (mdl_chan_flags_are_set(chan, ICHANNEL_HAS_LOOKAHEAD))
@@ -345,32 +345,27 @@ void mdl_set_chan_lookahead(mdl_value_t *chan, MDL_INT ch)
 
 int mdl_read_1_char(FILE *f)
 {
-    int ch, ch2;
-
-    ch = getc(f);
+    int ch = getc(f);
 
     if (ch == '!')
     {
-        ch2 = getc(f);
+        int ch2 = getc(f);
         if (ch2 == -1) return ch;
         ch = BANGCHAR(ch2);
     }
     return ch;
-
 }
 
 int mdl_read_1_char_cs(counted_string_t *s)
 {
-    int ch, ch2;
-
     if (s->l <= 0) return -1;
-    ch = *(s->p++);
+    int ch = *(s->p++);
     s->l--;
 
     if (ch == '!')
     {
         if (s->l <= 0) return -1;
-        ch2 = *(s->p++);
+        int ch2 = *(s->p++);
         s->l--;
         ch = BANGCHAR(ch2);
     }
@@ -380,19 +375,17 @@ int mdl_read_1_char_cs(counted_string_t *s)
 int mdl_read_word_from_chan(mdl_value_t *chan, MDL_INT *buf)
 {
     int chnum = mdl_get_chan_channum(chan);
-    int nwords;
-    int result;
+    int result = -1;
     if (chnum > 0)
     {
         FILE *f = mdl_get_chan_file(chan);
-        nwords = fread((void *)buf, sizeof(MDL_INT), 1, f);
-        if (nwords != 1) result = -1;
-        else result = 0;
+        int nwords = fread((void *)buf, sizeof(MDL_INT), 1, f);
+        if (nwords == 1)
+            result = 0;
     }
     else
     {
         mdl_error("Attempt to read from closed channel");
-        result = -1;
     }
 
     if (result < 0)
@@ -408,7 +401,7 @@ int mdl_read_from_chan(mdl_value_t *chan)
     if (mdl_chan_flags_are_set(chan, ICHANNEL_HAS_LOOKAHEAD))
     {
         result = mdl_get_chan_lookahead(chan);
-        mdl_clear_chan_flags(chan,ICHANNEL_HAS_LOOKAHEAD);
+        mdl_clear_chan_flags(chan, ICHANNEL_HAS_LOOKAHEAD);
     }
     else
     {
@@ -459,7 +452,9 @@ int mdl_read_chan_lookahead(mdl_value_t *chan)
         result = mdl_get_chan_lookahead(chan);
     }
     else if (mdl_chan_flags_are_set(chan, ICHANNEL_AT_EOF))
+    {
         result = -1;
+    }
     else
     {
         result = mdl_read_from_chan(chan);
@@ -474,7 +469,7 @@ int mdl_read_chan_lookahead(mdl_value_t *chan)
 mdl_value_t *mdl_get_default_inchan()
 {
     mdl_frame_t *frame = cur_frame;
-    if (cur_frame == NULL) frame = cur_process_initial_frame;
+    if (!cur_frame) frame = cur_process_initial_frame;
     return mdl_local_symbol_lookup_pname("INCHAN!-", frame);
 }
 
@@ -483,13 +478,13 @@ mdl_value_t *mdl_create_default_inchan()
     mdl_value_t *chan = mdl_internal_create_channel();
     int chnum = mdl_new_chan_num(stdin);
     mdl_set_chan_mode(chan, "READ");
-    *FASTVITEM(chan,CHANNEL_SLOT_CHNUM) = *mdl_new_fix(chnum);
+    *FASTVITEM(chan, CHANNEL_SLOT_CHNUM) = *mdl_new_fix(chnum);
 
     if (!isatty(fileno(stdin)))
-        *FASTVITEM(chan,CHANNEL_SLOT_DEVN) = *(mdl_new_string(3, "DSK"));
+        *FASTVITEM(chan, CHANNEL_SLOT_DEVN) = *(mdl_new_string(3, "DSK"));
     else
-        *FASTVITEM(chan,CHANNEL_SLOT_DEVN) = *(mdl_new_string(3, "TTY"));
-    mdl_set_chan_eof_object(chan, NULL);
+        *FASTVITEM(chan, CHANNEL_SLOT_DEVN) = *(mdl_new_string(3, "TTY"));
+    mdl_set_chan_eof_object(chan, nullptr);
     return chan;
 }
 
@@ -505,13 +500,13 @@ bool mdl_inchan_is_reasonable(mdl_value_t *chan)
     if (mdl_get_channum_file(channum) != stdin) return false;
     return true;
 }
-        
+
 mdl_value_t *mdl_advance_readstate(mdl_value_t *chan, readstate_t **rdstatep, MDL_INT ch)
 {
     readstate_t *rdstate = *rdstatep;
     charinfo_t cinfo, cinfolook;
     int lookahead;
-    mdl_value_t *obj = NULL;
+    mdl_value_t *obj = nullptr;
 
     mdl_get_charinfo(ch, &cinfo);
 
@@ -523,15 +518,13 @@ mdl_value_t *mdl_advance_readstate(mdl_value_t *chan, readstate_t **rdstatep, MD
             (rdstate->statenum <= READSTATE_INATOM))
         {
             rdstate->statenum = READSTATE_INATOM_BS;
-            return NULL;
+            return nullptr;
         }
-
         else if (rdstate->statenum == READSTATE_INSTRING_LIT)
         {
             rdstate->statenum = READSTATE_INSTRING_LIT_BS;
-            return NULL;
+            return nullptr;
         }
-
         else if ((rdstate->statenum >= READSTATE_INLVALATOM_FLOAT) &&
                  (rdstate->statenum <= READSTATE_INLVALATOM))
         {
@@ -545,20 +538,20 @@ mdl_value_t *mdl_advance_readstate(mdl_value_t *chan, readstate_t **rdstatep, MD
         {
             mdl_readstate_buf_append(rdstate, '!');
             rdstate->statenum = READSTATE_INATOM_BS;
-            return NULL;
+            return nullptr;
         }
         else if (rdstate->statenum == READSTATE_INSTRING_LIT)
         {
             mdl_readstate_buf_append(rdstate, '!');
             rdstate->statenum = READSTATE_INSTRING_LIT_BS;
-            return NULL;
+            return nullptr;
         }
         else if ((rdstate->statenum >= READSTATE_INLVALATOM_FLOAT) &&
                  (rdstate->statenum <= READSTATE_INLVALATOM))
         {
             mdl_readstate_buf_append(rdstate, '!');
             rdstate->statenum = READSTATE_INLVALATOM_BS;
-            return NULL;
+            return nullptr;
         }
         else if ((rdstate->statenum == READSTATE_INSTRING_LIT_BS) ||
                  (rdstate->statenum == READSTATE_INATOM_BS) ||
@@ -567,14 +560,14 @@ mdl_value_t *mdl_advance_readstate(mdl_value_t *chan, readstate_t **rdstatep, MD
             mdl_readstate_buf_append(rdstate, '!');
             // remain in backslash state, do not append backslash -- e.g.
             // "FOO\!\!\!" -> "FOO!!!"
-            return NULL;
+            return nullptr;
         }
     }
 
     switch (rdstate->statenum)
     {
     case READSTATE_INITIAL:
-        switch(cinfo.charclass)
+        switch (cinfo.charclass)
         {
         case MDL_C_SQUOTE:
             rdstate->statenum = READSTATE_QUOTE;
@@ -925,7 +918,7 @@ mdl_value_t *mdl_advance_readstate(mdl_value_t *chan, readstate_t **rdstatep, MD
             if (rdstate->buflen == 0)
                 mdl_error("ATOM with null PNAME not permitted");
             mdl_readstate_buf_append(rdstate, '\0');
-            switch(rdstate->statenum)
+            switch (rdstate->statenum)
             {
             case READSTATE_INATOM:
             case READSTATE_INATOM_OCTAL_FIX:
@@ -1081,8 +1074,8 @@ mdl_value_t *mdl_advance_readstate(mdl_value_t *chan, readstate_t **rdstatep, MD
             else
                 mdl_additem(rdstate->lastitem, obj, &rdstate->lastitem);
         }
-        obj = NULL;
-        
+        obj = nullptr;
+
         lookahead = mdl_read_chan_lookahead(chan);
         if (rdstate->statenum == READSTATE_INITIAL && 
             rdstate->seqtype == SEQTYPE_SINGLE &&
@@ -1181,21 +1174,20 @@ mdl_value_t *mdl_advance_readstate(mdl_value_t *chan, readstate_t **rdstatep, MD
                 rdstate->statenum = READSTATE_FINAL;
         }
     }
-    while(obj);
+    while (obj);
 
     if (rdstate->statenum == READSTATE_FINAL)
         return rdstate->objects;
-    return NULL;
+    return nullptr;
 }
 
 mdl_value_t *mdl_read_object(mdl_value_t *chan)
 {
-    int curchar;
-    readstate_t *readstate = mdl_new_readstate(NULL, SEQTYPE_SINGLE);
-    mdl_value_t *result = NULL;
+    readstate_t *readstate = mdl_new_readstate(nullptr, SEQTYPE_SINGLE);
+    mdl_value_t *result = nullptr;
 
-    mdl_internal_eval_putprop(chan, mdl_get_atom_from_oblist("COMMENT", mdl_value_root_oblist), NULL);
-    curchar = mdl_read_from_chan(chan);
+    mdl_internal_eval_putprop(chan, mdl_get_atom_from_oblist("COMMENT", mdl_value_root_oblist), nullptr);
+    int curchar = mdl_read_from_chan(chan);
     while (!result && !mdl_chan_flags_are_set(chan, ICHANNEL_AT_EOF))
     {
         result = mdl_advance_readstate(chan, &readstate, curchar);
@@ -1225,8 +1217,7 @@ mdl_value_t *mdl_read_character(mdl_value_t *chan)
 
 mdl_value_t *mdl_next_character(mdl_value_t *chan)
 {
-    int ch;
-    ch = mdl_read_chan_lookahead(chan);
+    int ch = mdl_read_chan_lookahead(chan);
     if (ch == -1)
         return mdl_exec_chan_eof_object(chan);
     return mdl_new_word(ch, MDL_TYPE_CHARACTER);
@@ -1235,7 +1226,7 @@ mdl_value_t *mdl_next_character(mdl_value_t *chan)
 mdl_value_t *mdl_read_binary(mdl_value_t *chan, mdl_value_t *buffer)
 {
     uvector_element_t *elem, *first;
-    int nelem;
+
     // only call the EOF if we've already hit EOF on a previous read
     if (mdl_chan_flags_are_set(chan, ICHANNEL_AT_EOF))
     {
@@ -1245,14 +1236,13 @@ mdl_value_t *mdl_read_binary(mdl_value_t *chan, mdl_value_t *buffer)
     {
         mdl_error("UVECTOR for read must be of type WORD");
     }
-    nelem = UVLENGTH(buffer);
+    int nelem = UVLENGTH(buffer);
     first = elem = UVREST(buffer, 0);
     while (nelem--)
     {
         MDL_INT w;
-        int status;
 
-        status = mdl_read_word_from_chan(chan, &w);
+        int status = mdl_read_word_from_chan(chan, &w);
         if (status < 0) break;
         elem++->w = w;
         
@@ -1262,11 +1252,8 @@ mdl_value_t *mdl_read_binary(mdl_value_t *chan, mdl_value_t *buffer)
 
 mdl_value_t *mdl_read_string(mdl_value_t *chan, mdl_value_t *buffer, mdl_value_t *stop)
 {
-    int ntoread;
-    int ch;
-    char *stopstr = NULL;
+    char *stopstr = nullptr;
     int stoplen = 0;
-    char *buf;
 
     // only call the EOF if we've already hit EOF on a previous read
     if (mdl_chan_flags_are_set(chan, ICHANNEL_AT_EOF))
@@ -1278,8 +1265,8 @@ mdl_value_t *mdl_read_string(mdl_value_t *chan, mdl_value_t *buffer, mdl_value_t
     {
         mdl_error("UVECTOR for readstring must be of type STRING");
     }
-    buf = buffer->v.s.p;
-    ntoread = buffer->v.s.l;
+    char *buf = buffer->v.s.p;
+    int ntoread = buffer->v.s.l;
     if (stop)
     {
         if (stop->type == MDL_TYPE_FIX) ntoread = stop->v.w;
@@ -1289,10 +1276,10 @@ mdl_value_t *mdl_read_string(mdl_value_t *chan, mdl_value_t *buffer, mdl_value_t
             stoplen = stop->v.s.l;
         }
     }
-    
+
     while (ntoread--)
     {
-        ch = mdl_read_from_chan(chan);
+        int ch = mdl_read_from_chan(chan);
         if (ch < 0) break;
         if (stoplen && memchr(stopstr, ch, stoplen)) break;
         *buf++ = ch;
@@ -1302,16 +1289,14 @@ mdl_value_t *mdl_read_string(mdl_value_t *chan, mdl_value_t *buffer, mdl_value_t
 
 mdl_value_t *mdl_load_file_from_chan(mdl_value_t *chan)
 {
-    mdl_value_t *result = NULL;
-    int ch;
-
+    mdl_value_t *result = nullptr;
     while (!mdl_chan_flags_are_set(chan, ICHANNEL_AT_EOF))
     {
         result = mdl_read_object(chan);
         mdl_eval(result);
-        
+
         // skip whitespace and check for eof
-        ch = mdl_read_chan_lookahead(chan);
+        int ch = mdl_read_chan_lookahead(chan);
         while (mdl_get_charclass(ch) == MDL_C_WHITESPACE)
         {
             mdl_read_from_chan(chan);

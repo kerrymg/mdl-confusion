@@ -20,9 +20,10 @@
 #include <ctype.h>
 #include <string.h>
 #include <errno.h>
+#include <unistd.h>
 #include "mdl_strbuf.h"
 
-typedef enum outbuf_items_t
+enum outbuf_items_t
 {
     OUTBUF_BUFSIZE,
     OUTBUF_TOTLEN,
@@ -31,7 +32,7 @@ typedef enum outbuf_items_t
     OUTBUF_BUFCHAIN,
     OUTBUF_LASTBUFLIST,
     OUTBUF_VLENGTH
-} ioutbuf_items_t;
+};
 // for flatsize
 // BUFSIZE is BUFSIZE
 // TOTLEN is TOTLEN
@@ -123,25 +124,18 @@ MDL_INT mdl_get_internal_output_channel_length(mdl_value_t *chan)
 mdl_value_t *mdl_get_internal_output_channel_string(mdl_value_t *chan)
 {
     mdl_value_t *devdep = VITEM(chan, CHANNEL_SLOT_DEVDEP);
-    int totlen;
-    mdl_value_t *cursor;
-    mdl_value_t *result;
-    char *d;
-    int len;
-    int bufsize;
-    int cplen;
 
     if (devdep->type != MDL_TYPE_VECTOR || VLENGTH(devdep) != OUTBUF_VLENGTH)
         mdl_error("Cannot obtain string from channel");
-    totlen = VITEM(devdep, OUTBUF_TOTLEN)->v.w;
-    bufsize = VITEM(devdep, OUTBUF_BUFSIZE)->v.w;
-    result = mdl_new_string(totlen);
-    d = result->v.s.p;
-    len = totlen;
-    cursor = LREST(VITEM(devdep, OUTBUF_BUFCHAIN), 0);
+    int totlen = VITEM(devdep, OUTBUF_TOTLEN)->v.w;
+    int bufsize = VITEM(devdep, OUTBUF_BUFSIZE)->v.w;
+    mdl_value_t *result = mdl_new_string(totlen);
+    char *d = result->v.s.p;
+    int len = totlen;
+    mdl_value_t *cursor = LREST(VITEM(devdep, OUTBUF_BUFCHAIN), 0);
     while (cursor && (len > 0))
     {
-        cplen = (len > bufsize)?bufsize:len;
+        int cplen = (len > bufsize) ? bufsize : len;
         memcpy(d, cursor->v.p.car->v.s.p, cplen);
         d += cplen;
         len -= cplen;
@@ -169,20 +163,17 @@ bool mdl_need_line_break(int len, int extrawidth,
 void mdl_print_newline_to_transcript_channels(mdl_value_t *chan, int printflags)
 {
     mdl_value_t *transcript_chan_list = VITEM(chan, CHANNEL_SLOT_TRANSCRIPT);
-    mdl_value_t *cursor;
-    mdl_value_t *tchan;
-    bool binary;
 
     if (transcript_chan_list &&
         transcript_chan_list->type == MDL_TYPE_LIST)
     {
-        cursor = transcript_chan_list->v.p.cdr;
+        mdl_value_t *cursor = transcript_chan_list->v.p.cdr;
         while (cursor)
         {
-            tchan = cursor->v.p.car;
+            mdl_value_t *tchan = cursor->v.p.car;
             if (tchan->type == MDL_TYPE_CHANNEL)
             {
-                binary = mdl_chan_mode_is_print_binary(tchan);
+                bool binary = mdl_chan_mode_is_print_binary(tchan);
                 if (binary) printflags |= MDL_PF_BINARY;
                 else printflags &= ~MDL_PF_BINARY;
                 if (!mdl_chan_mode_is_output(tchan))
@@ -199,20 +190,17 @@ void mdl_print_newline_to_transcript_channels(mdl_value_t *chan, int printflags)
 void mdl_print_char_to_transcript_channels(mdl_value_t *chan, int ch, int printflags)
  {
     mdl_value_t *transcript_chan_list = VITEM(chan, CHANNEL_SLOT_TRANSCRIPT);
-    mdl_value_t *cursor;
-    mdl_value_t *tchan;
-    bool binary;
 
     if (transcript_chan_list &&
         transcript_chan_list->type == MDL_TYPE_LIST)
     {
-        cursor = transcript_chan_list->v.p.cdr;
+        mdl_value_t *cursor = transcript_chan_list->v.p.cdr;
         while (cursor)
         {
-            tchan = cursor->v.p.car;
+            mdl_value_t *tchan = cursor->v.p.car;
             if (tchan->type == MDL_TYPE_CHANNEL)
             {
-                binary = mdl_chan_mode_is_print_binary(tchan);
+                bool binary = mdl_chan_mode_is_print_binary(tchan);
                 if (binary) printflags |= MDL_PF_BINARY;
                 else printflags &= ~MDL_PF_BINARY;
                 if (!mdl_chan_mode_is_output(tchan))
@@ -232,9 +220,9 @@ void mdl_print_newline_to_chan(mdl_value_t *chan, int printflags, FILE *f)
     MDL_INT *linepos = &(VITEM(chan, CHANNEL_SLOT_CPOS)->v.w);
     int pageheight = VITEM(chan, CHANNEL_SLOT_PAGEHEIGHT)->v.w;
     MDL_INT *pagepos = &(VITEM(chan, CHANNEL_SLOT_LINENO)->v.w);
-    int chnum = VITEM(chan,CHANNEL_SLOT_CHNUM)->v.w;
+    int chnum = VITEM(chan, CHANNEL_SLOT_CHNUM)->v.w;
     bool binary = (printflags & MDL_PF_BINARY) != 0;
-    
+
     if (linewidth) *linepos = 0;
     if (pageheight) 
     {
@@ -263,7 +251,7 @@ void mdl_print_char_to_chan(mdl_value_t *chan, int ch, int printflags, FILE *f)
     MDL_INT *pagepos = &(VITEM(chan, CHANNEL_SLOT_LINENO)->v.w);
     int linewidth = VITEM(chan, CHANNEL_SLOT_LINEWIDTH)->v.w;
     MDL_INT *linepos = &(VITEM(chan, CHANNEL_SLOT_CPOS)->v.w);
-    int chnum = VITEM(chan,CHANNEL_SLOT_CHNUM)->v.w;
+    int chnum = VITEM(chan, CHANNEL_SLOT_CHNUM)->v.w;
     bool noadvance = (printflags & MDL_PF_NOADVANCE) != 0;
     
     if (!noadvance)
@@ -338,17 +326,15 @@ void mdl_print_string_to_chan(mdl_value_t *chan,
     int linewidth = VITEM(chan, CHANNEL_SLOT_LINEWIDTH)->v.w;
     MDL_INT *linepos = &(VITEM(chan, CHANNEL_SLOT_CPOS)->v.w);
     bool broke = false;
-    bool binary;
     const char *s;
-    char ch;
-    int olen, tlen;
+    int tlen;
     FILE *f;
 
-    binary = mdl_chan_mode_is_print_binary(chan);
+    bool binary = mdl_chan_mode_is_print_binary(chan);
 //    fflush(stdout);
 //    fprintf(stderr, "||%3d %-.*s %d %d %d %d %d||\n", len, len, str, canbreakbefore, addspacebefore, binary, linewidth, (int)*linepos);
 
-    olen = len;
+    int olen = len;
     if (!binary)
     {
         tlen = olen;
@@ -356,7 +342,7 @@ void mdl_print_string_to_chan(mdl_value_t *chan,
         
         while (tlen--)
         {
-            ch = *s++;
+            char ch = *s++;
             if (!isspace(ch) && !iscntrl(ch)) len++;
         }
     }
@@ -381,7 +367,7 @@ void mdl_print_string_to_chan(mdl_value_t *chan,
     tlen = olen;
     while (tlen--)
     {
-        ch = *s++;
+        char ch = *s++;
         if (!binary && !isspace(ch) && iscntrl(ch))
         {
             mdl_print_char_to_chan(chan, '^', MDL_PF_NONE, f);
@@ -393,17 +379,15 @@ void mdl_print_string_to_chan(mdl_value_t *chan,
 
 void mdl_print_binary(mdl_value_t *chan, mdl_value_t *buffer)
 {
+    FILE *f = mdl_get_chan_file(chan);
+    if (!f) mdl_error("Attempt to write to closed binary channel");
+
     int len = UVLENGTH(buffer);
-    FILE *f;
     uvector_element_t *elem = UVREST(buffer, 0);
 
-    f = mdl_get_chan_file(chan);
-
-    if (!f) mdl_error("Attempt to write to closed binary channel");
     while (len--)
     {
-        int nitems;
-        nitems = fwrite(&elem->w, sizeof(MDL_INT), 1, f);
+        int nitems = fwrite(&elem->w, sizeof(MDL_INT), 1, f);
         if (nitems != 1)
             mdl_error("Error on binary write");
         elem++;
@@ -412,7 +396,6 @@ void mdl_print_binary(mdl_value_t *chan, mdl_value_t *buffer)
 
 const char *mdl_quote_atomname(const char *name, bool *nonnump)
 {
-    int newlen;
     const char *s = name;
     bool nonnum = false;
     charinfo_t cinfo;
@@ -424,8 +407,8 @@ const char *mdl_quote_atomname(const char *name, bool *nonnump)
     bool goteminus = false;
     bool doneoctal = false;
     char ch;
-    
-    newlen = 0;
+
+    int newlen = 0;
     if (*s == '.' || *s == '!')
     {
         newlen += 2;
@@ -435,12 +418,12 @@ const char *mdl_quote_atomname(const char *name, bool *nonnump)
     else if (*s == '-') 
     {
         newlen++;
-        *s++;
+        s++;
     }
     else if (*s == '*') 
     {
         newlen++;
-        *s++;
+        s++;
         octal = true;
     }
     while ((ch = *s++))
@@ -523,7 +506,7 @@ mdl_strbuf_t *mdl_unparse_atom(const atom_t *a, bool princ, bool nonnum, bool *b
     }
     else
         r = mdl_strbuf_append_cstr(r, mdl_quote_atomname(a->pname, &nonnum));
-    
+
     if (!a->oblist) 
     {
         r = mdl_strbuf_append_cstr_len(r, "!-#FALSE ()", 11);
@@ -580,13 +563,11 @@ int mdl_int_to_string(MDL_INT mi, char *buf, int buflen, int radix)
         p2++;
         buflen--;
         mi = -mi;
-        
     }
     if (buflen < 2) return -1;
     do
     {
-        int d;
-        d = mi%radix;
+        int d = mi % radix;
         if (d < 10) d += '0';
         else d = d - 10 + 'A';
         *p++ = d;
@@ -607,16 +588,13 @@ int mdl_int_to_string(MDL_INT mi, char *buf, int buflen, int radix)
 
 void mdl_print_hashtype(mdl_value_t *chan, int type, bool princ, bool prespace, mdl_value_t *oblists)
 {
-    mdl_strbuf_t *r;
-    int rlen;
-    char *rstr;
     atom_t *a = mdl_type_atom(type);
     bool breakable;
-    
+
     // Note a->type, not print_as_type
-    r = mdl_strbuf_prepend_cstr("#", mdl_unparse_atom(a, princ, true, &breakable, oblists));
-    rstr = mdl_strbuf_to_new_cstr(r);
-    rlen = mdl_strbuf_len(r);
+    mdl_strbuf_t *r = mdl_strbuf_prepend_cstr("#", mdl_unparse_atom(a, princ, true, &breakable, oblists));
+    char *rstr = mdl_strbuf_to_new_cstr(r);
+    int rlen = mdl_strbuf_len(r);
     if (breakable)
     {
         mdl_print_string_to_chan(chan, rstr - 3, rlen - 3, 0, true, prespace);

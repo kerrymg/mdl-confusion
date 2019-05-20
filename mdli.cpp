@@ -16,13 +16,12 @@
 /*****************************************************************************/
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <gc/gc.h>
 #include "macros.hpp"
 #include "mdl_internal_defs.h"
 #include <set>
 #include <string>
-
-using namespace std;
 
 const char copyright_notice[] = 
     "Welcome to 'Confusion', a MDL interpreter.\n"
@@ -43,7 +42,7 @@ int main(int argc, char *argv[])
 {
     static const char *optstring = "r:";
     int optchar;
-    FILE * restorefile = NULL;
+    FILE * restorefile = nullptr;
 
     GC_INIT();
     mdl_interp_init();

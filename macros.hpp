@@ -21,11 +21,14 @@
 #include <gc/gc.h>
 #include <gc/gc_allocator.h>
 #include <gc/gc_cpp.h>
+
 #include <vector>
 #include <string>
 #include <map>
-#include <csetjmp>
 #include <cfloat>
+#include <csetjmp>
+#include <cstdint>
+
 #include "mdl_builtin_types.h"
 
 // PRIMTYPES and TYPES must be specified in order, with

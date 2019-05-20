@@ -16,8 +16,6 @@
 /*****************************************************************************/
 #include <gc/gc.h>
 
-#include <set>
-#include <string>
 #include <cstdio>
 #include <cstdlib>
 

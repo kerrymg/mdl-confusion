@@ -14,15 +14,17 @@
 /*    You should have received a copy of the GNU General Public License     */
 /*    along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 /*****************************************************************************/
+#include <cstdarg>
+#include <cstdlib>
+#include <cstring>
+#include <cerrno>
+#include <cmath>
+
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/resource.h>
-#include <stdarg.h>
-#include <stdlib.h>
-#include <string.h>
-#include <errno.h>
-#include <math.h>
 #include <unistd.h>
+
 #include "macros.hpp"
 #include "mdl_internal_defs.h"
 #include "mdl_builtin_types.h"

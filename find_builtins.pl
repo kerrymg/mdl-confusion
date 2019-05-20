@@ -14,7 +14,7 @@
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 $indent="    ";
-print '#include <string.h>'."\n";
+print '#include <cstring>'."\n";
 print '#include "mdl_builtin_macro.hpp"'."\n";
 print '#include "mdl_builtins.h"'."\n";
 print '#include "mdl_internal_defs.h"'."\n";

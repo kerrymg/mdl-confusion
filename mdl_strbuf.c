@@ -15,8 +15,10 @@
 /*    along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 /*****************************************************************************/
 #include <gc/gc.h>
+
 #include <string.h>
 #include <assert.h>
+
 #include "mdl_strbuf.h"
 
 mdl_strbuf_t *mdl_new_strbuf(int isize)

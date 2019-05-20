@@ -18,8 +18,6 @@
 #ifndef MDL_ASSOC_H_
 #define MDL_ASSOC_H_
 
-#include <gc/gc.h>
-
 struct mdl_assoc_t
 {
     struct mdl_assoc_t *next;

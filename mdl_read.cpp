@@ -14,13 +14,15 @@
 /*    You should have received a copy of the GNU General Public License     */
 /*    along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 /*****************************************************************************/
+#include <cstdlib>
+#include <cstring>
+#include <cctype>
+#include <cerrno>
+
+#include <unistd.h>
+
 #include "macros.hpp"
 #include "mdl_internal_defs.h"
-#include <stdlib.h>
-#include <string.h>
-#include <ctype.h>
-#include <errno.h>
-#include <unistd.h>
 
 #define BANGCHAR(ch) (('!' << 8) | (ch))
 #define IS_BANGCHAR(ch) (((ch) >> 8) == '!')

@@ -14,15 +14,16 @@
 /*    You should have received a copy of the GNU General Public License     */
 /*    along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 /*****************************************************************************/
+#include <map>
+#include <unordered_set>
+#include <vector>
+#include <cstring>
+
 #include "macros.hpp"
 #include "mdl_internal_defs.h"
 #include "mdl_builtins.h"
 #include "mdl_builtin_types.h"
 #include "mdl_assoc.hpp"
-#include <vector>
-#include <map>
-#include <unordered_set>
-#include <string.h>
 
 //#define MDL_DEBUG_BINARY_IO
 
@@ -1547,6 +1548,6 @@ bool mdl_read_image(std::FILE *f)
 #ifdef GC_DEBUG
     GC_gcollect();
 #endif
-    longjmp(initial_frame->interp_frame, LONGJMP_RESTORE);
+    std::longjmp(initial_frame->interp_frame, LONGJMP_RESTORE);
     return true;
 }

@@ -14,6 +14,10 @@
 /*    You should have received a copy of the GNU General Public License     */
 /*    along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 /*****************************************************************************/
+
+#ifndef MDL_BUILTIN_MACRO_HPP_
+#define MDL_BUILTIN_MACRO_HPP_
+
 #include "macros.hpp"
 
 #define MDL_BUILTIN(name, cname, stype, proc) do    \
@@ -31,3 +35,5 @@
     built_in_table.push_back(bi); \
     mdl_set_gval(atom_##cname, mdl_value_builtin_##cname); \
 } while (0);
+
+#endif  // MDL_BUILTIN_MACRO_HPP_

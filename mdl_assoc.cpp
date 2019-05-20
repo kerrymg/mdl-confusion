@@ -15,11 +15,15 @@
 /*    along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 /*****************************************************************************/
 #include <gc/gc.h>
-#include <string.h>
+
+#include <cstring>
+
 #include <unistd.h>
+
 #include "macros.hpp"
 #include "mdl_assoc.hpp"
 #include "mdl_internal_defs.h"
+
 // associations are special, they need to disappear when their item or indicator
 // disappears, but until then, they hold a reference to their value
 // rather than futz with typed objects, I simply hold the key in a separately

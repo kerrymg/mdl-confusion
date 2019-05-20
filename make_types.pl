@@ -35,7 +35,7 @@ if ($#ARGV > -1)
     }
     open(HEADER, ">", $headerout) || die "Couldn't open $headerout";
 }
-print '#include <string.h>'."\n";
+print '#include <cstring>'."\n";
 print '#include "macros.hpp"'."\n";
 print '#include "mdl_internal_defs.h"'."\n";
 print '#include "mdl_builtins.h"'."\n";
@@ -84,7 +84,7 @@ print "void mdl_init_built_in_types()\n";
 print "{\n";
 print $indent."atom_t *bi_atom;\n";
 print $indent."mdl_type_table_entry_t tte;\n";
-print $indent."memset(&tte, 0, sizeof(tte));\n";
+print $indent."std::memset(&tte, 0, sizeof(tte));\n";
 foreach $i (0..$#atom_names)
 {
     $atom_name = $atom_names[$i];

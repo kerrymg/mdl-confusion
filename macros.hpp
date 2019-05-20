@@ -24,8 +24,8 @@
 #include <vector>
 #include <string>
 #include <map>
-#include <setjmp.h>
-#include <float.h>
+#include <csetjmp>
+#include <cfloat>
 #include "mdl_builtin_types.h"
 
 // PRIMTYPES and TYPES must be specified in order, with

@@ -14,13 +14,15 @@
 /*    You should have received a copy of the GNU General Public License     */
 /*    along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 /*****************************************************************************/
+#include <cctype>
+#include <cstring>
+#include <cerrno>
+
+#include <unistd.h>
+
 #include "macros.hpp"
 #include "mdl_internal_defs.h"
 #include "mdl_builtins.h"
-#include <ctype.h>
-#include <string.h>
-#include <errno.h>
-#include <unistd.h>
 #include "mdl_strbuf.h"
 
 enum outbuf_items_t

@@ -14,14 +14,17 @@
 /*    You should have received a copy of the GNU General Public License     */
 /*    along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 /*****************************************************************************/
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
 #include <gc/gc.h>
-#include "macros.hpp"
-#include "mdl_internal_defs.h"
+
 #include <set>
 #include <string>
+#include <cstdio>
+#include <cstdlib>
+
+#include <unistd.h>
+
+#include "macros.hpp"
+#include "mdl_internal_defs.h"
 
 const char copyright_notice[] = 
     "Welcome to 'Confusion', a MDL interpreter."

@@ -277,7 +277,7 @@ mdl_value_t *mdl_exec_chan_eof_object(mdl_value_t *chan)
     return mdl_eval(eofobj);
 }
 
-FILE *mdl_get_chan_file(mdl_value_t *chan)
+std::FILE *mdl_get_chan_file(mdl_value_t *chan)
 {
     int chnum = FASTVITEM(chan, CHANNEL_SLOT_CHNUM)->v.w;
     return mdl_get_channum_file(chnum);
@@ -343,13 +343,13 @@ void mdl_set_chan_lookahead(mdl_value_t *chan, MDL_INT ch)
     mdl_set_chan_flags(chan, ICHANNEL_HAS_LOOKAHEAD);
 }
 
-int mdl_read_1_char(FILE *f)
+int mdl_read_1_char(std::FILE *f)
 {
-    int ch = getc(f);
+    int ch = std::getc(f);
 
     if (ch == '!')
     {
-        int ch2 = getc(f);
+        int ch2 = std::getc(f);
         if (ch2 == -1) return ch;
         ch = BANGCHAR(ch2);
     }
@@ -378,8 +378,8 @@ int mdl_read_word_from_chan(mdl_value_t *chan, MDL_INT *buf)
     int result = -1;
     if (chnum > 0)
     {
-        FILE *f = mdl_get_chan_file(chan);
-        int nwords = fread((void *)buf, sizeof(MDL_INT), 1, f);
+        std::FILE *f = mdl_get_chan_file(chan);
+        int nwords = std::fread((void *)buf, sizeof(MDL_INT), 1, f);
         if (nwords == 1)
             result = 0;
     }
@@ -933,9 +933,9 @@ mdl_value_t *mdl_advance_readstate(mdl_value_t *chan, readstate_t **rdstatep, MD
             case READSTATE_INATOM_OCTAL_FIX2:
             {
 #ifdef MDL32
-                MDL_INT oct = strtol(rdstate->buf + 1, NULL, 8);
+                MDL_INT oct = std::strtol(rdstate->buf + 1, NULL, 8);
 #else
-                MDL_INT oct = strtoll(rdstate->buf + 1, NULL, 8);
+                MDL_INT oct = std::strtoll(rdstate->buf + 1, NULL, 8);
 #endif
                 obj = mdl_new_fix(oct);
                 break;
@@ -944,20 +944,20 @@ mdl_value_t *mdl_advance_readstate(mdl_value_t *chan, readstate_t **rdstatep, MD
             {
                 int radix = mdl_get_chan_radix(chan);
 #ifdef MDL32
-                MDL_INT num = strtol(rdstate->buf, NULL, radix);
+                MDL_INT num = std::strtol(rdstate->buf, nullptr, radix);
 #else
-                MDL_INT num = strtoll(rdstate->buf, NULL, radix);
+                MDL_INT num = std::strtoll(rdstate->buf, nullptr, radix);
 #endif
-//                printf("MDL_INT = %lld %s\n", num, rdstate->buf);
+//                std::printf("MDL_INT = %lld %s\n", num, rdstate->buf);
                 obj = mdl_new_fix(num);
                 break;
             }
             case READSTATE_INATOM_FIXDOT_FLOAT:
             {
 #ifdef MDL32
-                MDL_INT dec = strtol(rdstate->buf, NULL, 10);
+                MDL_INT dec = std::strtol(rdstate->buf, nullptr, 10);
 #else
-                MDL_INT dec = strtoll(rdstate->buf, NULL, 10);
+                MDL_INT dec = std::strtoll(rdstate->buf, nullptr, 10);
 #endif
                 obj = mdl_new_fix(dec);
                 break;
@@ -968,9 +968,9 @@ mdl_value_t *mdl_advance_readstate(mdl_value_t *chan, readstate_t **rdstatep, MD
             case READSTATE_INATOM_FLOAT:
             {
 #ifdef MDL32
-                MDL_FLOAT fl = strtof(rdstate->buf, NULL);
+                MDL_FLOAT fl = std::strtof(rdstate->buf, nullptr);
 #else
-                MDL_FLOAT fl = strtod(rdstate->buf, NULL);
+                MDL_FLOAT fl = std::strtod(rdstate->buf, nullptr);
 #endif
                 obj = mdl_new_float(fl);
                 break;
@@ -979,7 +979,7 @@ mdl_value_t *mdl_advance_readstate(mdl_value_t *chan, readstate_t **rdstatep, MD
             case READSTATE_INATOM_SCIFLOAT_E2:
             {
                 char *exp;
-                char *dot = strchr(rdstate->buf, '.');
+                char *dot = std::strchr(rdstate->buf, '.');
                 MDL_FLOAT fl;
 #ifdef MDL32
                 long mantissa;
@@ -992,25 +992,25 @@ mdl_value_t *mdl_advance_readstate(mdl_value_t *chan, readstate_t **rdstatep, MD
                 
                 if (dot) notfix = true;
 #ifdef MDL32
-                fl = strtof(rdstate->buf, NULL);
+                fl = std::strtof(rdstate->buf, nullptr);
 #else
-                fl = strtod(rdstate->buf, NULL);
+                fl = std::strtod(rdstate->buf, nullptr);
 #endif
                 
                 if (!notfix)
                 {
-                    exp = strchr(rdstate->buf, 'e');
-                    if (!exp) exp = strchr(rdstate->buf, 'E');
+                    exp = std::strchr(rdstate->buf, 'e');
+                    if (!exp) exp = std::strchr(rdstate->buf, 'E');
                     if (!exp) mdl_error("SCI without E should never happen");
                     *exp++ = 0;
                     errno = 0;
 #ifdef MDL32
-                    mantissa = strtol(rdstate->buf, NULL, 0);
+                    mantissa = std::strtol(rdstate->buf, nullptr, 0);
 #else
-                    mantissa = strtoll(rdstate->buf, NULL, 0);
+                    mantissa = std::strtoll(rdstate->buf, nullptr, 0);
 #endif
                     if (errno == ERANGE) notfix = true;
-                    exponent = strtol(exp, NULL, 10);
+                    exponent = std::strtol(exp, nullptr, 10);
                     if (exponent < 0) notfix = true;
                     while (exponent-- && !notfix)
                     {

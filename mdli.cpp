@@ -44,7 +44,7 @@ int main(int argc, char *argv[])
 {
     static const char *optstring = "r:";
     int optchar;
-    FILE * restorefile = nullptr;
+    std::FILE *restorefile = nullptr;
 
     GC_INIT();
     mdl_interp_init();
@@ -54,17 +54,17 @@ int main(int argc, char *argv[])
         switch (optchar)
         {
         case 'r':
-            restorefile = fopen(optarg, "rb");
+            restorefile = std::fopen(optarg, "rb");
             if (!restorefile) 
             {
-                fprintf(stderr, "Couldn't open restore file %s", optarg);
+                std::fprintf(stderr, "Couldn't open restore file %s", optarg);
                 exit(-1);
             }
             break;
         }
     }
-        
+
 //    mdl_rep_loop();
-    puts(copyright_notice);
+    std::puts(copyright_notice);
     mdl_toplevel(restorefile);
 }

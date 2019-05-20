@@ -188,8 +188,8 @@ mdl_value_t *mdl_make_list(mdl_value_t *a, int type = MDL_TYPE_LIST);
 mdl_value_t *mdl_make_vector(mdl_value_t *a, int type = MDL_TYPE_VECTOR, bool destroy = false);
 mdl_value_t *mdl_make_uvector(mdl_value_t *a, int type = MDL_TYPE_UVECTOR, bool destroy = false);
 mdl_value_t *mdl_make_tuple(mdl_value_t *a, int type = MDL_TYPE_TUPLE, bool destroy = false);
-void mdl_print_atom(FILE *f, const atom_t *a);
-void mdl_print_value(FILE *f, mdl_value_t *v);
+void mdl_print_atom(std::FILE *f, const atom_t *a);
+void mdl_print_value(std::FILE *f, mdl_value_t *v);
 void mdl_interp_init();
 
 mdl_value_t *mdl_eval(mdl_value_t *l, bool in_struct = false, mdl_value_t *environment = NULL);
@@ -201,6 +201,6 @@ bool mdl_chan_at_eof(mdl_value_t *chan);
 mdl_charclass_t mdl_get_charclass(MDL_INT ch);
 int mdl_read_from_chan(mdl_value_t *chan);
 [[noreturn]] void mdl_error(const char *err);
-void mdl_toplevel(FILE *restorefile);
+void mdl_toplevel(std::FILE *restorefile);
 
 #endif  // MACROS_HPP_

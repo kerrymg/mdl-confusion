@@ -85,7 +85,7 @@ struct mdl_tmp_assoc_entry_t
 
 using mdl_tmp_assoc_table_t = std::vector<mdl_tmp_assoc_entry_t, traceable_allocator<mdl_tmp_assoc_entry_t>>;
 
-static obj_in_image_t null_obj{nullptr, OBJTYPE_MDL_VALUE, 0};
+static obj_in_image_t null_obj = {nullptr, OBJTYPE_MDL_VALUE, 0};
 static obj_in_image_t builtin_obj;
 
 static obj_in_image_t *find_obj_by_num(int objnum, objtype_t objtype)
@@ -108,7 +108,7 @@ static obj_in_image_t *find_obj_by_num(int objnum, objtype_t objtype)
     return nullptr;
 }
 
-int mdl_write_encint(FILE *f, intmax_t val, bool is_signed)
+int mdl_write_encint(std::FILE *f, intmax_t val, bool is_signed)
 {
     unsigned char ibuf[(sizeof(intmax_t) * 8 + 7) / 7];
     unsigned char *bufp;
@@ -156,17 +156,17 @@ int mdl_write_encint(FILE *f, intmax_t val, bool is_signed)
             shift -= 7;
         }
     }
-    return fwrite(ibuf, 1, len, f);
+    return std::fwrite(ibuf, 1, len, f);
 }
 
-int mdl_read_encint(FILE *f, intmax_t *val, bool is_signed)
+int mdl_read_encint(std::FILE *f, intmax_t *val, bool is_signed)
 {
     uintmax_t uval = 0;
     int ch;
     do
     {
         uval <<= 7;
-        ch = fgetc(f);
+        ch = std::fgetc(f);
         if (ch < 0) return ch;
         uval |= ch & 0x7F;
     }
@@ -184,21 +184,21 @@ int mdl_read_encint(FILE *f, intmax_t *val, bool is_signed)
 
 // the mdl_read_x functions return 0 for success, nonzero for failure
 // the mdl_write_x functions return < 0 for failure > 0 for success
-static int mdl_write_primtype(FILE *f, primtype_t primtype)
+static int mdl_write_primtype(std::FILE *f, primtype_t primtype)
 {
 #ifdef MDL_DEBUG_BINARY_IO
-    return fprintf(f, "PT %d\n", (int)primtype);
+    return std::fprintf(f, "PT %d\n", (int)primtype);
 #else
     return mdl_write_encint(f, (intmax_t)primtype, false);
-//    return fwrite((void *)&primtype, sizeof(primtype), 1, f);
+//    return std::fwrite((void *)&primtype, sizeof(primtype), 1, f);
 #endif
 }
 
-static int mdl_read_primtype(FILE *f, primtype_t *primtype)
+static int mdl_read_primtype(std::FILE *f, primtype_t *primtype)
 {
 #ifdef MDL_DEBUG_BINARY_IO
     int pt_as_int;
-    if (fscanf(f, "PT %d\n", &pt_as_int) == 1)
+    if (std::fscanf(f, "PT %d\n", &pt_as_int) == 1)
     {
         *primtype = (primtype_t)pt_as_int;
         return 0;
@@ -211,25 +211,25 @@ static int mdl_read_primtype(FILE *f, primtype_t *primtype)
     int err = mdl_read_encint(f, &tmp, false);
     *primtype = (primtype_t)tmp;
     return err;
-//    return fread(primtype, sizeof(primtype), 1, f) != 1;
+//    return std::fread(primtype, sizeof(primtype), 1, f) != 1;
 #endif
 }
 
-static int mdl_write_objtype(FILE *f, objtype_t objtype)
+static int mdl_write_objtype(std::FILE *f, objtype_t objtype)
 {
 #ifdef MDL_DEBUG_BINARY_IO
-    return fprintf(f, "OT %d\n", (int)objtype);
+    return std::fprintf(f, "OT %d\n", (int)objtype);
 #else
     return mdl_write_encint(f, (intmax_t)objtype, false);
-//    return fwrite((void *)&objtype, sizeof(objtype), 1, f);
+//    return std::fwrite((void *)&objtype, sizeof(objtype), 1, f);
 #endif
 }
 
-static int mdl_read_objtype(FILE *f, objtype_t *objtype)
+static int mdl_read_objtype(std::FILE *f, objtype_t *objtype)
 {
 #ifdef MDL_DEBUG_BINARY_IO
     int ot_as_int;
-    if (fscanf(f, "OT %d\n", &ot_as_int) == 1)
+    if (std::fscanf(f, "OT %d\n", &ot_as_int) == 1)
     {
         *objtype = (objtype_t)ot_as_int;
         return 0;
@@ -242,53 +242,53 @@ static int mdl_read_objtype(FILE *f, objtype_t *objtype)
     int err = mdl_read_encint(f, &tmp, false);
     *objtype = (objtype_t)tmp;
     return err;
-//    return fread((void *)objtype, sizeof(objtype), 1, f) != 1;
+//    return std::fread((void *)objtype, sizeof(objtype), 1, f) != 1;
 #endif
 }
 
-static int mdl_write_intptr(FILE *f, intptr_t val)
+static int mdl_write_intptr(std::FILE *f, intptr_t val)
 {
 #ifdef MDL_DEBUG_BINARY_IO
     // no printf string for intptr_t, ptrdiff_t probably works in most cases
     // anyway I don't expect to leave this text stuff around
-    return fprintf(f, "IP %td\n", (ptrdiff_t)val);
+    return std::fprintf(f, "IP %td\n", (ptrdiff_t)val);
 #else
     return mdl_write_encint(f, val, false);
-//    return fwrite((void *)&val, sizeof(intptr_t), 1, f);
+//    return std::fwrite((void *)&val, sizeof(intptr_t), 1, f);
 #endif
 }
 
-static int mdl_read_intptr(FILE *f, intptr_t *val)
+static int mdl_read_intptr(std::FILE *f, intptr_t *val)
 {
 #ifdef MDL_DEBUG_BINARY_IO
     // no scanf string for intptr_t, ptrdiff_t probably works in most cases
     // anyway I don't expect to leave this text stuff around
-    return (fscanf(f, "IP %td\n", (ptrdiff_t *)val) != 1);
+    return (std::fscanf(f, "IP %td\n", (ptrdiff_t *)val) != 1);
 #else
     intmax_t tmp;
     int err = mdl_read_encint(f, &tmp, false);
     *val = (intptr_t)tmp;
     return err;
-//    return fread((void *)val, sizeof(intptr_t), 1, f) != 1;
+//    return std::fread((void *)val, sizeof(intptr_t), 1, f) != 1;
 #endif
 }
 
-static int mdl_write_int(FILE *f, int val)
+static int mdl_write_int(std::FILE *f, int val)
 {
 #ifdef MDL_DEBUG_BINARY_IO
     // no printf string for intptr_t, ptrdiff_t probably works in most cases
     // anyway I don't expect to leave this text stuff around
-    return fprintf(f, "I %d\n", val);
+    return std::fprintf(f, "I %d\n", val);
 #else
     return mdl_write_encint(f, (intmax_t)val, true);
-//    return fwrite((void *)&val, sizeof(int), 1, f);
+//    return std::fwrite((void *)&val, sizeof(int), 1, f);
 #endif
 }
 
-static int mdl_read_int(FILE *f, int *val)
+static int mdl_read_int(std::FILE *f, int *val)
 {
 #ifdef MDL_DEBUG_BINARY_IO
-    return (fscanf(f, "I %d\n", val) != 1);
+    return (std::fscanf(f, "I %d\n", val) != 1);
 #else
     intmax_t tmp;
     int err;
@@ -296,31 +296,31 @@ static int mdl_read_int(FILE *f, int *val)
     err = mdl_read_encint(f, &tmp, true);
     *val = (int)tmp;
     return err;
-//    return fread((void *)val, sizeof(int), 1, f) != 1;
+//    return std::fread((void *)val, sizeof(int), 1, f) != 1;
 #endif
 }
 
-static int mdl_write_MDL_INT(FILE *f, MDL_INT val)
+static int mdl_write_MDL_INT(std::FILE *f, MDL_INT val)
 {
 #ifdef MDL_DEBUG_BINARY_IO
  #ifdef MDL32
-    return fprintf(f, "MI32 %d\n", val);
+    return std::fprintf(f, "MI32 %d\n", val);
  #else
-    return fprintf(f, "MI64 %lld\n", val);
+    return std::fprintf(f, "MI64 %lld\n", val);
  #endif
 #else
     return mdl_write_encint(f, (intmax_t)val, true);
-//    return fwrite((void *)&val, sizeof(MDL_INT), 1, f);
+//    return std::fwrite((void *)&val, sizeof(MDL_INT), 1, f);
 #endif
 }
 
-static int mdl_read_MDL_INT(FILE *f, MDL_INT *val)
+static int mdl_read_MDL_INT(std::FILE *f, MDL_INT *val)
 {
 #ifdef MDL_DEBUG_BINARY_IO
  #ifdef MDL32
-    return (fscanf(f, "MI32 %d\n", val) != 1);
+    return (std::fscanf(f, "MI32 %d\n", val) != 1);
  #else
-    return (fscanf(f, "MI64 %lld\n", val) != 1);
+    return (std::fscanf(f, "MI64 %lld\n", val) != 1);
  #endif
 #else
     intmax_t tmp;
@@ -328,7 +328,7 @@ static int mdl_read_MDL_INT(FILE *f, MDL_INT *val)
     int err = mdl_read_encint(f, &tmp, true);
     *val = (MDL_INT)tmp;
     return err;
-//    return fread((void *)val, sizeof(MDL_INT), 1, f) != 1;
+//    return std::fread((void *)val, sizeof(MDL_INT), 1, f) != 1;
 #endif
 }
 
@@ -381,7 +381,7 @@ int mdl_schedule_pname_for_write(char *s)
 {
     counted_string_t tmp;
     tmp.p = s;
-    tmp.l = strlen(s);
+    tmp.l = std::strlen(s);
     return mdl_schedule_string_for_write(&tmp);
 }
 
@@ -405,8 +405,8 @@ int mdl_schedule_uvector_block_for_write(mdl_uvector_block_t *blk)
     return mdl_schedule_for_write(obj);
 }
 
-void mdl_write_mdl_value(FILE *f, mdl_value_t *v, objtype_t objtype = OBJTYPE_MDL_VALUE);
-void mdl_write_mdl_value(FILE *f, mdl_value_t *v, objtype_t objtype)
+void mdl_write_mdl_value(std::FILE *f, mdl_value_t *v, objtype_t objtype = OBJTYPE_MDL_VALUE);
+void mdl_write_mdl_value(std::FILE *f, mdl_value_t *v, objtype_t objtype)
 {
     mdl_write_objtype(f, objtype);
     mdl_write_primtype(f, v->pt);
@@ -440,9 +440,9 @@ void mdl_write_mdl_value(FILE *f, mdl_value_t *v, objtype_t objtype)
             int channum = mdl_get_chan_channum(v);
             if (channum > 1)
             {
-                FILE *chanf = mdl_get_channum_file(channum);
+                std::FILE *chanf = mdl_get_channum_file(channum);
 
-                VITEM(v, CHANNEL_SLOT_PTR)->v.w = (MDL_INT)ftell(chanf);
+                VITEM(v, CHANNEL_SLOT_PTR)->v.w = (MDL_INT)std::ftell(chanf);
             }
         }
         onum = mdl_schedule_vector_block_for_write(v->v.v.p);
@@ -455,15 +455,15 @@ void mdl_write_mdl_value(FILE *f, mdl_value_t *v, objtype_t objtype)
         mdl_write_int(f, v->v.v.offset);
         break;
     case PRIMTYPE_TUPLE:
-        fprintf(stderr, "Can't write tuples");
+        std::fprintf(stderr, "Can't write tuples");
         break;
     case PRIMTYPE_FRAME:
-        fprintf(stderr, "Can't write frames");
+        std::fprintf(stderr, "Can't write frames");
         break;
     }
 }
 
-int mdl_read_mdl_value(FILE *f, mdl_value_t **vp)
+int mdl_read_mdl_value(std::FILE *f, mdl_value_t **vp)
 {
     // objtype will already have been read at this point
     mdl_value_t *v;
@@ -510,18 +510,18 @@ int mdl_read_mdl_value(FILE *f, mdl_value_t **vp)
         if (mdl_read_int(f, &v->v.uv.offset) != 0) return -1;
         break;
     case PRIMTYPE_TUPLE:
-        fprintf(stderr, "Can't read tuples");
+        std::fprintf(stderr, "Can't read tuples");
         return -1;
         break;
     case PRIMTYPE_FRAME:
-        fprintf(stderr, "Can't read frames");
+        std::fprintf(stderr, "Can't read frames");
         return -1;
         break;
     }
     return 0;
 }
 
-int mdl_fixup_mdl_value(FILE *f, mdl_value_t *v)
+int mdl_fixup_mdl_value(std::FILE *f, mdl_value_t *v)
 {
     intptr_t onum;
     obj_in_image_t *obj;
@@ -572,36 +572,36 @@ int mdl_fixup_mdl_value(FILE *f, mdl_value_t *v)
         v->v.uv.p = (mdl_uvector_block_t *)obj->ptr;
         break;
     case PRIMTYPE_TUPLE:
-        fprintf(stderr, "Can't fixup tuples");
+        std::fprintf(stderr, "Can't fixup tuples");
         return -1;
         break;
     case PRIMTYPE_FRAME:
-        fprintf(stderr, "Can't fixup frames");
+        std::fprintf(stderr, "Can't fixup frames");
         return -1;
         break;
     }
     return 0;
 }
 
-void mdl_write_rawstring(FILE *f, const char *raw, int len)
+void mdl_write_rawstring(std::FILE *f, const char *raw, int len)
 {
     mdl_write_objtype(f, OBJTYPE_RAWSTRING);
     int truelen = *(MDL_INT *)ALIGN_MDL_INT(raw + len + 1);
 
     mdl_write_int(f, truelen);
     if (truelen < 0) truelen = ~truelen;
-    fputc('%', f);
-    fwrite(raw, truelen, 1, f);
+    std::fputc('%', f);
+    std::fwrite(raw, truelen, 1, f);
 }
 
-int mdl_read_rawstring(FILE *f, char **rawp, int *lenp)
+int mdl_read_rawstring(std::FILE *f, char **rawp, int *lenp)
 {
     // objtype is already read
     int len;
     bool immut = false;
 
     if (mdl_read_int(f, &len) != 0) return -1;
-    char pct = fgetc(f);
+    char pct = std::fgetc(f);
     if (pct != '%') return -1;
     *lenp = len;
     if (len < 0) 
@@ -610,17 +610,17 @@ int mdl_read_rawstring(FILE *f, char **rawp, int *lenp)
         immut = true;
     }
     *rawp = mdl_new_raw_string(len, immut);
-    if (fread(*rawp, len, 1, f) != 1) return -1;
+    if (std::fread(*rawp, len, 1, f) != 1) return -1;
     return 0;
 }
 
-int mdl_fixup_rawstring(FILE *f, char *rawp)
+int mdl_fixup_rawstring(std::FILE *f, char *rawp)
 {
     // nothing to be done
     return 0;
 }
 
-void mdl_write_atom(FILE *f, atom_t *a)
+void mdl_write_atom(std::FILE *f, atom_t *a)
 {
     // atom is pname(obj), type, oblist(obj), globalsym(obj), localsym(obj)
     mdl_write_objtype(f, OBJTYPE_ATOM);
@@ -643,7 +643,7 @@ void mdl_write_atom(FILE *f, atom_t *a)
     mdl_write_intptr(f, objnum);
 }
 
-int mdl_read_atom(FILE *f, atom_t **ap, mdl_symbol_table_t *global, mdl_local_symbol_table_t *local)
+int mdl_read_atom(std::FILE *f, atom_t **ap, mdl_symbol_table_t *global, mdl_local_symbol_table_t *local)
 {
     // atom is pname(obj), type, oblist(obj), globalsym(obj), localsym(obj)
     intptr_t objnum;
@@ -677,7 +677,7 @@ int mdl_read_atom(FILE *f, atom_t **ap, mdl_symbol_table_t *global, mdl_local_sy
     return 0;
 }
 
-int mdl_fixup_atom(FILE *f, atom_t *a, mdl_symbol_table_t *global, mdl_local_symbol_table_t *local)
+int mdl_fixup_atom(atom_t *a, mdl_symbol_table_t *global, mdl_local_symbol_table_t *local)
 {
     // atom is pname(obj), type, oblist(obj), globalsym(obj), localsym(obj)
     intptr_t objnum = (intptr_t)a->pname;
@@ -711,7 +711,7 @@ int mdl_fixup_atom(FILE *f, atom_t *a, mdl_symbol_table_t *global, mdl_local_sym
     return 0;
 }
 
-void mdl_write_vector_block(FILE *f, const mdl_vector_block_t &blk)
+void mdl_write_vector_block(std::FILE *f, const mdl_vector_block_t &blk)
 {
     mdl_write_objtype(f, OBJTYPE_VECTOR_BLOCK);
     mdl_write_int(f, blk.size);
@@ -723,7 +723,7 @@ void mdl_write_vector_block(FILE *f, const mdl_vector_block_t &blk)
     }
 }
 
-int mdl_read_vector_block(FILE *f, mdl_vector_block_t **blkp)
+int mdl_read_vector_block(std::FILE *f, mdl_vector_block_t **blkp)
 {
     // objtype has already been read
     mdl_vector_block_t *blk = GC_NEW(mdl_vector_block_t);
@@ -741,7 +741,7 @@ int mdl_read_vector_block(FILE *f, mdl_vector_block_t **blkp)
             objtype != OBJTYPE_MDL_ROOT_OBLIST &&
             objtype != OBJTYPE_MDL_INITIAL_OBLIST)
         {
-            fprintf(stderr, "Bad objtype in vector\n");
+            std::fprintf(stderr, "Bad objtype in vector\n");
             return i+1;
         }
         if (mdl_read_mdl_value(f, &elems) != 0) return (i+1);
@@ -751,7 +751,7 @@ int mdl_read_vector_block(FILE *f, mdl_vector_block_t **blkp)
     return 0;
 }
 
-int mdl_fixup_vector_block(FILE *f, mdl_vector_block_t *blk)
+int mdl_fixup_vector_block(std::FILE *f, mdl_vector_block_t *blk)
 {
     for (int i = 0; i < blk->size; i++)
     {
@@ -760,7 +760,7 @@ int mdl_fixup_vector_block(FILE *f, mdl_vector_block_t *blk)
     return 0;
 }
 
-void mdl_write_uvector_element(FILE *f, primtype_t pt, const uvector_element_t &elem)
+void mdl_write_uvector_element(std::FILE *f, primtype_t pt, const uvector_element_t &elem)
 {
     int onum;
     switch (pt)
@@ -787,12 +787,12 @@ void mdl_write_uvector_element(FILE *f, primtype_t pt, const uvector_element_t &
         mdl_write_int(f, elem.uv.offset);
         break;
     default:
-        fprintf(stderr, " BOGUS UVECTOR PRIMTYPE %d\n", pt);
+        std::fprintf(stderr, " BOGUS UVECTOR PRIMTYPE %d\n", pt);
         break;
     }
 }
 
-int mdl_read_uvector_element(FILE *f, primtype_t pt, uvector_element_t *elem)
+int mdl_read_uvector_element(std::FILE *f, primtype_t pt, uvector_element_t *elem)
 {
     intptr_t onum;
     switch (pt)
@@ -819,13 +819,13 @@ int mdl_read_uvector_element(FILE *f, primtype_t pt, uvector_element_t *elem)
         if (mdl_read_int(f, &elem->uv.offset) != 0) return -1;
         break;
     default:
-        fprintf(stderr, " BOGUS UVECTOR PRIMTYPE %d\n", pt);
+        std::fprintf(stderr, " BOGUS UVECTOR PRIMTYPE %d\n", pt);
         return -1;
     }
     return 0;
 }
 
-int mdl_fixup_uvector_element(FILE *f, primtype_t pt, uvector_element_t *elem)
+int mdl_fixup_uvector_element(std::FILE *f, primtype_t pt, uvector_element_t *elem)
 {
     int onum;
     obj_in_image_t *obj;
@@ -859,13 +859,13 @@ int mdl_fixup_uvector_element(FILE *f, primtype_t pt, uvector_element_t *elem)
         elem->uv.p = (mdl_uvector_block_t *)obj->ptr;
         break;
     default:
-        fprintf(stderr, " BOGUS UVECTOR PRIMTYPE %d\n", pt);
+        std::fprintf(stderr, " BOGUS UVECTOR PRIMTYPE %d\n", pt);
         return -1;
     }
     return 0;
 }
 
-void mdl_write_uvector_block(FILE *f, const mdl_uvector_block_t &blk)
+void mdl_write_uvector_block(std::FILE *f, const mdl_uvector_block_t &blk)
 {
     if (blk.type == MDL_TYPE_CHANNEL)
     {
@@ -883,7 +883,7 @@ void mdl_write_uvector_block(FILE *f, const mdl_uvector_block_t &blk)
     }
 }
 
-int mdl_read_uvector_block(FILE *f, mdl_uvector_block_t **blkp, const mdl_type_table_t &tt)
+int mdl_read_uvector_block(std::FILE *f, mdl_uvector_block_t **blkp, const mdl_type_table_t &tt)
 {
     //objtype has already been read
     mdl_uvector_block_t *blk = GC_NEW(mdl_uvector_block_t);
@@ -901,7 +901,7 @@ int mdl_read_uvector_block(FILE *f, mdl_uvector_block_t **blkp, const mdl_type_t
     return 0;
 }
 
-int mdl_fixup_uvector_block(FILE *f, mdl_uvector_block_t *blk, const mdl_type_table_t &tt)
+int mdl_fixup_uvector_block(std::FILE *f, mdl_uvector_block_t *blk, const mdl_type_table_t &tt)
 {
     primtype_t pt = tt[blk->type].pt;
 
@@ -913,7 +913,7 @@ int mdl_fixup_uvector_block(FILE *f, mdl_uvector_block_t *blk, const mdl_type_ta
     return 0;
 }
 
-void mdl_write_type_table_entry(FILE *f, const mdl_type_table_entry_t& tt)
+void mdl_write_type_table_entry(std::FILE *f, const mdl_type_table_entry_t& tt)
 {
     int objnum;
 
@@ -928,7 +928,7 @@ void mdl_write_type_table_entry(FILE *f, const mdl_type_table_entry_t& tt)
     mdl_write_intptr(f, objnum);
 }
 
-int mdl_read_type_table_entry(FILE *f, mdl_type_table_entry_t *tte)
+int mdl_read_type_table_entry(std::FILE *f, mdl_type_table_entry_t *tte)
 {
     intptr_t objnum;
     int err;
@@ -970,7 +970,7 @@ int mdl_fixup_type_table_entry(mdl_type_table_entry_t *tte)
     return 0;
 }
 
-void mdl_write_type_table(FILE *f, const mdl_type_table_t &tt)
+void mdl_write_type_table(std::FILE *f, const mdl_type_table_t &tt)
 {
     mdl_write_objtype(f, OBJTYPE_TYPE_TABLE);
     mdl_write_int(f, tt.size());
@@ -980,7 +980,7 @@ void mdl_write_type_table(FILE *f, const mdl_type_table_t &tt)
     }
 }
 
-int mdl_read_type_table(FILE *f, mdl_type_table_t *tt)
+int mdl_read_type_table(std::FILE *f, mdl_type_table_t *tt)
 {
     objtype_t objtype;
     if (mdl_read_objtype(f, &objtype) != 0)
@@ -989,7 +989,7 @@ int mdl_read_type_table(FILE *f, mdl_type_table_t *tt)
     }
     if (objtype != OBJTYPE_TYPE_TABLE)
     {
-        fprintf(stderr, "Didn't find type table\n");
+        std::fprintf(stderr, "Didn't find type table\n");
         return -1;
     }
 
@@ -1023,7 +1023,7 @@ int mdl_fixup_type_table(mdl_type_table_t *tt)
     return 0;
 }
 
-void mdl_write_asoc_table(FILE *f)
+void mdl_write_asoc_table(std::FILE *f)
 {
     int size;
     mdl_assoc_iterator_t *iter;
@@ -1048,20 +1048,20 @@ void mdl_write_asoc_table(FILE *f)
     }
 }
 
-int mdl_read_asoc_table(FILE *f, mdl_tmp_assoc_table_t *tmptable)
+int mdl_read_asoc_table(std::FILE *f, mdl_tmp_assoc_table_t *tmptable)
 {
     int size;
     objtype_t objtype;
 
     if (mdl_read_objtype(f, &objtype) != 0)
     {
-        fprintf(stderr, "Couldn't read assoc table objtype\n");
+        std::fprintf(stderr, "Couldn't read assoc table objtype\n");
         return -1;
     }
 
     if (objtype != OBJTYPE_ASOC_TABLE)
     {
-        fprintf(stderr, "Didn't find association table\n");
+        std::fprintf(stderr, "Didn't find association table\n");
         return -1;
     }
     mdl_read_int(f, &size);
@@ -1110,7 +1110,7 @@ int mdl_fixup_asoc_table(mdl_tmp_assoc_table_t *tmptable)
     return 0;
 }
 
-void mdl_write_built_in_table(FILE *f)
+void mdl_write_built_in_table(std::FILE *f)
 {
     mdl_built_in_table_t::iterator biter;
     int valueobjnum = -1;
@@ -1136,7 +1136,7 @@ void mdl_write_built_in_table(FILE *f)
     }
 }
 
-int mdl_read_built_in_table(FILE *f, mdl_built_in_table_t *new_table)
+int mdl_read_built_in_table(std::FILE *f, mdl_built_in_table_t *new_table)
 {
     mdl_built_in_table_t::iterator biter;
     int valueobjnum = -1;
@@ -1149,7 +1149,7 @@ int mdl_read_built_in_table(FILE *f, mdl_built_in_table_t *new_table)
 
     if (objtype != OBJTYPE_BUILT_IN_TABLE)
     {
-        fprintf(stderr, "Didn't find built-in table\n");
+        std::fprintf(stderr, "Didn't find built-in table\n");
         return -1;
     }
 
@@ -1157,7 +1157,7 @@ int mdl_read_built_in_table(FILE *f, mdl_built_in_table_t *new_table)
     if (mdl_read_int(f, &tablesize) != 0) return -1;
     if (tablesize != (int)built_in_table.size())
     {
-        fprintf(stderr, "Built-in table size does not match\n");
+        std::fprintf(stderr, "Built-in table size does not match\n");
         return -1;
     }
     new_table->reserve(tablesize);
@@ -1213,7 +1213,7 @@ int mdl_fixup_built_in_table(mdl_built_in_table_t *new_table)
 // Associations
 // Type vector
 // built-in SUBR/FSUBRS (not written, considered immutable)
-void mdl_write_image(FILE *f, mdl_value_t *save_arg)
+void mdl_write_image(std::FILE *f, mdl_value_t *save_arg)
 {
     image_objects.clear();
     image_object_list.clear();
@@ -1235,7 +1235,7 @@ void mdl_write_image(FILE *f, mdl_value_t *save_arg)
         // note iterators cannot be used because they can be invalidated
         // at any time.  could check if capacity has changed but.. meh
 #ifdef MDL_DEBUG_BINARY_IO
-        fprintf(f, "\n-----OBJECT %zu-----\n\n", index + 1);
+        std::fprintf(f, "\n-----OBJECT %zu-----\n\n", index + 1);
 #else
         mdl_write_int(f, (int)index + 1);
 #endif
@@ -1266,7 +1266,7 @@ void mdl_write_image(FILE *f, mdl_value_t *save_arg)
     image_object_list.clear();
 }
 
-bool mdl_read_image(FILE *f)
+bool mdl_read_image(std::FILE *f)
 {
     obj_in_image_t obj;
     mdl_symbol_table_t newglobal;
@@ -1282,34 +1282,34 @@ bool mdl_read_image(FILE *f)
     mdl_built_in_table_t new_built_ins;
     if ((err = mdl_read_built_in_table(f, &new_built_ins)) != 0)
     {
-        fprintf(stderr, "Unable to read built_in table %d\n", err);
+        std::fprintf(stderr, "Unable to read built_in table %d\n", err);
         return false;
     }
 
     mdl_type_table_t new_types;
     if ((err = mdl_read_type_table(f, &new_types)) !=0 )
     {
-        fprintf(stderr, "Unable to read type table %d\n", err);
+        std::fprintf(stderr, "Unable to read type table %d\n", err);
         return false;
     }
 
     mdl_tmp_assoc_table_t new_assocs;
     if ((err = mdl_read_asoc_table(f, &new_assocs)) != 0)
     {
-        fprintf(stderr, "Unable to read assoc table %d\n", err);
+        std::fprintf(stderr, "Unable to read assoc table %d\n", err);
         return false;
     }
 
     size_t index = 0;
-    while (!feof(f))
+    while (!std::feof(f))
     {
 #ifdef MDL_DEBUG_BINARY_IO
         size_t check_index;
         // note iterators cannot be used because they can be invalidated
         // at any time.  could check if capacity has changed but.. meh
-        if (fscanf(f, "\n-----OBJECT %zu-----\n\n", &check_index) != 1)
+        if (std::fscanf(f, "\n-----OBJECT %zu-----\n\n", &check_index) != 1)
         {
-            fprintf(stderr, "Unable to read object header %zd\n", index);
+            std::fprintf(stderr, "Unable to read object header %zd\n", index);
             return false;
         }
 #else
@@ -1318,8 +1318,8 @@ bool mdl_read_image(FILE *f)
 
         if (mdl_read_int(f, &tmp) != 0)
         {
-            if (feof(f)) break;
-            fprintf(stderr, "Unable to read object header %zd\n", index);
+            if (std::feof(f)) break;
+            std::fprintf(stderr, "Unable to read object header %zd\n", index);
             return false;
         }
         check_index = (size_t)tmp;
@@ -1327,14 +1327,14 @@ bool mdl_read_image(FILE *f)
 
         if (check_index != (index + 1))
         {
-            fprintf(stderr, "Wrong object index %zd != %zd\n", check_index, index + 1);
+            std::fprintf(stderr, "Wrong object index %zd != %zd\n", check_index, index + 1);
             return false;
         }
         obj.objnum = check_index;
 
         if (mdl_read_objtype(f, &obj.objtype) != 0)
         {
-            fprintf(stderr, "Unable to read object type %zd\n", index);
+            std::fprintf(stderr, "Unable to read object type %zd\n", index);
             return false;
         }
 
@@ -1384,13 +1384,13 @@ bool mdl_read_image(FILE *f)
         }
         if (!obj.ptr)
         {
-            fprintf(stderr, "Failed to read object %zd\n", index);
+            std::fprintf(stderr, "Failed to read object %zd\n", index);
             return false;
         }
         image_object_list.push_back(obj);
         if (image_object_list.size() != check_index)
         {
-            fprintf(stderr, "Wrong double-check object index %zd != %zd\n", image_object_list.size(), check_index);
+            std::fprintf(stderr, "Wrong double-check object index %zd != %zd\n", image_object_list.size(), check_index);
             return false;
         }
 
@@ -1400,19 +1400,19 @@ bool mdl_read_image(FILE *f)
 // Everything's read, now restore the pointers
     if ((err = mdl_fixup_built_in_table(&new_built_ins)) != 0)
     {
-        fprintf(stderr, "Unable to fixup built_in table %d\n", err);
+        std::fprintf(stderr, "Unable to fixup built_in table %d\n", err);
         return false;
     }
 
     if ((err = mdl_fixup_type_table(&new_types)) != 0)
     {
-        fprintf(stderr, "Unable to fixup type table %d\n", err);
+        std::fprintf(stderr, "Unable to fixup type table %d\n", err);
         return false;
     }
     
     if ((err = mdl_fixup_asoc_table(&new_assocs)) != 0)
     {
-        fprintf(stderr, "Unable to fixup assoc table %d\n", err);
+        std::fprintf(stderr, "Unable to fixup assoc table %d\n", err);
         return false;
     }
 
@@ -1443,7 +1443,7 @@ bool mdl_read_image(FILE *f)
         }
         case OBJTYPE_ATOM:
         {
-            err = mdl_fixup_atom(f, (atom_t *)obj.ptr, &newglobal, &newlocal);
+            err = mdl_fixup_atom((atom_t *)obj.ptr, &newglobal, &newlocal);
             break;
         }
         case OBJTYPE_RAWSTRING:
@@ -1464,7 +1464,7 @@ bool mdl_read_image(FILE *f)
         }
         if (err != 0)
         {
-            fprintf(stderr, "Failed to fixup object %zd (type %d)\n", index, (int)obj.objtype);
+            std::fprintf(stderr, "Failed to fixup object %zd (type %d)\n", index, (int)obj.objtype);
             return false;
         }
 
@@ -1474,13 +1474,13 @@ bool mdl_read_image(FILE *f)
     mdl_value_t *new_mdl_value_atom_oblist = mdl_get_atom_from_oblist("OBLIST", new_root_oblist);
     if (!new_mdl_value_atom_oblist)
     {
-        fprintf(stderr, "OBLIST!- atom missing in save image\n");
+        std::fprintf(stderr, "OBLIST!- atom missing in save image\n");
         return -1;
     }
     mdl_value_t *mdl_value_atom_interrupts = mdl_get_atom_from_oblist("INTERRUPTS", new_root_oblist);
     if (!mdl_value_atom_interrupts)
     {
-        fprintf(stderr, "INTERRUPTS!- atom missing in save image\n");
+        std::fprintf(stderr, "INTERRUPTS!- atom missing in save image\n");
         return -1;
     }
 
@@ -1497,7 +1497,7 @@ bool mdl_read_image(FILE *f)
     );
     if (!mdl_value_interrupts_oblist)
     {
-        fprintf(stderr, "INTERRUPTS!- oblist missing in save image");
+        std::fprintf(stderr, "INTERRUPTS!- oblist missing in save image");
         return -1;
     }
 
@@ -1543,7 +1543,7 @@ bool mdl_read_image(FILE *f)
 
     cur_frame = initial_frame;
     initial_frame->result = save_arg;
-    fclose(f); // no one else will do it, until channel GC is implemented
+    std::fclose(f); // no one else will do it, until channel GC is implemented
 #ifdef GC_DEBUG
     GC_gcollect();
 #endif

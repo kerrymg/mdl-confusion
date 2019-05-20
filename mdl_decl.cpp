@@ -214,12 +214,12 @@ mdl_check_struct_decl(mdl_value_t *val, mdl_value_t *decl, bool *error)
 
                 optfound = true;
                 curidecl = VITEM(curdecl, 1);
-                fprintf(stderr, "O1\n");
+                std::fprintf(stderr, "O1\n");
                 for (int j = 1; j < VLENGTH(curdecl); j++)
                 {
                     if (mdl_internal_struct_is_empty(valcursor))
                         break;
-                    fprintf(stderr, "O2 %d\n", j);
+                    std::fprintf(stderr, "O2 %d\n", j);
                     curval = mdl_internal_eval_nth(valcursor, nullptr);
                     result = mdl_check_decl(curval, curidecl, error);
                     if (*error || mdl_is_false(result)) return result;

@@ -41,7 +41,7 @@ static size_t mdl_hash_assoc_key(const mdl_assoc_key_t &h)
     size_t hindic = mdl_hash_value(h.indicator);
     size_t tmp;
     swab(&hindic, &tmp, sizeof(size_t));
-//            printf("Hash: %lx %lx %lx %lx\n", hitem, hindic, tmp, hitem + tmp);
+//    std::printf("Hash: %lx %lx %lx %lx\n", hitem, hindic, tmp, hitem + tmp);
     return hitem + tmp;
 }
 
@@ -164,12 +164,12 @@ bool mdl_assoc_clean(mdl_assoc_table_t *table)
     mdl_assoc_iterator_t *iter = mdl_assoc_iterator_first(table);
     bool result = false;
 
-//    fprintf(stderr, "ASSOC cleaning %d %p %lu %lu\n", table->size, table, table->last_clean, GC_gc_no);
+//    std::fprintf(stderr, "ASSOC cleaning %d %p %lu %lu\n", table->size, table, table->last_clean, GC_gc_no);
     while (!mdl_assoc_iterator_at_end(iter))
     {
         if (!iter->assoc->item_exists || !iter->assoc->indicator_exists)
         {
-//            fprintf(stderr, "Nuking an association\n");
+//            std::fprintf(stderr, "Nuking an association\n");
             mdl_assoc_iterator_delete(iter);
             result = true;
         }
@@ -179,7 +179,7 @@ bool mdl_assoc_clean(mdl_assoc_table_t *table)
         }
     }
     table->last_clean = GC_get_gc_no();
-//    fprintf(stderr, "ASSOC cleaning done %d\n", table->size);
+//    std::fprintf(stderr, "ASSOC cleaning done %d\n", table->size);
     return result;
 }
 

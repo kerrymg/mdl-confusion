@@ -192,8 +192,8 @@ bool mdl_atom_equal(const atom_t *a, const atom_t *b)
 
 bool mdl_string_equal_cstr(const counted_string_t *s, const char *cs)
 {
-    int len  = strlen(cs);
-    return (len == s->l) && !memcmp(s->p, cs, len);
+    int len = std::strlen(cs);
+    return (len == s->l) && !std::memcmp(s->p, cs, len);
 }
 
 bool mdl_value_equal_atom(const mdl_value_t *a, const atom_t *b)
@@ -293,7 +293,7 @@ bool mdl_value_equal(const mdl_value_t *a, const mdl_value_t *b)
     case PRIMTYPE_WORD:
         return a->v.w == b->v.w;
     case PRIMTYPE_STRING:
-        return (a->v.s.l == b->v.s.l) && !memcmp(a->v.s.p, b->v.s.p, a->v.s.l);
+        return (a->v.s.l == b->v.s.l) && !std::memcmp(a->v.s.p, b->v.s.p, a->v.s.l);
     case PRIMTYPE_LIST:
         return mdl_value_equal(a->v.p.car, b->v.p.car) && mdl_value_equal(a->v.p.cdr, b->v.p.cdr);
     case PRIMTYPE_VECTOR:
@@ -381,7 +381,7 @@ mdl_value_t *mdl_get_atom_from_oblist(const char *pname, mdl_value_t *oblist)
         mdl_value_t *av = cursor->v.p.car;
         if (av->type != MDL_TYPE_ATOM)
             mdl_error("Something not an atom in the oblist");
-        if (!strcmp(pname, av->v.a->pname))
+        if (!std::strcmp(pname, av->v.a->pname))
         {
             return av;
         }
@@ -406,7 +406,7 @@ mdl_value_t *mdl_remove_atom_from_oblist(const char *pname, mdl_value_t *oblist)
         mdl_value_t *av = cursor->v.p.car;
         if (av->type != MDL_TYPE_ATOM)
             mdl_error("Something not an atom in the oblist");
-        if (!strcmp(pname, av->v.a->pname))
+        if (!std::strcmp(pname, av->v.a->pname))
         {
             if (cursor == bucket->l) bucket->l = cursor->v.p.cdr;
             else lastcursor->v.p.cdr = cursor->v.p.cdr;
@@ -437,13 +437,13 @@ void mdl_put_atom_in_oblist(const char *pname, mdl_value_t *oblist, mdl_value_t 
 // create an atom not on an oblist
 mdl_value_t *mdl_create_atom(const char *pname)
 {
-//    atom_t *a = (atom_t *)GC_MALLOC(sizeof(atom_t) + strlen(pname)); // the -1 and +1 cancel
-//    strcpy(a->pname, pname);
-    atom_t *a = (atom_t *)GC_MALLOC(sizeof(atom_t));
-    int len = strlen(pname);
+//    atom_t *a = (atom_t *)GC_MALLOC(sizeof(atom_t) + std::strlen(pname)); // the -1 and +1 cancel
+//    std::strcpy(a->pname, pname);
+    atom_t *a = GC_NEW(atom_t);
+    int len = std::strlen(pname);
     a->typenum = MDL_TYPE_NOTATYPE;
     a->pname = mdl_new_raw_string(len, true);
-    strcpy(a->pname, pname);
+    std::strcpy(a->pname, pname);
     mdl_value_t *atomval = mdl_newatomval(a);
     return atomval;
 }
@@ -606,7 +606,7 @@ bool mdl_oblists_are_reasonable(mdl_value_t *oblists)
 // do what READ does with atoms
 mdl_value_t *mdl_get_atom(const char *pname, bool insert_allowed, mdl_value_t *default_oblists)
 {
-    const char *trailer = strstr(pname, "!-");
+    const char *trailer = std::strstr(pname, "!-");
     if (!trailer)
     {
         return mdl_get_atom_default_oblist(pname, insert_allowed, default_oblists);
@@ -614,7 +614,7 @@ mdl_value_t *mdl_get_atom(const char *pname, bool insert_allowed, mdl_value_t *d
     mdl_value_t *a = NULL;
     int ulen = trailer - pname;
     char *uname = (char *)alloca(ulen + 1);
-    memcpy(uname, pname, ulen);
+    std::memcpy(uname, pname, ulen);
     uname[ulen] = 0;
     if (trailer[2] == '\0')
     {
@@ -696,13 +696,13 @@ mdl_value_t *mdl_new_string(int len)
 mdl_value_t *mdl_new_string(int len, const char *s)
 {
     mdl_value_t *result = mdl_new_string(len);
-    strncpy(result->v.s.p, s, len);
+    std::strncpy(result->v.s.p, s, len);
     return result;
 }
 
 mdl_value_t *mdl_new_string(const char *s)
 {
-    return mdl_new_string(strlen(s),s);
+    return mdl_new_string(std::strlen(s),s);
 }
 
 mdl_value_t *mdl_new_word(MDL_INT fix, int type)
@@ -769,7 +769,7 @@ mdl_value_t *mdl_make_string(int len, char *s)
 
 mdl_value_t *mdl_make_string(char *s)
 {
-    return mdl_make_string(strlen(s), s);
+    return mdl_make_string(std::strlen(s), s);
 }
 
 mdl_value_t *mdl_new_empty_vector(int size, int type)
@@ -920,7 +920,7 @@ mdl_value_t *mdl_additem(mdl_value_t *a, mdl_value_t *b, mdl_value_t **lastitem)
 {
     if (!b)
     {
-        printf("Additem NULL\n");
+        std::printf("Additem NULL\n");
         if (lastitem) *lastitem = a; // not right, but I don't want to iterate for this special case
         return a;
     }
@@ -935,7 +935,7 @@ mdl_value_t *mdl_additem(mdl_value_t *a, mdl_value_t *b, mdl_value_t **lastitem)
     {
         mdl_error("Can't add an item to a non-list");
         mdl_print_value(stderr, a);
-        printf("\n");
+        std::printf("\n");
         return NULL;
     }
     else
@@ -989,10 +989,10 @@ bool mdl_primtype_nonstructured(int pt)
 // INPUT/OUTPUT support
 
 // channel number to file mapping (ick)
-typedef std::vector<FILE *> chanfilemap_t;
+using chanfilemap_t = std::vector<FILE *>;
 chanfilemap_t chanfilemap;
 
-int mdl_new_chan_num(FILE *f)
+int mdl_new_chan_num(std::FILE *f)
 {
     chanfilemap_t::reverse_iterator iter;
     int i;
@@ -1009,7 +1009,7 @@ int mdl_new_chan_num(FILE *f)
     return chanfilemap.size();
 }
 
-FILE *mdl_get_channum_file(int chnum)
+std::FILE *mdl_get_channum_file(int chnum)
 {
     return chanfilemap[chnum - 1];
 }
@@ -1033,31 +1033,31 @@ bool mdl_chan_mode_is_input(mdl_value_t *chan)
 {
     mdl_value_t *mode = mdl_get_chan_mode(chan);
     if (mode->v.s.l < 4) return false;
-    return !strncmp("READ", mode->v.s.p, 4);
+    return !std::strncmp("READ", mode->v.s.p, 4);
 }
 
 bool mdl_chan_mode_is_output(mdl_value_t *chan)
 {
     mdl_value_t *mode = mdl_get_chan_mode(chan);
     if (mode->v.s.l < 5) return false;
-    return !strncmp("PRINT", mode->v.s.p, 5);
+    return !std::strncmp("PRINT", mode->v.s.p, 5);
 }
 
 bool mdl_chan_mode_is_read_binary(mdl_value_t *chan)
 {
     mdl_value_t *mode = mdl_get_chan_mode(chan);
     if (mode->v.s.l != 5) return false;
-    return !memcmp("READB", mode->v.s.p, 5);
+    return !std::memcmp("READB", mode->v.s.p, 5);
 }
 
 bool mdl_chan_mode_is_print_binary(mdl_value_t *chan)
 {
     mdl_value_t *mode = mdl_get_chan_mode(chan);
     if (mode->v.s.l != 6) return false;
-    return !memcmp("PRINTB", mode->v.s.p, 6) || !memcmp("PRINTO", mode->v.s.p, 6);
+    return !std::memcmp("PRINTB", mode->v.s.p, 6) || !std::memcmp("PRINTO", mode->v.s.p, 6);
 }
 
-void mdl_set_chan_file(int chnum, FILE *f)
+void mdl_set_chan_file(int chnum, std::FILE *f)
 {
     chanfilemap[chnum - 1] = f;
 }
@@ -1158,7 +1158,7 @@ void mdl_decode_file_args(mdl_value_t **name1p, mdl_value_t **name2p, mdl_value_
             name1len -= (gtp - name1p) + 1;
 
             dir = mdl_new_string(gtp - name1p - 1);
-            memcpy(dir->v.s.p, name1p + 1, gtp - name1p - 1);
+            std::memcpy(dir->v.s.p, name1p + 1, gtp - name1p - 1);
             dotp = (char *)mdl_memrchr(gtp, '.', name1len + 1);
             if (dotp)
             {
@@ -1169,9 +1169,9 @@ void mdl_decode_file_args(mdl_value_t **name1p, mdl_value_t **name2p, mdl_value_
             {
                 name2 = mdl_new_string(0);
             }
-//            fprintf(stderr, "TENEX %s ", name1->v.s.p);
+//            std::fprintf(stderr, "TENEX %s ", name1->v.s.p);
             name1 = mdl_new_string(name1len, gtp+1);
-//            fprintf(stderr, "= %s %s %s %s\n", device?device->v.s.p:"default", dir->v.s.p, name1->v.s.p, name2->v.s.p);
+//            std::fprintf(stderr, "= %s %s %s %s\n", device?device->v.s.p:"default", dir->v.s.p, name1->v.s.p, name2->v.s.p);
         }
 #endif
         slashp = (char *)mdl_memrchr(name1->v.s.p, '/', name1->v.s.l);
@@ -1274,31 +1274,25 @@ char *mdl_build_chan_pathname(mdl_value_t *chan)
 
 mdl_value_t *mdl_internal_open_channel(mdl_value_t *chan)
 {
-    char *pathname;
-    const char *osmode;
-    int chnum;
-    FILE *f;
-    counted_string_t *dirstr;
+    const char *osmode = mdl_get_chan_os_mode(chan);
+    if (osmode == nullptr) mdl_error("Bad channel mode");
+    char *pathname = mdl_build_chan_pathname(chan);
 
-    osmode = mdl_get_chan_os_mode(chan);
-    if (osmode == NULL) mdl_error("Bad channel mode");
-    pathname = mdl_build_chan_pathname(chan);
-
-    f = fopen(pathname, osmode);
-    if (f == NULL)
+    std::FILE *f = std::fopen(pathname, osmode);
+    if (f == nullptr)
     {
-        mdl_value_t *errfalse = NULL;
+        mdl_value_t *errfalse = nullptr;
         errfalse = mdl_cons_internal(mdl_new_fix(errno), errfalse);
         errfalse = mdl_cons_internal(mdl_new_string(pathname), errfalse);
         errfalse = mdl_cons_internal(mdl_new_string(strerror(errno)), errfalse);
         return mdl_make_list(errfalse, MDL_TYPE_FALSE);
     }
-    chnum = mdl_new_chan_num(f);
+    int chnum = mdl_new_chan_num(f);
     VITEM(chan,CHANNEL_SLOT_STATUS)->v.w = 0;
     *VITEM(chan,CHANNEL_SLOT_CHNUM) = *mdl_new_fix(chnum);
     *VITEM(chan,CHANNEL_SLOT_FN1) = *VITEM(chan,CHANNEL_SLOT_FNARG1);
     *VITEM(chan,CHANNEL_SLOT_FN2) = *VITEM(chan,CHANNEL_SLOT_FNARG2);
-    dirstr = &VITEM(chan,CHANNEL_SLOT_DIRNARG)->v.s;
+    counted_string_t *dirstr = &VITEM(chan,CHANNEL_SLOT_DIRNARG)->v.s;
     *VITEM(chan,CHANNEL_SLOT_DIRN) = *VITEM(chan,CHANNEL_SLOT_DIRNARG);
     if ((dirstr->l == 0) || (dirstr->p[0] != '/'))
     {
@@ -1307,7 +1301,7 @@ mdl_value_t *mdl_internal_open_channel(mdl_value_t *chan)
         {
             mdl_strbuf_t *absdir = mdl_new_strbuf(256);
             absdir = mdl_strbuf_append_cstr(absdir, wd);
-            if (wd[strlen(wd)-1] != '/') absdir = mdl_strbuf_append_cstr(absdir, "/");
+            if (wd[std::strlen(wd) - 1] != '/') absdir = mdl_strbuf_append_cstr(absdir, "/");
             absdir = mdl_strbuf_append_cstr(absdir, VITEM(chan,CHANNEL_SLOT_DIRNARG)->v.s.p);
             *VITEM(chan,CHANNEL_SLOT_DIRN) = *mdl_new_string(mdl_strbuf_to_const_cstr(absdir));
         }
@@ -1321,32 +1315,29 @@ mdl_value_t *mdl_internal_open_channel(mdl_value_t *chan)
 
 mdl_value_t *mdl_internal_reset_channel(mdl_value_t *chan)
 {
-    char *pathname;
-    const char *osmode;
     int chnum;
-    FILE *f;
-    FILE *oldf;
+    std::FILE *f;
 
     if ((chnum = VITEM(chan,CHANNEL_SLOT_CHNUM)->v.w) == 0)
         return mdl_internal_open_channel(chan);
     
-    osmode = mdl_get_chan_os_mode(chan);
-    if (osmode == NULL) mdl_error("Bad channel mode");
-    pathname = mdl_build_pathname(VITEM(chan, CHANNEL_SLOT_FN1), VITEM(chan, CHANNEL_SLOT_FN2), VITEM(chan, CHANNEL_SLOT_DEVN),VITEM(chan, CHANNEL_SLOT_DIRN));
-    oldf = mdl_get_channum_file(chnum);
+    const char *osmode = mdl_get_chan_os_mode(chan);
+    if (osmode == nullptr) mdl_error("Bad channel mode");
+    char *pathname = mdl_build_pathname(VITEM(chan, CHANNEL_SLOT_FN1), VITEM(chan, CHANNEL_SLOT_FN2), VITEM(chan, CHANNEL_SLOT_DEVN),VITEM(chan, CHANNEL_SLOT_DIRN));
+    std::FILE *oldf = mdl_get_channum_file(chnum);
     if (oldf == stdin || oldf == stdout)
     {
         f = oldf;
     }
     else
     {
-        if (oldf) fclose(oldf);
+        if (oldf) std::fclose(oldf);
         
-        f = fopen(pathname, osmode);
+        f = std::fopen(pathname, osmode);
     }
-    if (f == NULL)
+    if (f == nullptr)
     {
-        mdl_value_t *errfalse = NULL;
+        mdl_value_t *errfalse = nullptr;
         mdl_free_chan_file(chnum);
 
         VITEM(chan,CHANNEL_SLOT_CHNUM)->v.w = 0;
@@ -1356,36 +1347,32 @@ mdl_value_t *mdl_internal_reset_channel(mdl_value_t *chan)
         return mdl_make_list(errfalse, MDL_TYPE_FALSE);
     }
     mdl_set_chan_file(chnum, f);
-    VITEM(chan,CHANNEL_SLOT_STATUS)->v.w = 0;
+    VITEM(chan, CHANNEL_SLOT_STATUS)->v.w = 0;
     if (!isatty(fileno(f)))
-        *VITEM(chan,CHANNEL_SLOT_DEVN) = *VITEM(chan,CHANNEL_SLOT_DEVNARG);
+        *VITEM(chan, CHANNEL_SLOT_DEVN) = *VITEM(chan, CHANNEL_SLOT_DEVNARG);
     else
-        *VITEM(chan,CHANNEL_SLOT_DEVN) = *(mdl_new_string(3, "TTY"));
+        *VITEM(chan, CHANNEL_SLOT_DEVN) = *(mdl_new_string(3, "TTY"));
     return chan;
 }
 
 // internal_reopen_channel re-opens a channel after a restore
 mdl_value_t *mdl_internal_reopen_channel(mdl_value_t *chan)
 {
-    char *pathname;
-    const char *osmode;
     int chnum;
-    FILE *f;
     off_t seekpos;
-    bool seekend;
 
-    osmode = mdl_get_chan_os_mode(chan);
-    if (osmode == NULL) mdl_error("Bad channel mode");
-    seekend = osmode[0] == 'w';
-    if (!strcmp(osmode, "w")) osmode = "r+";
-    if (!strcmp(osmode, "wb")) osmode = "rb+";
+    const char *osmode = mdl_get_chan_os_mode(chan);
+    if (osmode == nullptr) mdl_error("Bad channel mode");
+    bool seekend = osmode[0] == 'w';
+    if (!std::strcmp(osmode, "w")) osmode = "r+";
+    if (!std::strcmp(osmode, "wb")) osmode = "rb+";
 
-    pathname = mdl_build_pathname(VITEM(chan, CHANNEL_SLOT_FN1), VITEM(chan, CHANNEL_SLOT_FN2), VITEM(chan, CHANNEL_SLOT_DEVN),VITEM(chan, CHANNEL_SLOT_DIRN));
-    f = fopen(pathname, osmode);
-    fprintf(stderr, "RE-opened %s = %p\n", pathname, f);
-    if (f == NULL)
+    char *pathname = mdl_build_pathname(VITEM(chan, CHANNEL_SLOT_FN1), VITEM(chan, CHANNEL_SLOT_FN2), VITEM(chan, CHANNEL_SLOT_DEVN),VITEM(chan, CHANNEL_SLOT_DIRN));
+    std::FILE *f = std::fopen(pathname, osmode);
+    std::fprintf(stderr, "RE-opened %s = %p\n", pathname, f);
+    if (f == nullptr)
     {
-        mdl_value_t *errfalse = NULL;
+        mdl_value_t *errfalse = nullptr;
 
         VITEM(chan,CHANNEL_SLOT_CHNUM)->v.w = 0;
         errfalse = mdl_cons_internal(mdl_new_fix(errno), errfalse);
@@ -1400,11 +1387,11 @@ mdl_value_t *mdl_internal_reopen_channel(mdl_value_t *chan)
     {
         if (seekend)
         {
-            fseek(f, 0, SEEK_END);
+            std::fseek(f, 0, SEEK_END);
         }
         {
             seekpos = (off_t)VITEM(chan,CHANNEL_SLOT_PTR)->v.w;
-            fseek(f, seekpos, SEEK_SET);
+            std::fseek(f, seekpos, SEEK_SET);
         }
         *VITEM(chan,CHANNEL_SLOT_DEVN) = *VITEM(chan,CHANNEL_SLOT_DEVNARG);
     }
@@ -1417,13 +1404,11 @@ mdl_value_t *mdl_internal_close_channel(mdl_value_t *chan)
 {
     int chnum = VITEM(chan,CHANNEL_SLOT_CHNUM)->v.w;
     mdl_value_t *nullstring = mdl_new_string(0);
-    FILE *f;
-    int err;
     
     if (!chnum) return chan; // already closed
-    f = mdl_get_channum_file(chnum);
+    std::FILE *f = mdl_get_channum_file(chnum);
     mdl_free_chan_file(chnum);
-    err = fclose(f);
+    int err = std::fclose(f);
 
     VITEM(chan,CHANNEL_SLOT_CHNUM)->v.w = 0;
     *VITEM(chan,CHANNEL_SLOT_FN1) = *nullstring;
@@ -1518,7 +1503,7 @@ void mdl_longjmp_to(mdl_frame_t *jump_frame, int value)
     {
         if (frame->frame_flags & MDL_FRAME_FLAGS_UNWIND)
         {
-//            fprintf(stderr, "UNWINDING\n");
+//            std::fprintf(stderr, "UNWINDING\n");
             unwind_val = mdl_internal_eval_nth_i(frame->args,2);
             frame = mdl_pop_frame(frame->prev_frame);
             mdl_eval(unwind_val);
@@ -1532,17 +1517,17 @@ void mdl_longjmp_to(mdl_frame_t *jump_frame, int value)
 
 void mdl_error(const char *err)
 {
-    fflush(stdout);
-    fprintf(stderr, "%s\n",err);
+    std::fflush(stdout);
+    std::fprintf(stderr, "%s\n",err);
     if (initial_frame)
     {
-//        fprintf(stderr, "Error to initial jumpbuf\n");
+//        std::fprintf(stderr, "Error to initial jumpbuf\n");
         cur_frame = initial_frame;
         NEW_BINDID(cur_process_bindid);
         mdl_longjmp(initial_frame->interp_frame, LONGJMP_ERROR);
     }
-    fprintf(stderr, "Fatal: Lost my stack\n");
-    exit(-1);
+    std::fprintf(stderr, "Fatal: Lost my stack\n");
+    std::exit(-1);
 }
 
 mdl_value_t *mdl_call_error_ext(const char *erratom, const char *errstr, ...)
@@ -2130,16 +2115,16 @@ mdl_value_t *mdl_internal_expand(mdl_value_t *arg)
         (macro = mdl_eval_apply_expr(macro)) &&
         (mdl_apply_type(macro->type) == MDL_TYPE_MACRO))
     {
-//        printf("expand macro\n");
+//        std::printf("expand macro\n");
 //        mdl_print_value(stdout, macro);
-//        printf("\non form\n");
+//        std::printf("\non form\n");
 //        mdl_print_value(stdout, arg);
-//        printf("\n");
+//        std::printf("\n");
         result = mdl_apply_function(macro, arg, false);
     }
     else
     {
-        printf("eval top-level form\n");
+        std::printf("eval top-level form\n");
         mdl_print_value(stdout, arg);
         result = mdl_eval(arg, false);
     }
@@ -2216,7 +2201,7 @@ mdl_value_t *mdl_std_apply(mdl_value_t *applier, mdl_value_t *apply_to, int appl
             }
             else
             {
-                fprintf(stderr, "Bad longjmp in F/SUBR apply: %d", jumpval);
+                std::fprintf(stderr, "Bad longjmp in F/SUBR apply: %d", jumpval);
                 //Huh?  pass it on
                 mdl_longjmp_to(cur_frame->prev_frame, jumpval);
             }
@@ -2497,15 +2482,15 @@ mdl_value_t *mdl_internal_copy_structured(mdl_value_t *v)
         break;
     case PRIMTYPE_VECTOR:
         copy = mdl_new_empty_vector(VLENGTH(v), MDL_TYPE_VECTOR);
-        memcpy(VREST(copy, 0), VREST(v,0), VLENGTH(v) * sizeof(mdl_value_t));
+        std::memcpy(VREST(copy, 0), VREST(v,0), VLENGTH(v) * sizeof(mdl_value_t));
         break;
     case PRIMTYPE_TUPLE:
         copy = mdl_new_empty_vector(TPLENGTH(v), MDL_TYPE_VECTOR);
-        memcpy(VREST(copy, 0), TPREST(v,0), TPLENGTH(v) * sizeof(mdl_value_t));
+        std::memcpy(VREST(copy, 0), TPREST(v,0), TPLENGTH(v) * sizeof(mdl_value_t));
         break;
     case PRIMTYPE_UVECTOR:
         copy = mdl_new_empty_uvector(UVLENGTH(v), MDL_TYPE_UVECTOR);
-        memcpy(UVREST(copy, 0), UVREST(v,0), UVLENGTH(v) * sizeof(uvector_element_t));
+        std::memcpy(UVREST(copy, 0), UVREST(v,0), UVLENGTH(v) * sizeof(uvector_element_t));
         break;
     case PRIMTYPE_STRING:
         copy = mdl_new_string(v->v.s.l, v->v.s.p);
@@ -3554,11 +3539,11 @@ mdl_value_t *mdl_internal_listen_error(mdl_value_t *args, bool is_error)
     oblists = mdl_local_symbol_lookup(atom_oblist, cur_frame);
     if (!mdl_oblists_are_reasonable(oblists))
     {
-        fprintf(stderr, "LVAL of OBLIST not reasonable\n");
+        std::fprintf(stderr, "LVAL of OBLIST not reasonable\n");
         oblists = mdl_global_symbol_lookup(atom_oblist);
         if (!mdl_oblists_are_reasonable(oblists))
         {
-            fprintf(stderr, "GVAL of OBLIST not reasonable\n");
+            std::fprintf(stderr, "GVAL of OBLIST not reasonable\n");
             oblists = mdl_cons_internal(mdl_value_root_oblist, NULL);
             oblists = mdl_cons_internal(mdl_value_initial_oblist, oblists);
             oblists = mdl_make_list(oblists);
@@ -3570,11 +3555,11 @@ mdl_value_t *mdl_internal_listen_error(mdl_value_t *args, bool is_error)
     inchan = mdl_local_symbol_lookup(atom_inchan->v.a, cur_frame);
     if (!mdl_inchan_is_reasonable(inchan))
     {
-        fprintf(stderr, "LVAL of INCHAN not reasonable\n");
+        std::fprintf(stderr, "LVAL of INCHAN not reasonable\n");
         inchan = mdl_global_symbol_lookup(atom_inchan->v.a);
         if (!mdl_inchan_is_reasonable(inchan))
         {
-            fprintf(stderr, "GVAL of INCHAN not reasonable\n");
+            std::fprintf(stderr, "GVAL of INCHAN not reasonable\n");
             inchan = mdl_create_default_inchan();
         }
     }
@@ -3584,11 +3569,11 @@ mdl_value_t *mdl_internal_listen_error(mdl_value_t *args, bool is_error)
     outchan = mdl_local_symbol_lookup(atom_outchan->v.a, cur_frame);
     if (!mdl_outchan_is_reasonable(outchan))
     {
-        fprintf(stderr, "LVAL of OUTCHAN not reasonable\n");
+        std::fprintf(stderr, "LVAL of OUTCHAN not reasonable\n");
         outchan = mdl_global_symbol_lookup(atom_outchan->v.a);
         if (!mdl_outchan_is_reasonable(outchan))
         {
-            fprintf(stderr, "GVAL of OUTCHAN not reasonable\n");
+            std::fprintf(stderr, "GVAL of OUTCHAN not reasonable\n");
             outchan = mdl_create_default_outchan();
         }
     }
@@ -3663,7 +3648,7 @@ mdl_value_t *mdl_internal_listen_error(mdl_value_t *args, bool is_error)
                 // explicitly in the documentation
                 mdl_value_t *mdl_builtin_eval_rep(mdl_value_t *form, mdl_value_t *args);
                 
-                fprintf(stderr, "Atom REP has neither LVAL nor GVAL\n");
+                std::fprintf(stderr, "Atom REP has neither LVAL nor GVAL\n");
                 result = mdl_builtin_eval_rep(NULL, mdl_make_list(NULL));
             }
         }
@@ -3674,12 +3659,12 @@ mdl_value_t *mdl_internal_listen_error(mdl_value_t *args, bool is_error)
     }
     else
     {
-        printf("Bad longjmp to LISTEN frame");
+        std::printf("Bad longjmp to LISTEN frame");
     }
     return result;
 }
 
-void mdl_toplevel(FILE *restorefile)
+void mdl_toplevel(std::FILE *restorefile)
 {
     int jumpval;
 
@@ -3690,7 +3675,7 @@ void mdl_toplevel(FILE *restorefile)
     if (restorefile && !jumpval)
     {
         mdl_read_image(restorefile);
-        fprintf(stderr, "Initial restore failed");
+        std::fprintf(stderr, "Initial restore failed");
         exit(-1);
     }
     // re-acquire the atom in case of restore
@@ -4422,7 +4407,7 @@ mdl_value_t *mdl_builtin_eval_substruc(mdl_value_t *form, mdl_value_t *args)
         if (to && (amount > VLENGTH(to)))
             return mdl_call_error_ext("ARGUMENT-OUT-OF-RANGE", "SUBSTRUC destination too short", NULL);
         if (!to) to = mdl_new_empty_vector(amount, MDL_TYPE_VECTOR);
-        memcpy(VREST(to,0), VREST(from, rest), amount * sizeof(mdl_value_t));
+        std::memcpy(VREST(to,0), VREST(from, rest), amount * sizeof(mdl_value_t));
         break;
     case PRIMTYPE_UVECTOR:
         if (rest > UVLENGTH(from))
@@ -4439,7 +4424,7 @@ mdl_value_t *mdl_builtin_eval_substruc(mdl_value_t *form, mdl_value_t *args)
             to = mdl_new_empty_uvector(amount, MDL_TYPE_UVECTOR);
             UVTYPE(to) = UVTYPE(from);
         }
-        memcpy(UVREST(to,0), UVREST(from, rest), amount * sizeof(uvector_element_t));
+        std::memcpy(UVREST(to,0), UVREST(from, rest), amount * sizeof(uvector_element_t));
         break;
     case PRIMTYPE_TUPLE:
         if (rest > TPLENGTH(from))
@@ -4451,9 +4436,9 @@ mdl_value_t *mdl_builtin_eval_substruc(mdl_value_t *form, mdl_value_t *args)
             return mdl_call_error_ext("ARGUMENT-OUT-OF-RANGE", "SUBSTRUC destination too short", NULL);
         if (!to) to = mdl_new_empty_vector(amount, MDL_TYPE_VECTOR);
         if (to->pt == PRIMTYPE_VECTOR)
-            memcpy(VREST(to,0), TPREST(from, rest), amount * sizeof(mdl_value_t));
+            std::memcpy(VREST(to,0), TPREST(from, rest), amount * sizeof(mdl_value_t));
         else // must be another tuple
-            memcpy(TPREST(to,0), TPREST(from, rest), amount * sizeof(mdl_value_t));
+            std::memcpy(TPREST(to,0), TPREST(from, rest), amount * sizeof(mdl_value_t));
         break;
     case PRIMTYPE_STRING:
         if (rest > from->v.s.l)
@@ -4463,7 +4448,7 @@ mdl_value_t *mdl_builtin_eval_substruc(mdl_value_t *form, mdl_value_t *args)
             return mdl_call_error_ext("ARGUMENT-OUT-OF-RANGE", "SUBSTRUC amount too big for source", NULL);
         if (to && (amount > to->v.s.l))
             return mdl_call_error_ext("ARGUMENT-OUT-OF-RANGE", "SUBSTRUC destination too short", NULL);
-        if (to) memcpy(to->v.s.p, from->v.s.p + rest, amount);
+        if (to) std::memcpy(to->v.s.p, from->v.s.p + rest, amount);
         else to = mdl_new_string(amount, from->v.s.p + rest);
         break;
     default:
@@ -4548,7 +4533,7 @@ mdl_value_t *mdl_builtin_eval_string(mdl_value_t *form, mdl_value_t *args)
             *s++ = (char)cursor->v.p.car->v.w;
             break;
         case MDL_TYPE_STRING:
-            memcpy(s, cursor->v.p.car->v.s.p, cursor->v.p.car->v.s.l);
+            std::memcpy(s, cursor->v.p.car->v.s.p, cursor->v.p.car->v.s.l);
             s += cursor->v.p.car->v.s.l;
             break;
         }
@@ -5738,7 +5723,7 @@ mdl_value_t *mdl_builtin_eval_strcomp(mdl_value_t *form, mdl_value_t *args)
         mdl_error("Too many args to STRCOMP");
     if (e1->type == MDL_TYPE_ATOM && e2->type == MDL_TYPE_ATOM)
     {
-        int val = strcmp(e1->v.a->pname, e2->v.a->pname);
+        int val = std::strcmp(e1->v.a->pname, e2->v.a->pname);
         
         if (val < 0) return mdl_new_fix(-1);
         else if (val > 0) return mdl_new_fix(1);
@@ -5747,7 +5732,7 @@ mdl_value_t *mdl_builtin_eval_strcomp(mdl_value_t *form, mdl_value_t *args)
     else if (e1->type == MDL_TYPE_STRING && e2->type == MDL_TYPE_STRING)
     {
         int minlen = (e1->v.s.l < e2->v.s.l)?e1->v.s.l:e2->v.s.l;
-        int val = memcmp(e1->v.s.p, e2->v.s.p, minlen);
+        int val = std::memcmp(e1->v.s.p, e2->v.s.p, minlen);
 
         if (val < 0) return mdl_new_fix(-1);
         else if (val > 0) return mdl_new_fix(1);
@@ -6750,7 +6735,7 @@ mdl_value_t *mdl_builtin_eval_access(mdl_value_t *form, mdl_value_t *args)
     if (mdl_string_equal_cstr(&mode->v.s, "READ") || 
         mdl_string_equal_cstr(&mode->v.s, "READB"))
         mdl_clear_chan_flags(chan,ICHANNEL_HAS_LOOKAHEAD | ICHANNEL_AT_EOF);
-    fseek(mdl_get_channum_file(chnum), seek_to->v.w, SEEK_SET);
+    std::fseek(mdl_get_channum_file(chnum), seek_to->v.w, SEEK_SET);
     return chan;
 }
 // Conversion I/O
@@ -6901,7 +6886,7 @@ mdl_value_t *mdl_builtin_eval_prin1(mdl_value_t *form, mdl_value_t *args)
         mdl_error("Channel for PRIN1 must be output channel");
 
     mdl_print_value_to_chan(chan, obj, false, false, NULL);
-    fflush(stdout);
+    std::fflush(stdout);
     return obj;
 }
 
@@ -7255,7 +7240,6 @@ mdl_value_t *mdl_builtin_eval_save(mdl_value_t *form, mdl_value_t *args)
     mdl_value_t *nm1;
     mdl_value_t *nm2;
     mdl_value_t *gc;
-    FILE *f;
 
     GETNEXTARG(name1, args);
     GETNEXTARG(name2, args);
@@ -7272,12 +7256,12 @@ mdl_value_t *mdl_builtin_eval_save(mdl_value_t *form, mdl_value_t *args)
 
     mdl_decode_file_args(&name1, &name2, &dev, &dir);
     pathname = mdl_build_pathname(name1, name2, dev, dir);
-//    fprintf(stderr, "Saving to %s\n", pathname);
-    f = fopen(pathname, "wb");
+//    std::fprintf(stderr, "Saving to %s\n", pathname);
+    std::FILE *f = std::fopen(pathname, "wb");
     if (f)
     {
         mdl_write_image(f, NULL);
-        fclose(f);
+        std::fclose(f);
         return mdl_new_string(5, "SAVED");
     }
     return &mdl_value_false;
@@ -7294,11 +7278,9 @@ mdl_value_t *mdl_builtin_eval_save_eval(mdl_value_t *form, mdl_value_t *args)
     mdl_value_t *name2;
     mdl_value_t *dev;
     mdl_value_t *dir;
-    char *pathname;
     mdl_value_t *nm1;
     mdl_value_t *nm2;
     mdl_value_t *gc;
-    FILE *f;
 
     GETNEXTREQARG(save_arg, args);
     GETNEXTARG(name1, args);
@@ -7315,12 +7297,12 @@ mdl_value_t *mdl_builtin_eval_save_eval(mdl_value_t *form, mdl_value_t *args)
     mdl_bind_local_symbol(nm2->v.a, mdl_new_string(4, "SAVE"), cur_frame, false);
 
     mdl_decode_file_args(&name1, &name2, &dev, &dir);
-    pathname = mdl_build_pathname(name1, name2, dev, dir);
-    f = fopen(pathname, "wb");
+    char *pathname = mdl_build_pathname(name1, name2, dev, dir);
+    std::FILE *f = std::fopen(pathname, "wb");
     if (f)
     {
         mdl_write_image(f, save_arg);
-        fclose(f);
+        std::fclose(f);
         return mdl_new_string(5, "SAVED");
     }
     return &mdl_value_false;
@@ -7334,11 +7316,9 @@ mdl_value_t *mdl_builtin_eval_restore(mdl_value_t *form, mdl_value_t *args)
     mdl_value_t *name2;
     mdl_value_t *dev;
     mdl_value_t *dir;
-    char *pathname;
     mdl_value_t *nm1;
     mdl_value_t *nm2;
     mdl_value_t *gc;
-    FILE *f;
 
     GETNEXTARG(name1, args);
     GETNEXTARG(name2, args);
@@ -7354,12 +7334,12 @@ mdl_value_t *mdl_builtin_eval_restore(mdl_value_t *form, mdl_value_t *args)
     mdl_bind_local_symbol(nm2->v.a, mdl_new_string(4, "SAVE"), cur_frame, false);
 
     mdl_decode_file_args(&name1, &name2, &dev, &dir);
-    pathname = mdl_build_pathname(name1, name2, dev, dir);
-    f = fopen(pathname, "rb");
+    char *pathname = mdl_build_pathname(name1, name2, dev, dir);
+    std::FILE *f = std::fopen(pathname, "rb");
     if (f)
     {
         bool ok = mdl_read_image(f);
-        fclose(f);
+        std::fclose(f);
         if (ok) return mdl_new_string(8, "RESTORED");
     }
     return &mdl_value_false;
@@ -7371,28 +7351,25 @@ mdl_value_t *mdl_builtin_eval_file_length(mdl_value_t *form, mdl_value_t *args)
 {
     ARGSETUP(args);
     mdl_value_t *chan;
-    int channum;
-    FILE *f;
     fpos_t savepos;
-    off_t endpos;
 
     GETNEXTREQARG(chan, args);
     NOMOREARGS(args);
     
     if (!mdl_chan_mode_is_input(chan))
         return mdl_call_error("WRONG-DIRECTION-CHANNEL", NULL);
-    channum = mdl_get_chan_channum(chan);
+    int channum = mdl_get_chan_channum(chan);
     if (!channum)
         return mdl_call_error("CHANNEL-CLOSED", NULL); // or maybe internal.
-    f = mdl_get_channum_file(channum);
+    std::FILE *f = mdl_get_channum_file(channum);
     if (!f) 
         return mdl_call_error_ext("CHANNEL-CLOSED", "Channel closed but nonzero", NULL); // shouldn't happen
-    if (fgetpos(f,&savepos) == -1) 
+    if (std::fgetpos(f, &savepos) == -1) 
         return mdl_call_error("FILE-LENGTH-UNAVAILABLE", NULL); // not an original MDL error
-    if (fseek(f, SEEK_END, 0) == -1)
+    if (std::fseek(f, SEEK_END, 0) == -1)
         return mdl_call_error("FILE-LENGTH-UNAVAILABLE", NULL); // not an original MDL error
-    endpos = ftello(f);
-    fsetpos(f, &savepos);
+    off_t endpos = ftello(f);
+    std::fsetpos(f, &savepos);
     if (mdl_chan_mode_is_read_binary(chan))
         return mdl_new_fix((MDL_INT)(endpos / sizeof(MDL_INT)));
     else
@@ -8055,7 +8032,7 @@ mdl_value_t *mdl_builtin_eval_sleep(mdl_value_t *form, mdl_value_t *args)
 
     if (fix->v.w < 0)
         return mdl_call_error_ext("ARGUMENT-OUT-OF-RANGE", "SLEEP time negative", NULL);
-    fflush(stdout); // let the user see while we rest
+    std::fflush(stdout); // let the user see while we rest
     sleep(fix->v.w);
 
     return mdl_value_T;
@@ -8071,7 +8048,7 @@ mdl_value_t *mdl_builtin_eval_warranty(mdl_value_t *form, mdl_value_t *args)
     NOMOREARGS(args);
 
     mdl_setup_frame_for_print(&chan);
-    mdl_print_string_to_chan(chan, no_warranty, strlen(no_warranty), 0, false, false);
+    mdl_print_string_to_chan(chan, no_warranty, std::strlen(no_warranty), 0, false, false);
     mdl_print_newline_to_chan(chan, false, NULL);
     return &mdl_value_false;
 }
@@ -8085,7 +8062,7 @@ mdl_value_t *mdl_builtin_eval_license(mdl_value_t *form, mdl_value_t *args)
     NOMOREARGS(args);
 
     mdl_setup_frame_for_print(&chan);
-    mdl_print_string_to_chan(chan, license, strlen(license), 0, false, false);
+    mdl_print_string_to_chan(chan, license, std::strlen(license), 0, false, false);
     mdl_print_newline_to_chan(chan, false, NULL);
     return mdl_value_T;
 }

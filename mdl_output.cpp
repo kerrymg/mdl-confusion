@@ -136,7 +136,7 @@ mdl_value_t *mdl_get_internal_output_channel_string(mdl_value_t *chan)
     while (cursor && (len > 0))
     {
         int cplen = (len > bufsize) ? bufsize : len;
-        memcpy(d, cursor->v.p.car->v.s.p, cplen);
+        std::memcpy(d, cursor->v.p.car->v.s.p, cplen);
         d += cplen;
         len -= cplen;
         cursor = cursor->v.p.cdr;
@@ -214,7 +214,7 @@ void mdl_print_char_to_transcript_channels(mdl_value_t *chan, int ch, int printf
     }
 }
 
-void mdl_print_newline_to_chan(mdl_value_t *chan, int printflags, FILE *f)
+void mdl_print_newline_to_chan(mdl_value_t *chan, int printflags, std::FILE *f)
 {
     int linewidth = VITEM(chan, CHANNEL_SLOT_LINEWIDTH)->v.w;
     MDL_INT *linepos = &(VITEM(chan, CHANNEL_SLOT_CPOS)->v.w);
@@ -233,9 +233,9 @@ void mdl_print_newline_to_chan(mdl_value_t *chan, int printflags, FILE *f)
         if (!f) f = mdl_get_chan_file(chan);
         if (!f) mdl_error("No file for channel");
         if (binary)
-            fputs("\r\n", f);
+            std::fputs("\r\n", f);
         else
-            fputc('\n', f);
+            std::fputc('\n', f);
     }
     else
     {
@@ -272,7 +272,7 @@ void mdl_print_char_to_chan(mdl_value_t *chan, int ch, int printflags, FILE *f)
     {
         if (!f) f = mdl_get_chan_file(chan);
         if (!f) mdl_error("No file for channel");
-        putc(ch, f);
+        std::putc(ch, f);
     }
     else
     {
@@ -316,11 +316,11 @@ void mdl_print_char_to_chan(mdl_value_t *chan, int ch, int printflags, FILE *f)
 }
 
 void mdl_print_string_to_chan(mdl_value_t *chan, 
-                                      const char *str,
-                                      int len,
-                                      int extralen, // space to reserve, not including the addspacebefore value
-                                      bool canbreakbefore,
-                                      bool addspacebefore // add a space if no break
+                              const char *str,
+                              int len,
+                              int extralen, // space to reserve, not including the addspacebefore value
+                              bool canbreakbefore,
+                              bool addspacebefore // add a space if no break
     )
 {
     int linewidth = VITEM(chan, CHANNEL_SLOT_LINEWIDTH)->v.w;
@@ -328,11 +328,10 @@ void mdl_print_string_to_chan(mdl_value_t *chan,
     bool broke = false;
     const char *s;
     int tlen;
-    FILE *f;
 
     bool binary = mdl_chan_mode_is_print_binary(chan);
-//    fflush(stdout);
-//    fprintf(stderr, "||%3d %-.*s %d %d %d %d %d||\n", len, len, str, canbreakbefore, addspacebefore, binary, linewidth, (int)*linepos);
+//    std::fflush(stdout);
+//    std::fprintf(stderr, "||%3d %-.*s %d %d %d %d %d||\n", len, len, str, canbreakbefore, addspacebefore, binary, linewidth, (int)*linepos);
 
     int olen = len;
     if (!binary)
@@ -349,7 +348,7 @@ void mdl_print_string_to_chan(mdl_value_t *chan,
     else if (!mdl_chan_mode_is_output(chan))
         mdl_error("Tried to print to an input channel!");
 
-    f = mdl_get_chan_file(chan);
+    std::FILE *f = mdl_get_chan_file(chan);
     if (addspacebefore) extralen++;
     if (canbreakbefore && !binary)
     {
@@ -379,7 +378,7 @@ void mdl_print_string_to_chan(mdl_value_t *chan,
 
 void mdl_print_binary(mdl_value_t *chan, mdl_value_t *buffer)
 {
-    FILE *f = mdl_get_chan_file(chan);
+    std::FILE *f = mdl_get_chan_file(chan);
     if (!f) mdl_error("Attempt to write to closed binary channel");
 
     int len = UVLENGTH(buffer);
@@ -647,7 +646,7 @@ void mdl_print_nonstructured_to_chan(mdl_value_t *chan, const mdl_value_t *a, in
                     {
                     }
                 }
-                mdl_print_string_to_chan(chan,buf, strlen(buf), 0, true, prespace);
+                mdl_print_string_to_chan(chan,buf, std::strlen(buf), 0, true, prespace);
             }
             break;
             case MDL_TYPE_FIX:
@@ -655,14 +654,14 @@ void mdl_print_nonstructured_to_chan(mdl_value_t *chan, const mdl_value_t *a, in
                 char buf[(sizeof(MDL_INT) << 3) + 1]; // # bits + 1
                 int radix = mdl_get_chan_radix(chan);
                 mdl_int_to_string(a->v.w, buf, sizeof(buf), radix);
-                mdl_print_string_to_chan(chan,buf, strlen(buf), 0, true, prespace);
+                mdl_print_string_to_chan(chan,buf, std::strlen(buf), 0, true, prespace);
             }
             break;
             case MDL_TYPE_FLOAT:
             {
                 char buf[10];
-                sprintf(buf, "%.7f", a->v.fl);
-                mdl_print_string_to_chan(chan,buf, strlen(buf), 0, true, prespace);
+                std::sprintf(buf, "%.7f", a->v.fl);
+                mdl_print_string_to_chan(chan,buf, std::strlen(buf), 0, true, prespace);
             }
             break;
             default:
@@ -670,11 +669,11 @@ void mdl_print_nonstructured_to_chan(mdl_value_t *chan, const mdl_value_t *a, in
                 char buf[(((sizeof(MDL_INT) << 3) + 2) / 3) + 3]; // size of octal representation plus stars
                 mdl_print_hashtype(chan, a->type, princ, prespace, oblists);
 #ifdef MDL32
-                sprintf(buf, "*%011o*", a->v.w);
+                std::sprintf(buf, "*%011o*", a->v.w);
 #else
-                sprintf(buf, "*%022llo*", a->v.w);
+                std::sprintf(buf, "*%022llo*", a->v.w);
 #endif
-                mdl_print_string_to_chan(chan,buf, strlen(buf), 0, true, true);
+                mdl_print_string_to_chan(chan,buf, std::strlen(buf), 0, true, true);
                 break;
             }
             }
@@ -788,7 +787,7 @@ void mdl_print_list_to_chan(mdl_value_t *chan, const mdl_value_t *v, int print_a
     if (specialform)
     {
         // this can result in an orphan special form ... oh well
-        mdl_print_string_to_chan(chan, startstr, strlen(startstr), 0, true, prespace);
+        mdl_print_string_to_chan(chan, startstr, std::strlen(startstr), 0, true, prespace);
         mdl_print_value_to_chan(chan, v->v.p.cdr->v.p.cdr->v.p.car, princ, false, oblists);
         return;
     }
@@ -797,13 +796,13 @@ void mdl_print_list_to_chan(mdl_value_t *chan, const mdl_value_t *v, int print_a
     if (!c)
     {
         // no break allowed in ()
-        int elen = strlen(endstr);
-        mdl_print_string_to_chan(chan, startstr, strlen(startstr), elen, true, prespace);
+        int elen = std::strlen(endstr);
+        mdl_print_string_to_chan(chan, startstr, std::strlen(startstr), elen, true, prespace);
         mdl_print_string_to_chan(chan, endstr, elen, 0, false, false);
         return;
     }
 
-    mdl_print_string_to_chan(chan, startstr, strlen(startstr), 0, true, prespace);
+    mdl_print_string_to_chan(chan, startstr, std::strlen(startstr), 0, true, prespace);
     mdl_print_value_to_chan(chan, c->v.p.car, princ, false, oblists);
     c = c->v.p.cdr;
     while (c)
@@ -811,7 +810,7 @@ void mdl_print_list_to_chan(mdl_value_t *chan, const mdl_value_t *v, int print_a
         mdl_print_value_to_chan(chan, c->v.p.car, princ, true, oblists);
         c = c->v.p.cdr;
     }
-    mdl_print_string_to_chan(chan, endstr, strlen(endstr), 0, true, false);
+    mdl_print_string_to_chan(chan, endstr, std::strlen(endstr), 0, true, false);
 }
 
 void mdl_print_vector_to_chan(mdl_value_t *chan, const mdl_value_t *v, int print_as_type, bool princ, bool prespace, mdl_value_t *oblists)
@@ -1017,7 +1016,7 @@ void mdl_print_value_to_chan(mdl_value_t *chan, mdl_value_t *v, bool princ,
 }
 
 
-void mdl_print_value(FILE *f, mdl_value_t *v)
+void mdl_print_value(std::FILE *f, mdl_value_t *v)
 {
     // FIXME : remove
     mdl_value_t *chan = mdl_get_default_outchan();

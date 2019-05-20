@@ -24,19 +24,19 @@ PERL = perl
 
 PROGRAMS = mdli
 
-TMPSRCS = mdl_builtins.cpp mdl_builtin_types.cpp mdl_builtin_types.h mdl_builtins.h copying.c
+TMPSRCS = mdl_builtins.cpp mdl_builtin_types.cpp mdl_builtin_types.h mdl_builtins.h license.c
 
 CXXSRCS = macros.cpp mdli.cpp mdl_builtins.cpp mdl_builtin_types.cpp mdl_read.cpp mdl_output.cpp mdl_binary_io.cpp mdl_decl.cpp mdl_assoc.cpp
 
-CSRCS = mdl_strbuf.c copying.c
+CSRCS = mdl_strbuf.c license.c
 
 OBJS = $(CXXSRCS:.cpp=.o) $(CSRCS:.c=.o)
 
 mdli: $(OBJS)
 	$(CXX) $(CXXFLAGS) -o $@ $^ $(LIBS)
 
-copying.c: COPYING
-	awk 'BEGIN { print "const char copying [] = " } /END OF TERMS AND CONDITIONS/ { nextfile } { gsub("\"", "\\\"", $$0); print "\"" $$0 "\\n\""  } END { print ";" }'  < COPYING > copying.c
+license.c: LICENSE
+	awk 'BEGIN { print "const char license [] = " } /END OF TERMS AND CONDITIONS/ { nextfile } { gsub("\"", "\\\"", $$0); print "\"" $$0 "\\n\""  } END { print ";" }'  < LICENSE > license.c
 
 mdl_builtins.o: mdl_builtins.h
 

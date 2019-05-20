@@ -8076,16 +8076,22 @@ mdl_value_t *mdl_builtin_eval_warranty(mdl_value_t *form, mdl_value_t *args)
     return &mdl_value_false;
 }
 
-mdl_value_t *mdl_builtin_eval_copying(mdl_value_t *form, mdl_value_t *args)
+mdl_value_t *mdl_builtin_eval_license(mdl_value_t *form, mdl_value_t *args)
 /* SUBR */
 {
-    extern const char copying[];
+    extern const char license[];
     mdl_value_t *chan = NULL;
     ARGSETUP(args);
     NOMOREARGS(args);
 
     mdl_setup_frame_for_print(&chan);
-    mdl_print_string_to_chan(chan, copying, strlen(copying), 0, false, false);
+    mdl_print_string_to_chan(chan, license, strlen(license), 0, false, false);
     mdl_print_newline_to_chan(chan, false, NULL);
     return mdl_value_T;
+}
+
+mdl_value_t *mdl_builtin_eval_copying(mdl_value_t *form, mdl_value_t *args)
+/* SUBR */
+{
+    return mdl_builtin_eval_license(form, args);
 }

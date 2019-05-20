@@ -24,10 +24,12 @@
 #include <string>
 
 const char copyright_notice[] = 
-    "Welcome to 'Confusion', a MDL interpreter.\n"
-    "Copyright 2009 Matthew T. Russotto"
-    "\nThis program comes with ABSOLUTELY NO WARRANTY; for details type <WARRANTY>.\n"
-    "This is free software, and you are welcome to distribute under certain conditions; type <COPYING> for details\n";
+    "Welcome to 'Confusion', a MDL interpreter."
+    "\nCopyright 2009 Matthew T. Russotto"
+    "\nCopyright 2019 Kerry M. Guerrero"
+    "\nThis program comes with ABSOLUTELY NO WARRANTY; for details type <WARRANTY>."
+    "\nThis is free software, and you are welcome to distribute under certain conditions; "
+    "type <COPYING> or <LICENSE> for details\n";
 
 extern const char no_warranty[] = "THERE IS NO WARRANTY FOR THIS PROGRAM, TO THE EXTENT PERMITTED BY\n"
 "APPLICABLE LAW.  EXCEPT WHEN OTHERWISE STATED IN WRITING THE COPYRIGHT\n"

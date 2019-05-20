@@ -2,7 +2,7 @@
 *.d
 
 # Generated Files
-copying.c
+license.c
 mdl_builtin_types.cpp
 mdl_builtin_types.h
 mdl_builtins.cpp

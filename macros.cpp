@@ -38,8 +38,8 @@ mdl_built_in_table_t built_in_table;
 mdl_type_table_t mdl_type_table;
 mdl_symbol_table_t global_syms;
 
-mdl_frame_t *cur_frame = NULL;
-mdl_frame_t *initial_frame = NULL;
+mdl_frame_t *cur_frame = nullptr;
+mdl_frame_t *initial_frame = nullptr;
 int cur_process_bindid;
 bool suppress_listen_message;
 
@@ -59,7 +59,7 @@ mdl_value_t *mdl_value_atom_default;
 mdl_value_t *mdl_value_T;
 mdl_value_t mdl_value_false = { PRIMTYPE_LIST, MDL_TYPE_FALSE};
 mdl_value_t mdl_value_unassigned = { PRIMTYPE_WORD, MDL_TYPE_UNBOUND};
-mdl_value_t *mdl_static_block_stack = NULL;
+mdl_value_t *mdl_static_block_stack = nullptr;
 
 #define MDL_OBLIST_HASHBUCKET_DEFAULT 17
 #define MDL_ROOT_OBLIST_HASHBUCKET_DEFAULT 103
@@ -68,7 +68,7 @@ mdl_value_t *mdl_static_block_stack = NULL;
 
 mdl_type_table_entry_t *mdl_type_table_entry(int typenum)
 {
-    if (typenum >= (int)mdl_type_table.size()) return NULL;
+    if (typenum >= (int)mdl_type_table.size()) return nullptr;
     return &mdl_type_table[typenum];
 }
 
@@ -76,7 +76,7 @@ atom_t *mdl_type_atom(int typenum)
 {
     const mdl_type_table_entry_t *tte = mdl_type_table_entry(typenum);
     if (tte) return tte->a;
-    return NULL;
+    return nullptr;
 }
 
 int mdl_get_typenum(mdl_value_t *val)
@@ -120,21 +120,21 @@ mdl_value_t *mdl_get_printtype(int typenum)
 {
     const mdl_type_table_entry_t *tte = mdl_type_table_entry(typenum);
     if (tte) return tte->printtype;
-    return NULL;
+    return nullptr;
 }
 
 mdl_value_t *mdl_get_evaltype(int typenum)
 {
     const mdl_type_table_entry_t *tte = mdl_type_table_entry(typenum);
     if (tte) return tte->evaltype;
-    return NULL;
+    return nullptr;
 }
 
 mdl_value_t *mdl_get_applytype(int typenum)
 {
     const mdl_type_table_entry_t *tte = mdl_type_table_entry(typenum);
     if (tte) return tte->applytype;
-    return NULL;
+    return nullptr;
 }
 
 mdl_value_t *mdl_set_printtype(int typenum, mdl_value_t *how)
@@ -145,7 +145,7 @@ mdl_value_t *mdl_set_printtype(int typenum, mdl_value_t *how)
         tte->printtype = how;
         return how;
     }
-    return NULL;
+    return nullptr;
 }
 
 mdl_value_t *mdl_set_evaltype(int typenum, mdl_value_t *how)
@@ -156,7 +156,7 @@ mdl_value_t *mdl_set_evaltype(int typenum, mdl_value_t *how)
         tte->evaltype = how;
         return how;
     }
-    return NULL;
+    return nullptr;
 }
 
 mdl_value_t *mdl_set_applytype(int typenum, mdl_value_t *how)
@@ -167,7 +167,7 @@ mdl_value_t *mdl_set_applytype(int typenum, mdl_value_t *how)
         tte->applytype = how;
         return how;
     }
-    return NULL;
+    return nullptr;
 }
 
 // this returns a copy of the internal type vector, not the real thing as in
@@ -200,8 +200,8 @@ bool mdl_string_equal_cstr(const counted_string_t *s, const char *cs)
 
 bool mdl_value_equal_atom(const mdl_value_t *a, const atom_t *b)
 {
-    if (a == NULL && b == NULL) return true; // ?? maybe wrong
-    if (a == NULL || b == NULL) return false;
+    if (a == nullptr && b == nullptr) return true; // ?? maybe wrong
+    if (a == nullptr || b == nullptr) return false;
     if (a->pt != PRIMTYPE_ATOM) return false;
     if (a->type != MDL_TYPE_ATOM) return false;
     return mdl_atom_equal(a->v.a, b);
@@ -335,8 +335,8 @@ bool mdl_value_equal(const mdl_value_t *a, const mdl_value_t *b)
         uvector_element_t *elemb = UVREST(b, 0);
         while (len--)
         {
-            mdl_value_t *vala = mdl_uvector_element_to_value(a, elema, NULL);
-            mdl_value_t *valb = mdl_uvector_element_to_value(b, elemb, NULL);
+            mdl_value_t *vala = mdl_uvector_element_to_value(a, elema, nullptr);
+            mdl_value_t *valb = mdl_uvector_element_to_value(b, elemb, nullptr);
             if (!mdl_value_equal(vala, valb)) return false;
             elema++;
             elemb++;
@@ -389,7 +389,7 @@ mdl_value_t *mdl_get_atom_from_oblist(const char *pname, mdl_value_t *oblist)
         }
         cursor = cursor->v.p.cdr;
     }
-    return NULL;
+    return nullptr;
 }
 
 mdl_value_t *mdl_remove_atom_from_oblist(const char *pname, mdl_value_t *oblist)
@@ -402,7 +402,7 @@ mdl_value_t *mdl_remove_atom_from_oblist(const char *pname, mdl_value_t *oblist)
     uvector_element_t *bucket = mdl_internal_uvector_rest(oblist, bucket_num);
 
     mdl_value_t *cursor = bucket->l;
-    mdl_value_t *lastcursor = NULL;
+    mdl_value_t *lastcursor = nullptr;
     while (cursor)
     {
         mdl_value_t *av = cursor->v.p.car;
@@ -412,13 +412,13 @@ mdl_value_t *mdl_remove_atom_from_oblist(const char *pname, mdl_value_t *oblist)
         {
             if (cursor == bucket->l) bucket->l = cursor->v.p.cdr;
             else lastcursor->v.p.cdr = cursor->v.p.cdr;
-            av->v.a->oblist = NULL;
+            av->v.a->oblist = nullptr;
             return av;
         }
         lastcursor = cursor;
         cursor = cursor->v.p.cdr;
     }
-    return NULL;
+    return nullptr;
 }
 
 // note that it is assumed the atom isn't already there
@@ -456,7 +456,7 @@ mdl_value_t *mdl_create_atom_on_oblist(const char *pname, mdl_value_t *oblist)
         mdl_error("Oblist not of oblist type in ATOM create");
 
     if (mdl_get_atom_from_oblist(pname, oblist))
-        return NULL; // no dupes allowed
+        return nullptr; // no dupes allowed
 
     mdl_value_t *atomval = mdl_create_atom(pname);
     atomval->v.a->oblist = oblist;
@@ -501,7 +501,7 @@ mdl_value_t *mdl_create_oblist(mdl_value_t *oblname, int buckets)
 atom_t *mdl_get_oblist_name(mdl_value_t *oblist)
 {
     mdl_value_t *oname = mdl_internal_eval_getprop(oblist, mdl_value_oblist);
-    if (!oname) return NULL;
+    if (!oname) return nullptr;
     if (oname->type != MDL_TYPE_ATOM) 
         mdl_error("Name of an oblist must be an atom"); // probably not actually true in real MDL
     return oname->v.a;
@@ -511,7 +511,7 @@ mdl_value_t *mdl_get_current_oblists()
 {
     mdl_value_t *oblists;
 
-    if (cur_frame == NULL) 
+    if (cur_frame == nullptr) 
         oblists = mdl_local_symbol_lookup(atom_oblist, cur_process_initial_frame);
     else
         oblists = mdl_local_symbol_lookup(atom_oblist, cur_frame);
@@ -523,13 +523,13 @@ mdl_value_t *mdl_get_atom_default_oblist(const char *pname, bool insert_allowed,
     if (!oblists)
         oblists = mdl_get_current_oblists();
         
-    if (oblists == NULL)
+    if (oblists == nullptr)
     {
         if (insert_allowed)
             mdl_error(".OBLIST is not set");
-        return NULL;
+        return nullptr;
     }
-    mdl_value_t *a = NULL;
+    mdl_value_t *a = nullptr;
     if (oblists->type == MDL_TYPE_OBLIST)
     {
         a = mdl_get_atom_from_oblist(pname, oblists);
@@ -579,7 +579,7 @@ mdl_value_t *mdl_push_oblist_lval(mdl_value_t *new_lval)
 
 mdl_value_t *mdl_pop_oblist_lval()
 {
-    if (mdl_static_block_stack == NULL)
+    if (mdl_static_block_stack == nullptr)
         mdl_error("Tried to pop static block stack when it was empty");
     mdl_value_t *old_lval = mdl_static_block_stack->v.p.car;
     mdl_static_block_stack = mdl_static_block_stack->v.p.cdr;
@@ -613,7 +613,7 @@ mdl_value_t *mdl_get_atom(const char *pname, bool insert_allowed, mdl_value_t *d
     {
         return mdl_get_atom_default_oblist(pname, insert_allowed, default_oblists);
     }
-    mdl_value_t *a = NULL;
+    mdl_value_t *a = nullptr;
     int ulen = trailer - pname;
     char *uname = (char *)alloca(ulen + 1);
     std::memcpy(uname, pname, ulen);
@@ -649,7 +649,7 @@ mdl_value_t *mdl_get_atom(const char *pname, bool insert_allowed, mdl_value_t *d
 
 mdl_value_t *mdl_create_or_get_atom(const char *pname)
 {
-    mdl_value_t *a = mdl_get_atom(pname, true, NULL);
+    mdl_value_t *a = mdl_get_atom(pname, true, nullptr);
     return a;
 }
 
@@ -742,7 +742,7 @@ mdl_value_t *mdl_newlist()
     r = (mdl_value_t *)GC_MALLOC(sizeof(mdl_value_t));
     r->pt = PRIMTYPE_LIST;
     r->type = MDL_TYPE_INTERNAL_LIST; // it's not a true list without the first element
-    r->v.p.car = r->v.p.cdr = NULL;
+    r->v.p.car = r->v.p.cdr = nullptr;
     return r;
 }
 // mdl_make_list returns a MDL list -- the input list with an extra element at the
@@ -906,7 +906,7 @@ mdl_value_t *mdl_make_uvector(mdl_value_t *l, int type, bool destroy)
         mdl_value_t *oldcursor = cursor;
         if (UVTYPE(dest) != cursor->v.p.car->type)
         {
-            return mdl_call_error("TYPES-DIFFER-IN-UNIFORM-VECTOR", NULL);
+            return mdl_call_error("TYPES-DIFFER-IN-UNIFORM-VECTOR", nullptr);
         }
         mdl_uvector_value_to_element(cursor->v.p.car, elems++);
         cursor = cursor->v.p.cdr;
@@ -927,7 +927,7 @@ mdl_value_t *mdl_additem(mdl_value_t *a, mdl_value_t *b, mdl_value_t **lastitem)
         return a;
     }
     
-    if (a == NULL)
+    if (a == nullptr)
     {
         a = mdl_newlist();
         a->v.p.car = b;
@@ -938,13 +938,13 @@ mdl_value_t *mdl_additem(mdl_value_t *a, mdl_value_t *b, mdl_value_t **lastitem)
         mdl_error("Can't add an item to a non-list");
         mdl_print_value(stderr, a);
         std::printf("\n");
-        return NULL;
+        return nullptr;
     }
     else
     {
         mdl_value_t *c = a;
         /* this ain't LISP, lists are always null terminated, if they terminate */
-        while (c->v.p.cdr != NULL)
+        while (c->v.p.cdr != nullptr)
         {
             c = c->v.p.cdr;
         }
@@ -1001,7 +1001,7 @@ int mdl_new_chan_num(std::FILE *f)
 
     for (i = chanfilemap.size(), iter = chanfilemap.rbegin(); iter != chanfilemap.rend(); iter++, i--)
     {
-        if (*iter == NULL) 
+        if (*iter == nullptr) 
         {
             *iter = f;
             return i;
@@ -1066,7 +1066,7 @@ void mdl_set_chan_file(int chnum, std::FILE *f)
 
 void mdl_free_chan_file(int chnum)
 {
-    chanfilemap[chnum - 1] = NULL;
+    chanfilemap[chnum - 1] = nullptr;
 }
 
 // Create and return a new and unopened channel
@@ -1079,7 +1079,7 @@ mdl_value_t *mdl_internal_create_channel()
 
     cvec = mdl_internal_eval_rest_i(cvec, CHANNEL_SLOT_OFFSET);
     cvec->type = MDL_TYPE_CHANNEL;
-    *VITEM(cvec, CHANNEL_SLOT_TRANSCRIPT) = *mdl_make_list(NULL);
+    *VITEM(cvec, CHANNEL_SLOT_TRANSCRIPT) = *mdl_make_list(nullptr);
     *VITEM(cvec, CHANNEL_SLOT_DEVDEP) = *zerofix;
     *VITEM(cvec, CHANNEL_SLOT_CHNUM) = *zerofix;
     for (i = CHANNEL_SLOT_MODE; i <= CHANNEL_SLOT_DIRN; i++)
@@ -1102,7 +1102,7 @@ const char *mdl_get_chan_os_mode(mdl_value_t *chan)
     if (mdl_string_equal_cstr(chanmode, "PRINT")) return "w";
     if (mdl_string_equal_cstr(chanmode, "PRINTB")) return "wb";
     if (mdl_string_equal_cstr(chanmode, "PRINTO")) return "rb+";
-    return NULL;
+    return nullptr;
 }
 
 char *mdl_getcwd()
@@ -1116,7 +1116,7 @@ char *mdl_getcwd()
         cwdp = getcwd(cwdbuf, bsize);
         bsize = bsize << 2;
     }
-    while (cwdbuf != NULL && cwdp == NULL && errno == ERANGE);
+    while (cwdbuf != nullptr && cwdp == nullptr && errno == ERANGE);
     return cwdp;
 }
 
@@ -1124,7 +1124,7 @@ void *mdl_memrchr(const void *s, int c, size_t n)
 {
     const unsigned char *p = (const unsigned char *)s + n;
     while (p-- != s) if (*p == c) return (void *)p;
-    return NULL;
+    return nullptr;
 }
 
 void mdl_decode_file_args(mdl_value_t **name1p, mdl_value_t **name2p, mdl_value_t **devicep, mdl_value_t **dirp)
@@ -1540,7 +1540,7 @@ mdl_value_t *mdl_call_error_ext(const char *erratom, const char *errstr, ...)
     mdl_value_t *arg;
 
     va_start(gp, errstr);
-    arglist = mdl_additem(NULL, mdl_value_builtin_error, &lastitem);
+    arglist = mdl_additem(nullptr, mdl_value_builtin_error, &lastitem);
     // FIXME -- use atom instead of string for first arg
     mdl_additem(lastitem, mdl_new_string(erratom), &lastitem);
     mdl_additem(lastitem, mdl_new_string(errstr), &lastitem);
@@ -1560,7 +1560,7 @@ mdl_value_t *mdl_call_error(const char *errstr, ...)
     mdl_value_t *arg;
 
     va_start(gp, errstr);
-    arglist = mdl_additem(NULL, mdl_value_builtin_error, &lastitem);
+    arglist = mdl_additem(nullptr, mdl_value_builtin_error, &lastitem);
     mdl_additem(lastitem, mdl_new_string(errstr), &lastitem);
     while ((arg = va_arg(gp, mdl_value_t *)))
     {
@@ -1574,7 +1574,7 @@ mdl_value_t *mdl_parse_string(mdl_value_t *str, int radix, mdl_value_t *lookahea
 {
     mdl_value_t *chan = mdl_internal_create_channel();
     mdl_set_chan_mode(chan, "READ");
-    mdl_set_chan_eof_object(chan, NULL); // error out on illegal object
+    mdl_set_chan_eof_object(chan, nullptr); // error out on illegal object
     mdl_set_chan_input_source(chan, str);
     if (lookahead)
         mdl_set_chan_lookahead(chan, lookahead->v.w);
@@ -1631,7 +1631,7 @@ mdl_local_symbol_t *mdl_local_symbol_slot(atom_t *atom, mdl_frame_t *frame)
         if (iter != frame->syms->end()) break;
         frame = frame->prev_frame;
     }
-    if (!frame) return NULL;
+    if (!frame) return nullptr;
 
 #ifdef CACHE_LOCAL_SYMBOLS
     if (fixbind)
@@ -1674,7 +1674,7 @@ mdl_value_t *mdl_bind_local_symbol(atom_t *atom, mdl_value_t *val, mdl_frame_t *
             atom->bindid = cur_process_bindid;
         }
         else
-            atom->binding = NULL;
+            atom->binding = nullptr;
 #endif
     }
     return val;
@@ -1689,7 +1689,7 @@ mdl_value_t *mdl_local_symbol_lookup(atom_t *atom, mdl_frame_t *frame)
 
 mdl_value_t *mdl_local_symbol_lookup_pname(const char *pname, mdl_frame_t *frame)
 {
-    mdl_value_t *av = mdl_get_atom(pname, true, NULL);
+    mdl_value_t *av = mdl_get_atom(pname, true, nullptr);
     if (!av) return nullptr;
     return mdl_local_symbol_lookup(av->v.a, frame);
 }
@@ -1708,12 +1708,12 @@ mdl_value_t *mdl_both_symbol_lookup(atom_t *atom, mdl_frame_t *frame)
 mdl_value_t *mdl_both_symbol_lookup_pname(const char *pname, mdl_frame_t *frame)
 {
     mdl_value_t *result;
-    mdl_value_t * av = mdl_get_atom(pname, true, NULL);
-    if (!av) return NULL;
+    mdl_value_t * av = mdl_get_atom(pname, true, nullptr);
+    if (!av) return nullptr;
     result = mdl_local_symbol_lookup(av->v.a, frame);
     if (!result || result->type == MDL_TYPE_UNBOUND)
         result = mdl_global_symbol_lookup(av->v.a);
-    if (!result || result->type == MDL_TYPE_UNBOUND) return NULL;
+    if (!result || result->type == MDL_TYPE_UNBOUND) return nullptr;
     return result;
 }
 
@@ -1726,7 +1726,7 @@ mdl_value_t *mdl_bind_args(mdl_value_t *fargs,
                    bool called_from_apply_subr,
                    bool auxonly)
 {
-    mdl_value_t *argptr = NULL;
+    mdl_value_t *argptr = nullptr;
     mdl_value_t *mdl_value_atom_quote = mdl_get_atom_from_oblist("QUOTE", mdl_value_root_oblist);
 
 
@@ -1767,7 +1767,7 @@ mdl_value_t *mdl_bind_args(mdl_value_t *fargs,
             if (farg->type != MDL_TYPE_FORM && farg->type != MDL_TYPE_ATOM)
                 mdl_error("First element in 2-list must be atom or quoted atom");
             if (argstate != ARGSTATE_OPTIONAL && argstate != ARGSTATE_AUX)
-                return mdl_call_error_ext("FIXME", "2-lists allowed only in OPTIONAL or AUX sections", NULL);
+                return mdl_call_error_ext("FIXME", "2-lists allowed only in OPTIONAL or AUX sections", nullptr);
         }
 
         if (farg->type == MDL_TYPE_STRING)
@@ -1852,13 +1852,13 @@ mdl_value_t *mdl_bind_args(mdl_value_t *fargs,
                     if (!called_from_apply_subr)
                         arg = mdl_eval(arg, false, mdl_make_frame_value(prev_frame));
                     if (!mdl_bind_local_symbol(farg->v.a, arg, frame, false))
-                        return mdl_call_error_ext ("BAD-ARGUMENT-LIST", "Duplicate formal argument", farg, fargs, NULL);
+                        return mdl_call_error_ext("BAD-ARGUMENT-LIST", "Duplicate formal argument", farg, fargs, nullptr);
                     argptr = argptr->v.p.cdr;
                     args_processed++;
                 }
                 else if (argstate != ARGSTATE_OPTIONAL)
                 {
-                    return mdl_call_error("TOO-FEW-ARGUMENTS-SUPPLIED", frame->subr, NULL);
+                    return mdl_call_error("TOO-FEW-ARGUMENTS-SUPPLIED", frame->subr, nullptr);
                 }
                 else 
                 {
@@ -1866,7 +1866,7 @@ mdl_value_t *mdl_bind_args(mdl_value_t *fargs,
                         default_val = mdl_eval(default_val);
 
                     if (!mdl_bind_local_symbol(farg->v.a, default_val, frame, false))
-                        return mdl_call_error_ext ("BAD-ARGUMENT-LIST", "Duplicate formal argument", farg, fargs, NULL);
+                        return mdl_call_error_ext("BAD-ARGUMENT-LIST", "Duplicate formal argument", farg, fargs, nullptr);
                 }
 
                 break;
@@ -1874,23 +1874,23 @@ mdl_value_t *mdl_bind_args(mdl_value_t *fargs,
             {
                 mdl_value_t *pframeval = mdl_make_frame_value(prev_frame, MDL_TYPE_ENVIRONMENT);
                 if (!mdl_bind_local_symbol(farg->v.a, pframeval, frame, false))
-                    return mdl_call_error_ext ("BAD-ARGUMENT-LIST", "Duplicate formal argument", farg, fargs, NULL);
+                    return mdl_call_error_ext("BAD-ARGUMENT-LIST", "Duplicate formal argument", farg, fargs, nullptr);
                 argstate = ARGSTATE_ATOMS;
                 break;
             }
             case ARGSTATE_CALL:
                 if (!mdl_bind_local_symbol(farg->v.a, apply_to, frame, false))
-                    return mdl_call_error_ext ("BAD-ARGUMENT-LIST", "Duplicate formal argument", farg, fargs, NULL);
+                    return mdl_call_error_ext("BAD-ARGUMENT-LIST", "Duplicate formal argument", farg, fargs, nullptr);
                 argstate = ARGSTATE_ANONLY;
-                argptr = NULL;
+                argptr = nullptr;
                 break;
             case ARGSTATE_ARGS:
             {
                 mdl_value_t *argsval = mdl_make_list(argptr);
                 if (!mdl_bind_local_symbol(farg->v.a, argsval, frame, false))
-                    return mdl_call_error_ext ("BAD-ARGUMENT-LIST", "Duplicate formal argument", farg, fargs, NULL);
+                    return mdl_call_error_ext("BAD-ARGUMENT-LIST", "Duplicate formal argument", farg, fargs, nullptr);
                 argstate = ARGSTATE_ANONLY;
-                argptr = NULL;
+                argptr = nullptr;
                 break;
             }
             case ARGSTATE_TUPLE:
@@ -1914,16 +1914,16 @@ mdl_value_t *mdl_bind_args(mdl_value_t *fargs,
                     argsval = mdl_make_tuple(argptr, MDL_TYPE_TUPLE);
                 }
                 if (!mdl_bind_local_symbol(farg->v.a, argsval, frame, false))
-                    return mdl_call_error_ext ("BAD-ARGUMENT-LIST", "Duplicate formal argument", farg, fargs, NULL);
+                    return mdl_call_error_ext("BAD-ARGUMENT-LIST", "Duplicate formal argument", farg, fargs, nullptr);
                 argstate = ARGSTATE_ANONLY;
-                argptr = NULL;
+                argptr = nullptr;
                 break;
             }
             case ARGSTATE_NAME:
             {
                 mdl_value_t *cframeval = mdl_make_frame_value(frame, MDL_TYPE_ACTIVATION);
                 if (!mdl_bind_local_symbol(farg->v.a, cframeval, frame, false))
-                    return mdl_call_error_ext ("BAD-ARGUMENT-LIST", "Duplicate formal argument", farg, fargs, NULL);
+                    return mdl_call_error_ext("BAD-ARGUMENT-LIST", "Duplicate formal argument", farg, fargs, nullptr);
                 argstate = ARGSTATE_NOMORE;
                 break;
             }
@@ -1931,7 +1931,7 @@ mdl_value_t *mdl_bind_args(mdl_value_t *fargs,
                 if (default_val != &mdl_value_unassigned)
                     default_val = mdl_eval(default_val);
                 if (!mdl_bind_local_symbol(farg->v.a, default_val, frame, false))
-                    return mdl_call_error_ext ("BAD-ARGUMENT-LIST", "Duplicate formal argument", farg, fargs, NULL);
+                    return mdl_call_error_ext("BAD-ARGUMENT-LIST", "Duplicate formal argument", farg, fargs, nullptr);
                 break;
             default:
                 mdl_error("Unexpected ATOM in formal argument list");
@@ -1958,7 +1958,7 @@ mdl_value_t *mdl_bind_args(mdl_value_t *fargs,
                 {
                     mdl_value_t *arg = argptr->v.p.car;
                     if (!mdl_bind_local_symbol(atom->v.a, arg, frame, false))
-                        return mdl_call_error_ext ("BAD-ARGUMENT-LIST", "Duplicate formal argument", farg, fargs, NULL);
+                        return mdl_call_error_ext("BAD-ARGUMENT-LIST", "Duplicate formal argument", farg, fargs, nullptr);
                     argptr = argptr->v.p.cdr;
                     args_processed++;
                 }
@@ -1970,7 +1970,7 @@ mdl_value_t *mdl_bind_args(mdl_value_t *fargs,
                         default_val = mdl_eval(default_val);
 
                     if (!mdl_bind_local_symbol(atom->v.a, default_val, frame, false))
-                        return mdl_call_error_ext ("BAD-ARGUMENT-LIST", "Duplicate formal argument", farg, fargs, NULL);
+                        return mdl_call_error_ext("BAD-ARGUMENT-LIST", "Duplicate formal argument", farg, fargs, nullptr);
                 }
                 break;
             default:
@@ -1979,9 +1979,9 @@ mdl_value_t *mdl_bind_args(mdl_value_t *fargs,
         }
         fargp = fargp->v.p.cdr;
     }
-    if (argptr != NULL)
-        return mdl_call_error("TOO-MANY-ARGUMENTS-SUPPLIED", NULL);
-    return NULL;
+    if (argptr != nullptr)
+        return mdl_call_error("TOO-MANY-ARGUMENTS-SUPPLIED", nullptr);
+    return nullptr;
 }
 
 mdl_value_t *mdl_internal_prog_repeat_bind(mdl_value_t *orig_form, bool bind_to_lastprog, bool repeat)
@@ -1990,7 +1990,7 @@ mdl_value_t *mdl_internal_prog_repeat_bind(mdl_value_t *orig_form, bool bind_to_
     mdl_frame_t *prev_frame = cur_frame;
     mdl_value_t *fargsp = LREST(orig_form, 1);
     mdl_value_t *fargs;
-    mdl_value_t *act_atom = NULL;
+    mdl_value_t *act_atom = nullptr;
     frame->prev_frame = prev_frame;
     
     if (fargsp->v.p.car->type == MDL_TYPE_ATOM)
@@ -2012,7 +2012,7 @@ mdl_value_t *mdl_internal_prog_repeat_bind(mdl_value_t *orig_form, bool bind_to_
     frame->frame_flags = MDL_FRAME_FLAGS_ACTIVATION;
     mdl_push_frame(frame);
     
-    mdl_bind_args(fargs, NULL, frame, prev_frame,
+    mdl_bind_args(fargs, nullptr, frame, prev_frame,
                   false /* not called from apply */,
                   true /* AUX arguments only */);
 
@@ -2023,13 +2023,13 @@ mdl_value_t *mdl_internal_prog_repeat_bind(mdl_value_t *orig_form, bool bind_to_
     {
         first = false;
         mdl_value_t *fexprs = fargsp->v.p.cdr;
-        mdl_value_t *mdl_last_value = NULL;
+        mdl_value_t *mdl_last_value = nullptr;
         while (fexprs)
         {
             mdl_last_value = mdl_eval(fexprs->v.p.car, false);
             fexprs = fexprs->v.p.cdr;
         }
-        if (mdl_last_value == NULL) mdl_last_value = mdl_call_error("HAS_EMPTY_BODY", NULL);
+        if (mdl_last_value == nullptr) mdl_last_value = mdl_call_error("HAS_EMPTY_BODY", nullptr);
         if (!repeat) frame->result = mdl_last_value;
     }
     mdl_pop_frame(frame->prev_frame);
@@ -2071,23 +2071,23 @@ mdl_value_t *mdl_apply_function(mdl_value_t *applier, mdl_value_t *apply_to, boo
     if (!mdl_setjmp(frame->interp_frame))
     {
         // mdl_bind_args returns NULL on success, return from ERRET on error
-        frame->result = 
-            mdl_bind_args(fargs, apply_to, frame, prev_frame,
-                      called_from_apply_subr, false);
+        frame->result = mdl_bind_args(fargs, apply_to, frame,
+            prev_frame, called_from_apply_subr, false
+        );
     }
 
     // RETURN and AGAIN come here (if there is an activation)
     if (!frame->result)
     {
         mdl_value_t *fexprs = LREST(applier, 1);
-        mdl_value_t *mdl_last_value = NULL;
+        mdl_value_t *mdl_last_value = nullptr;
         while (fexprs)
         {
             mdl_last_value = mdl_eval(fexprs->v.p.car, false);
             fexprs = fexprs->v.p.cdr;
         }
-        if (mdl_last_value == NULL)
-            mdl_last_value = mdl_call_error("HAS-EMPTY-BODY", NULL);
+        if (mdl_last_value == nullptr)
+            mdl_last_value = mdl_call_error("HAS-EMPTY-BODY", nullptr);
         frame->result = mdl_last_value;
     }
 
@@ -2241,9 +2241,9 @@ mdl_value_t *mdl_std_apply(mdl_value_t *applier, mdl_value_t *apply_to, int appl
 //            mdl_error("Can't use APPLY with FIXes");
 
         if (LHASITEM(apply_to, 3))
-            mdl_call_error_ext("TOO-MANY-ARGUMENTS-SUPPLIED", "Too many arguments to FIX", NULL);
+            mdl_call_error_ext("TOO-MANY-ARGUMENTS-SUPPLIED", "Too many arguments to FIX", nullptr);
         if (!LHASITEM(apply_to, 1))
-            mdl_call_error_ext("TOO-FEW-ARGUMENTS-SUPPLIED","Too few arguments to FIX", NULL);
+            mdl_call_error_ext("TOO-FEW-ARGUMENTS-SUPPLIED","Too few arguments to FIX", nullptr);
         mdl_value_t *index = applier;
         mdl_value_t *struc = LITEM(apply_to, 1);
         mdl_value_t *newitem = LITEM(apply_to, 2);
@@ -2261,8 +2261,10 @@ mdl_value_t *mdl_std_apply(mdl_value_t *applier, mdl_value_t *apply_to, int appl
         return result;
     }
     else
-        return mdl_call_error("NON-APPLICABLE-TYPE", applier, apply_to, NULL);
-    return NULL;
+    {
+        return mdl_call_error("NON-APPLICABLE-TYPE", applier, apply_to, nullptr);
+    }
+    return nullptr;
 }
 
 mdl_value_t *mdl_internal_apply(mdl_value_t *applier, mdl_value_t *apply_to, bool called_from_apply_subr)
@@ -2336,9 +2338,9 @@ struct mdl_struct_walker_t
 
 mdl_value_t *mdl_next_list_element(mdl_struct_walker_t *w)
 {
-    if (!w->vle) return NULL;
+    if (!w->vle) return nullptr;
     w->vle = w->vle->v.p.cdr;
-    if (!w->vle) return NULL;
+    if (!w->vle) return nullptr;
     mdl_value_t *result = w->vle->v.p.car;
     return result;
 }
@@ -2348,7 +2350,7 @@ mdl_value_t *mdl_next_vector_tuple_element(mdl_struct_walker_t *w)
     // note: must not execute GROW for a vector while a walker is active on it
     w->vle++;
     w->length--;
-    if (w->length <= 0) return NULL;
+    if (w->length <= 0) return nullptr;
     mdl_value_t *result = w->vle;
     return result;
 }
@@ -2358,7 +2360,7 @@ mdl_value_t *mdl_next_uvector_element(mdl_struct_walker_t *w)
     // note: must not execute GROW for a uvector while a walker is active on it
     w->uve++;
     w->length--;
-    if (w->length <= 0) return NULL;
+    if (w->length <= 0) return nullptr;
     mdl_value_t *result = mdl_uvector_element_to_value(w->sv, w->uve);
     return result;
 }
@@ -2367,7 +2369,7 @@ mdl_value_t *mdl_next_string_element(mdl_struct_walker_t *w)
 {
     w->se++;
     w->length--;
-    if (w->length <= 0) return NULL;
+    if (w->length <= 0) return nullptr;
     mdl_value_t *result = mdl_new_fix((int)(*w->se));
     result->type = MDL_TYPE_CHARACTER;
     return result;
@@ -2454,9 +2456,9 @@ void mdl_init_struct_walker(mdl_struct_walker_t *w, mdl_value_t *sv)
 
 mdl_value_t *mdl_internal_shallow_copy_list(mdl_value_t *oldlist)
 {
-    mdl_value_t *result = NULL;
-    mdl_value_t *cursor = NULL;
-    mdl_value_t *lastitem = NULL;
+    mdl_value_t *result = nullptr;
+    mdl_value_t *cursor = nullptr;
+    mdl_value_t *lastitem = nullptr;
     if (oldlist)
     {
         lastitem = cursor = result = mdl_newlist();
@@ -2498,7 +2500,7 @@ mdl_value_t *mdl_internal_copy_structured(mdl_value_t *v)
         copy = mdl_new_string(v->v.s.l, v->v.s.p);
         break;
     default:
-        return NULL;
+        return nullptr;
     }
     return copy;
 }
@@ -2647,7 +2649,7 @@ mdl_value_t *mdl_eval_apply_expr(mdl_value_t *appl_expr)
             applier = mdl_local_symbol_lookup(appl_expr->v.a);
         if (!applier || applier->type == MDL_TYPE_UNBOUND)
         {
-            return mdl_call_error_ext("UNBOUND-VARIABLE", "In apply of form", appl_expr, NULL);
+            return mdl_call_error_ext("UNBOUND-VARIABLE", "In apply of form", appl_expr, nullptr);
         }
     }
     else
@@ -2659,14 +2661,14 @@ mdl_value_t *mdl_eval_apply_expr(mdl_value_t *appl_expr)
 
 mdl_value_t *mdl_std_eval(mdl_value_t *l, bool in_struct, int as_type)
 {
-    mdl_value_t *result = NULL;
+    mdl_value_t *result = nullptr;
     if (as_type == MDL_TYPE_NOTATYPE) as_type = l->type;
     switch (as_type)
     {
     case MDL_TYPE_LIST:
     {
         mdl_value_t *rest = l->v.p.cdr;
-        mdl_value_t *lastitem = NULL;
+        mdl_value_t *lastitem = nullptr;
         while (rest)
         {
             mdl_value_t *item = rest->v.p.car;
@@ -2676,11 +2678,11 @@ mdl_value_t *mdl_std_eval(mdl_value_t *l, bool in_struct, int as_type)
                 mdl_value_t *seg = mdl_eval(item, true);
                 if (mdl_primtype_nonstructured(seg->pt))
                 {
-                    return mdl_call_error_ext("ILLEGAL-SEGMENT","Segment evaluated to nonstructured type", item, NULL);
+                    return mdl_call_error_ext("ILLEGAL-SEGMENT", "Segment evaluated to nonstructured type", item, nullptr);
                 }
                 if (!rest && seg->pt == PRIMTYPE_LIST)
                 {
-                    if (result == NULL)
+                    if (result == nullptr)
                     {
                         result = seg->v.p.cdr;
                     }
@@ -2701,7 +2703,7 @@ mdl_value_t *mdl_std_eval(mdl_value_t *l, bool in_struct, int as_type)
                     while (elem)
                     {
                         tmp = mdl_additem(lastitem, elem, &lastitem);
-                        if (result == NULL) result = tmp;
+                        if (result == nullptr) result = tmp;
                         elem= w.next(&w);
                     }
                 }
@@ -2712,7 +2714,7 @@ mdl_value_t *mdl_std_eval(mdl_value_t *l, bool in_struct, int as_type)
                 mdl_value_t *newitem = mdl_eval(item, true);
                 mdl_value_t *tmp;
                 tmp = mdl_additem(lastitem, newitem, &lastitem);
-                if (result == NULL) result = tmp;
+                if (result == nullptr) result = tmp;
             }
         }
         result = mdl_make_list(result);
@@ -2720,7 +2722,7 @@ mdl_value_t *mdl_std_eval(mdl_value_t *l, bool in_struct, int as_type)
     }
     case MDL_TYPE_SEGMENT:
         if (!in_struct)
-            return mdl_call_error_ext("ILLEGAL-SEGMENT", "Attempt to evaluate segment outside structured type", NULL);
+            return mdl_call_error_ext("ILLEGAL-SEGMENT", "Attempt to evaluate segment outside structured type", nullptr);
         /* FALLTHROUGH */
     case MDL_TYPE_FORM:
         if (l->v.p.cdr)
@@ -2732,7 +2734,7 @@ mdl_value_t *mdl_std_eval(mdl_value_t *l, bool in_struct, int as_type)
         else
         {
             // an empty form is a FALSE
-            result =  mdl_make_list(NULL, MDL_TYPE_FALSE);
+            result =  mdl_make_list(nullptr, MDL_TYPE_FALSE);
         }
         break;
     case MDL_TYPE_VECTOR:
@@ -2814,7 +2816,7 @@ mdl_value_t *mdl_std_eval(mdl_value_t *l, bool in_struct, int as_type)
                     }
                     else if (UVTYPE(result) != elem->type)
                     {
-                        return mdl_call_error("TYPES-DIFFER-IN-UNIFORM-VECTOR", NULL);
+                        return mdl_call_error("TYPES-DIFFER-IN-UNIFORM-VECTOR", nullptr);
                     }
                     mdl_uvector_value_to_element(elem, relems++);
                     elem = w.next(&w);
@@ -2836,7 +2838,7 @@ mdl_value_t *mdl_std_eval(mdl_value_t *l, bool in_struct, int as_type)
                 }
                 else if (UVTYPE(result) != newval->type)
                 {
-                    return mdl_call_error("TYPES-DIFFER-IN-UNIFORM-VECTOR", NULL);
+                    return mdl_call_error("TYPES-DIFFER-IN-UNIFORM-VECTOR", nullptr);
                 }
                 mdl_uvector_value_to_element(newval, relems++);
             }
@@ -2854,7 +2856,7 @@ mdl_value_t *mdl_std_eval(mdl_value_t *l, bool in_struct, int as_type)
 mdl_value_t *mdl_eval(mdl_value_t *l, bool in_struct, mdl_value_t *environment)
 {
     mdl_frame_t *save_frame = cur_frame;
-    mdl_value_t *result = NULL;
+    mdl_value_t *result = nullptr;
     int eval_as_type;
     mdl_value_t *evaltype;
     if (environment)
@@ -2867,7 +2869,7 @@ mdl_value_t *mdl_eval(mdl_value_t *l, bool in_struct, mdl_value_t *environment)
     evaltype = mdl_get_evaltype(l->type);
     if (evaltype && evaltype->type != MDL_TYPE_ATOM)
     {
-        mdl_value_t *arglist = mdl_cons_internal(l, NULL);
+        mdl_value_t *arglist = mdl_cons_internal(l, nullptr);
         arglist = mdl_cons_internal(evaltype, arglist);
         arglist = mdl_make_list(arglist);
         result = mdl_internal_apply(evaltype, arglist, true);
@@ -2966,10 +2968,10 @@ void mdl_interp_init()
     cur_process_bindid = 1;
 
     initial_frame = mdl_new_frame();
-    initial_frame->subr = mdl_get_atom("TOPLEVEL!-", true, NULL);
+    initial_frame->subr = mdl_get_atom("TOPLEVEL!-", true, nullptr);
     initial_frame->frame_flags = MDL_FRAME_FLAGS_TRUEFRAME;
 
-    mdl_value_t *dotoblist = mdl_additem(NULL, mdl_value_initial_oblist);
+    mdl_value_t *dotoblist = mdl_additem(nullptr, mdl_value_initial_oblist);
     mdl_additem(dotoblist, mdl_value_root_oblist);
     mdl_value_t *commaoblist = mdl_internal_shallow_copy_list(dotoblist);
     dotoblist = mdl_make_list(dotoblist);
@@ -2995,7 +2997,7 @@ void mdl_interp_init()
 
 bool mdl_is_true(mdl_value_t *item)
 {
-    if (!item) mdl_call_error("WTF", NULL);
+    if (!item) mdl_call_error("WTF", nullptr);
     return item->type != MDL_TYPE_FALSE;
 }
 
@@ -3024,7 +3026,7 @@ mdl_value_t *mdl_internal_list_rest(const mdl_value_t *val, int skip)
 mdl_value_t *mdl_internal_list_nth(const mdl_value_t *val, int skip)
 {
     mdl_value_t *result = mdl_internal_list_rest(val, skip);
-    if (result == NULL || (result == (mdl_value_t *)-1)) return NULL;
+    if (result == nullptr || (result == (mdl_value_t *)-1)) return nullptr;
     return result->v.p.car;
 }
 
@@ -3044,7 +3046,7 @@ mdl_value_t *mdl_internal_tuple_rest(const mdl_value_t *val, int skip)
     // vector items starting at "skip"
 
     if (val->pt != PRIMTYPE_TUPLE) return (mdl_value_t *)-1;
-    if (skip >= (val->v.tp.p->size - val->v.tp.offset)) return NULL;
+    if (skip >= (val->v.tp.p->size - val->v.tp.offset)) return nullptr;
     mdl_value_t *result = val->v.tp.p->elements + val->v.tp.offset + skip;
     return result;
 }
@@ -3105,7 +3107,7 @@ mdl_value_t *mdl_internal_uvector_nth(const mdl_value_t *val, int skip)
 
     if (val->pt != PRIMTYPE_UVECTOR) return (mdl_value_t *)-1;
     elem = mdl_internal_uvector_rest(val, skip);
-    if (!elem) return NULL;
+    if (!elem) return nullptr;
     return mdl_uvector_element_to_value(val, elem);
 }
 
@@ -3139,7 +3141,7 @@ mdl_value_t *mdl_internal_uvector_put(mdl_value_t *val, int skip, mdl_value_t *n
     if (val->pt != PRIMTYPE_UVECTOR) return (mdl_value_t *)-1;
     if (newval->type != UVTYPE(val)) return (mdl_value_t *)-1;
     elem = mdl_internal_uvector_rest(val, skip);
-    if (!elem) return NULL;
+    if (!elem) return nullptr;
     mdl_uvector_value_to_element(newval, elem);
     return val;
 }
@@ -3150,7 +3152,7 @@ mdl_value_t *mdl_internal_eval_nth(mdl_value_t *arg, mdl_value_t *indexval)
     if (indexval) 
     {
         if (indexval->type != MDL_TYPE_FIX )
-            return mdl_call_error("Second argument to NTH must be a FIX", NULL);
+            return mdl_call_error("Second argument to NTH must be a FIX", nullptr);
         index = indexval->v.w;
     }
     return mdl_internal_eval_nth_i(arg, index);
@@ -3159,7 +3161,7 @@ mdl_value_t *mdl_internal_eval_nth(mdl_value_t *arg, mdl_value_t *indexval)
 mdl_value_t *mdl_internal_eval_nth_i(mdl_value_t *arg, int index)
 {
     if (index <= 0)
-        return mdl_call_error("ARGUMENT-OUT-OF-RANGE",NULL);
+        return mdl_call_error("ARGUMENT-OUT-OF-RANGE", nullptr);
 
     mdl_value_t *result;
     switch (arg->pt)
@@ -3167,33 +3169,33 @@ mdl_value_t *mdl_internal_eval_nth_i(mdl_value_t *arg, int index)
     case PRIMTYPE_LIST:
         result = LITEM(arg, index - 1);
         if (!result)
-            return mdl_call_error("ARGUMENT-OUT-OF-RANGE",NULL);
+            return mdl_call_error("ARGUMENT-OUT-OF-RANGE", nullptr);
         break;
     case PRIMTYPE_STRING:
         if (index > arg->v.s.l)
-            return mdl_call_error("ARGUMENT-OUT-OF-RANGE",NULL);
+            return mdl_call_error("ARGUMENT-OUT-OF-RANGE", nullptr);
         result = mdl_new_fix((int)arg->v.s.p[index - 1]);
         result->type = MDL_TYPE_CHARACTER;
         break;
     case PRIMTYPE_VECTOR:
         if (index > VLENGTH(arg))
-            return mdl_call_error("ARGUMENT-OUT-OF-RANGE",NULL);
+            return mdl_call_error("ARGUMENT-OUT-OF-RANGE", nullptr);
         result = VITEM(arg, index - 1);
         break;
     case PRIMTYPE_UVECTOR:
         if (index > UVLENGTH(arg))
-            return mdl_call_error("ARGUMENT-OUT-OF-RANGE",NULL);
+            return mdl_call_error("ARGUMENT-OUT-OF-RANGE", nullptr);
         result = UVITEM(arg, index - 1);
         break;
     case PRIMTYPE_TUPLE:
         if (index > TPLENGTH(arg))
-            return mdl_call_error("ARGUMENT-OUT-OF-RANGE",NULL);
+            return mdl_call_error("ARGUMENT-OUT-OF-RANGE", nullptr);
         result = TPITEM(arg, index - 1);
         break;
     default:
         if (mdl_primtype_nonstructured(arg->pt))
         {
-            return mdl_call_error_ext("FIRST-ARG-WRONG-TYPE", "First arg to NTH must be structured", NULL);
+            return mdl_call_error_ext("FIRST-ARG-WRONG-TYPE", "First arg to NTH must be structured", nullptr);
         }
         // other structued types such as BYTES
         mdl_error("UNIMPLEMENTED PRIMTYPE");
@@ -3329,7 +3331,7 @@ mdl_value_t *mdl_internal_eval_put(mdl_value_t *arg, mdl_value_t *indexval, mdl_
     int index = indexval->v.w;
     
     if (index <= 0)
-        return mdl_call_error_ext("ARGUMENT-OUT-OF-RANGE", "PUT index too small", NULL);
+        return mdl_call_error_ext("ARGUMENT-OUT-OF-RANGE", "PUT index too small", nullptr);
 
     mdl_value_t *tail;
     switch (arg->pt)
@@ -3354,7 +3356,7 @@ mdl_value_t *mdl_internal_eval_put(mdl_value_t *arg, mdl_value_t *indexval, mdl_
         if (!uvtail || uvtail == (uvector_element_t *)-1)
             mdl_error("PUT index too large");
         if (UVTYPE(arg) != newitem->type)
-            return mdl_call_error("UVECTOR-PUT-TYPE-VIOLATION", NULL);
+            return mdl_call_error("UVECTOR-PUT-TYPE-VIOLATION", nullptr);
         mdl_uvector_value_to_element(newitem, uvtail);
         break;
 
@@ -3378,7 +3380,7 @@ mdl_value_t *mdl_internal_eval_put(mdl_value_t *arg, mdl_value_t *indexval, mdl_
     default:
         if (mdl_primtype_nonstructured(arg->pt))
         {
-            mdl_call_error_ext("FIXME", "First argument to PUT must be structured", cur_frame->subr, NULL);
+            mdl_call_error_ext("FIXME", "First argument to PUT must be structured", cur_frame->subr, nullptr);
         }
         // VECTOR, UVECTOR, BYTES
         mdl_error("UNIMPLEMENTED PRIMTYPE");
@@ -3411,7 +3413,7 @@ mdl_value_t *mdl_internal_eval_mapfr(mdl_value_t *form, mdl_value_t *args, bool 
     int jumpval;
     mdl_frame_t *frame = mdl_new_frame();
     mdl_frame_t *prev_frame = cur_frame;
-    mdl_value_t *result = NULL;
+    mdl_value_t *result = nullptr;
 
     if (!loopf)
         mdl_error("Not enough args to MAPF/R");
@@ -3436,14 +3438,14 @@ mdl_value_t *mdl_internal_eval_mapfr(mdl_value_t *form, mdl_value_t *args, bool 
     }
     else num_structs = 0;
 
-    mdl_value_t *lastitem, *flastitem = NULL;
+    mdl_value_t *lastitem, *flastitem = nullptr;
     mdl_value_t *flist;
     mdl_value_t *val = &mdl_value_false;
     if (hasfinal)
-        flist = mdl_additem(NULL, finalf, &flastitem);
+        flist = mdl_additem(nullptr, finalf, &flastitem);
     while (!done)
     {
-        mdl_value_t *rlist = mdl_additem(NULL, loopf, &lastitem);
+        mdl_value_t *rlist = mdl_additem(nullptr, loopf, &lastitem);
         for (i = 0; i < num_structs; i++)
         {
             mdl_value_t *s = TPITEM(stup, i);
@@ -3456,7 +3458,7 @@ mdl_value_t *mdl_internal_eval_mapfr(mdl_value_t *form, mdl_value_t *args, bool 
                 if (is_mapr)
                     val = mdl_internal_eval_rest_i(s, 0);
                 else
-                    val = mdl_internal_eval_nth_copy(s, NULL);
+                    val = mdl_internal_eval_nth_copy(s, nullptr);
                 mdl_additem(lastitem, val, &lastitem);
             }
         }
@@ -3485,13 +3487,13 @@ mdl_value_t *mdl_internal_eval_mapfr(mdl_value_t *form, mdl_value_t *args, bool 
                     mdl_additem(flastitem, cursor->v.p.car, &flastitem);
                     cursor = cursor->v.p.cdr;
                 }
-                frame->result = NULL;
+                frame->result = nullptr;
             }
             break;
             case LONGJMP_MAPLEAVE:
                 done = 1;
                 result = frame->result;
-                frame->result = NULL;
+                frame->result = nullptr;
                 break;
             default:
                 mdl_error("Bad longjmp to MAPF/R");
@@ -3499,7 +3501,7 @@ mdl_value_t *mdl_internal_eval_mapfr(mdl_value_t *form, mdl_value_t *args, bool 
             for (i = 0; i < num_structs; i++)
             {
                 mdl_value_t *s = TPITEM(stup, i);
-                *s = *mdl_internal_eval_rest(s, NULL);
+                *s = *mdl_internal_eval_rest(s, nullptr);
             }
         }
     }
@@ -3532,7 +3534,7 @@ mdl_value_t *mdl_internal_listen_error(mdl_value_t *args, bool is_error)
     mdl_value_t *atom_lerr;
     mdl_value_t *l_level;
     mdl_value_t *intlevel, *atom_intlevel;
-    mdl_value_t *result = NULL;
+    mdl_value_t *result = nullptr;
     mdl_value_t *atom_rep;
     mdl_value_t *rep;
     int jumpval;
@@ -3546,14 +3548,14 @@ mdl_value_t *mdl_internal_listen_error(mdl_value_t *args, bool is_error)
         if (!mdl_oblists_are_reasonable(oblists))
         {
             std::fprintf(stderr, "GVAL of OBLIST not reasonable\n");
-            oblists = mdl_cons_internal(mdl_value_root_oblist, NULL);
+            oblists = mdl_cons_internal(mdl_value_root_oblist, nullptr);
             oblists = mdl_cons_internal(mdl_value_initial_oblist, oblists);
             oblists = mdl_make_list(oblists);
         }
     }
     mdl_bind_local_symbol(atom_oblist, oblists, cur_frame, false);
 
-    atom_inchan = mdl_get_atom("INCHAN!-", true, NULL);
+    atom_inchan = mdl_get_atom("INCHAN!-", true, nullptr);
     inchan = mdl_local_symbol_lookup(atom_inchan->v.a, cur_frame);
     if (!mdl_inchan_is_reasonable(inchan))
     {
@@ -3567,7 +3569,7 @@ mdl_value_t *mdl_internal_listen_error(mdl_value_t *args, bool is_error)
     }
     mdl_bind_local_symbol(atom_inchan->v.a, inchan, cur_frame, false);
 
-    atom_outchan = mdl_get_atom("OUTCHAN!-", true, NULL);
+    atom_outchan = mdl_get_atom("OUTCHAN!-", true, nullptr);
     outchan = mdl_local_symbol_lookup(atom_outchan->v.a, cur_frame);
     if (!mdl_outchan_is_reasonable(outchan))
     {
@@ -3582,7 +3584,7 @@ mdl_value_t *mdl_internal_listen_error(mdl_value_t *args, bool is_error)
     mdl_bind_local_symbol(atom_outchan->v.a, outchan, cur_frame, false);
     printflags = mdl_chan_mode_is_print_binary(outchan)?MDL_PF_BINARY:0;
     
-    atom_l_level = mdl_get_atom("L-LEVEL !-INTERRUPTS!-", true, NULL);
+    atom_l_level = mdl_get_atom("L-LEVEL !-INTERRUPTS!-", true, nullptr);
     l_level = mdl_local_symbol_lookup(atom_l_level->v.a, cur_frame);
     if (!l_level || l_level->type != MDL_TYPE_FIX)
         l_level = mdl_new_fix(1);
@@ -3590,13 +3592,13 @@ mdl_value_t *mdl_internal_listen_error(mdl_value_t *args, bool is_error)
         l_level = mdl_new_fix(l_level->v.w + 1);
     mdl_bind_local_symbol(atom_l_level->v.a, l_level, cur_frame, false);
 
-    atom_lerr = mdl_get_atom("L-ERR !-INTERRUPTS!-", true, NULL);
+    atom_lerr = mdl_get_atom("L-ERR !-INTERRUPTS!-", true, nullptr);
     mdl_bind_local_symbol(atom_lerr->v.a, mdl_make_frame_value(cur_frame), cur_frame, false);
     if (is_error)
     {
-        mdl_print_newline_to_chan(outchan, printflags, NULL);
+        mdl_print_newline_to_chan(outchan, printflags, nullptr);
         mdl_print_string_to_chan(outchan, "*ERROR*", 7, 0, true, true);
-        mdl_print_char_to_chan(outchan, ' ', printflags, NULL);
+        mdl_print_char_to_chan(outchan, ' ', printflags, nullptr);
     }
 
     if (!suppress_listen_message)
@@ -3605,26 +3607,26 @@ mdl_value_t *mdl_internal_listen_error(mdl_value_t *args, bool is_error)
         args = args->v.p.cdr;
         while (args)
         {
-            mdl_print_newline_to_chan(outchan, printflags, NULL);
-            mdl_print_value_to_chan(outchan, args->v.p.car, false, true, NULL);
-            mdl_print_char_to_chan(outchan, ' ', printflags, NULL);
+            mdl_print_newline_to_chan(outchan, printflags, nullptr);
+            mdl_print_value_to_chan(outchan, args->v.p.car, false, true, nullptr);
+            mdl_print_char_to_chan(outchan, ' ', printflags, nullptr);
             args = args->v.p.cdr;
         }
         
-        atom_intlevel = mdl_get_atom("INT-LEVEL!-INTERRUPTS!-", true, NULL);
+        atom_intlevel = mdl_get_atom("INT-LEVEL!-INTERRUPTS!-", true, nullptr);
         intlevel = mdl_global_symbol_lookup(atom_intlevel->v.a);
         
-        mdl_print_newline_to_chan(outchan, printflags, NULL);
+        mdl_print_newline_to_chan(outchan, printflags, nullptr);
         mdl_print_string_to_chan(outchan, "LISTENING-AT-LEVEL ", 18, 0, true, false);
-        mdl_print_value_to_chan(outchan, l_level, false, true, NULL);
+        mdl_print_value_to_chan(outchan, l_level, false, true, nullptr);
         mdl_print_string_to_chan(outchan, "PROCESS", 7, 0, true, true);
         mdl_print_string_to_chan(outchan, "1", 1, 0, true, true);
         if (intlevel && (intlevel->type != MDL_TYPE_FIX || intlevel->v.w != 0))
         {
             mdl_print_string_to_chan(outchan, "INT-LEVEL", 9, 0, true, true);
-            mdl_print_value_to_chan(outchan, intlevel, false, true, NULL);
+            mdl_print_value_to_chan(outchan, intlevel, false, true, nullptr);
         }
-        mdl_print_newline_to_chan(outchan, printflags, NULL);
+        mdl_print_newline_to_chan(outchan, printflags, nullptr);
     }
     suppress_listen_message = false;
 
@@ -3637,12 +3639,12 @@ mdl_value_t *mdl_internal_listen_error(mdl_value_t *args, bool is_error)
         while (1) 
         {
             // Not sure if this should be REP or REP!-
-            atom_rep = mdl_get_atom("REP", true, NULL);
+            atom_rep = mdl_get_atom("REP", true, nullptr);
             rep = mdl_both_symbol_lookup(atom_rep->v.a, cur_frame);
             // FIXME -- is_error doesn't belong here
             if (!is_error && rep && mdl_type_is_applicable(mdl_apply_type(rep->type)))
             {
-                result = mdl_internal_apply(rep, mdl_make_list(mdl_cons_internal(atom_rep, NULL)), true);
+                result = mdl_internal_apply(rep, mdl_make_list(mdl_cons_internal(atom_rep, nullptr)), true);
             }
             else
             {
@@ -3651,7 +3653,7 @@ mdl_value_t *mdl_internal_listen_error(mdl_value_t *args, bool is_error)
                 mdl_value_t *mdl_builtin_eval_rep(mdl_value_t *form, mdl_value_t *args);
                 
                 std::fprintf(stderr, "Atom REP has neither LVAL nor GVAL\n");
-                result = mdl_builtin_eval_rep(NULL, mdl_make_list(NULL));
+                result = mdl_builtin_eval_rep(nullptr, mdl_make_list(nullptr));
             }
         }
     }
@@ -3672,7 +3674,7 @@ void mdl_toplevel(std::FILE *restorefile)
 
     cur_frame = initial_frame;
     cur_frame->frame_flags |= MDL_FRAME_FLAGS_TRUEFRAME;
-    cur_frame->args = mdl_make_list(NULL);
+    cur_frame->args = mdl_make_list(nullptr);
     jumpval = mdl_setjmp(cur_frame->interp_frame);
     if (restorefile && !jumpval)
     {
@@ -3681,18 +3683,18 @@ void mdl_toplevel(std::FILE *restorefile)
         exit(-1);
     }
     // re-acquire the atom in case of restore
-    cur_frame->subr = mdl_get_atom("TOPLEVEL!-", true, NULL);
+    cur_frame->subr = mdl_get_atom("TOPLEVEL!-", true, nullptr);
     suppress_listen_message = jumpval == LONGJMP_RESTORE;
     if (jumpval == LONGJMP_RESTORE && cur_frame->result)
     {
         mdl_eval(cur_frame->result);
     }
-    cur_frame->result = NULL;
+    cur_frame->result = nullptr;
     if (!mdl_chan_at_eof(mdl_get_default_inchan()))
     {
-        mdl_std_apply(mdl_value_builtin_listen, mdl_make_list(mdl_cons_internal(mdl_value_builtin_listen, NULL)), MDL_TYPE_SUBR, true);
+        mdl_std_apply(mdl_value_builtin_listen, mdl_make_list(mdl_cons_internal(mdl_value_builtin_listen, nullptr)), MDL_TYPE_SUBR, true);
     }
-    cur_frame = NULL;
+    cur_frame = nullptr;
 }
 
 void mdl_internal_erret(mdl_value_t *result, mdl_value_t *frame)
@@ -3714,20 +3716,20 @@ void mdl_internal_erret(mdl_value_t *result, mdl_value_t *frame)
 
 // Random access to args
 #define GETARG(a, n, args) ((a) = LITEM(args, n))
-#define GETREQARG(a, n, args) do {(a) = LITEM(args, n); if (!a) return mdl_call_error("TOO-FEW-ARGUMENTS-SUPPLIED", NULL); }  while(0)
-#define DENYARG(n, args) do {if (LITEM(args, n)) return mdl_call_error("TOO-MANY-ARGUMENTS-SUPPLIED", NULL); } while(0)
+#define GETREQARG(a, n, args) do {(a) = LITEM(args, n); if (!a) return mdl_call_error("TOO-FEW-ARGUMENTS-SUPPLIED", nullptr); }  while(0)
+#define DENYARG(n, args) do {if (LITEM(args, n)) return mdl_call_error("TOO-MANY-ARGUMENTS-SUPPLIED", nullptr); } while(0)
 
 // Sequential access to args
 #define ARGSETUP(args) mdl_value_t *args##cursor = args->v.p.cdr
 
-#define GETNEXTARG(a, args) do { if (args##cursor) { (a) = args##cursor->v.p.car; args##cursor = args##cursor->v.p.cdr; } else { (a) = NULL; } } while(0)
-#define GETNEXTREQARG(a, args) do { if (args##cursor) { (a) = args##cursor->v.p.car; args##cursor = args##cursor->v.p.cdr; } else { return mdl_call_error("TOO-FEW-ARGUMENTS-SUPPLIED", NULL);  } } while(0)
+#define GETNEXTARG(a, args) do { if (args##cursor) { (a) = args##cursor->v.p.car; args##cursor = args##cursor->v.p.cdr; } else { (a) = nullptr; } } while(0)
+#define GETNEXTREQARG(a, args) do { if (args##cursor) { (a) = args##cursor->v.p.car; args##cursor = args##cursor->v.p.cdr; } else { return mdl_call_error("TOO-FEW-ARGUMENTS-SUPPLIED", nullptr);  } } while(0)
 #define REMAINING_ARGS(args) (args##cursor)
-#define NOMOREARGS(args) do { if (args##cursor) { return mdl_call_error("TOO-MANY-ARGUMENTS-SUPPLIED", NULL); }} while(0)
+#define NOMOREARGS(args) do { if (args##cursor) { return mdl_call_error("TOO-MANY-ARGUMENTS-SUPPLIED", nullptr); }} while(0)
 
 // old ones
 #define OARGSETUP(args, cursor) (cursor) = (args)->v.p.cdr
-#define OGETNEXTARG(arg, cursor) do {if (cursor) { (arg) = (cursor)->v.p.car; (cursor) = (cursor)->v.p.cdr; } else { (arg) = NULL; } } while (0)
+#define OGETNEXTARG(arg, cursor) do {if (cursor) { (arg) = (cursor)->v.p.car; (cursor) = (cursor)->v.p.cdr; } else { (arg) = nullptr; } } while (0)
 
 // below this point are built-ins
 // BEGIN BUILT-INS (do not remove this line)
@@ -3765,11 +3767,11 @@ mdl_value_t *mdl_builtin_eval_lval(mdl_value_t *form, mdl_value_t *args)
     else frame = cur_frame;
 
     if (atomval->pt != PRIMTYPE_ATOM)
-        return mdl_call_error("Type Mismatch, 1st arg to LVAL must be atom", NULL);
+        return mdl_call_error("Type Mismatch, 1st arg to LVAL must be atom", nullptr);
     mdl_value_t *result = mdl_local_symbol_lookup(atomval->v.a, frame);
     if (!result || result->type == MDL_TYPE_UNBOUND)
     {
-        return mdl_call_error_ext("UNBOUND-VARIABLE", "LVAL", atomval, NULL);
+        return mdl_call_error_ext("UNBOUND-VARIABLE", "LVAL", atomval, nullptr);
     }
     return result;
 }
@@ -3784,11 +3786,11 @@ mdl_value_t *mdl_builtin_eval_gval(mdl_value_t *form, mdl_value_t *args)
     NOMOREARGS(args);
 
     if (atomval->pt != PRIMTYPE_ATOM)
-        mdl_call_error_ext("FIRST-ARG-WRONG-TYPE", "First arg to GVAL must be atom", NULL);
+        mdl_call_error_ext("FIRST-ARG-WRONG-TYPE", "First arg to GVAL must be atom", nullptr);
     mdl_value_t *result = mdl_global_symbol_lookup(atomval->v.a);
     if (!result || result->type == MDL_TYPE_UNBOUND)
     {
-        return mdl_call_error_ext("UNBOUND-VARIABLE", "GVAL", atomval, NULL);
+        return mdl_call_error_ext("UNBOUND-VARIABLE", "GVAL", atomval, nullptr);
     }
     return result;
 }
@@ -3845,7 +3847,7 @@ mdl_value_t *mdl_builtin_eval_bound(mdl_value_t *form, mdl_value_t *args)
     if (atomval->pt != PRIMTYPE_ATOM)
             mdl_error("Type Mismatch, 1st arg to BOUND? must be atom");
     mdl_value_t *result = mdl_local_symbol_lookup(atomval->v.a, frame);
-    return mdl_boolean_value(result != NULL);
+    return mdl_boolean_value(result != nullptr);
 }
 
 mdl_value_t *mdl_builtin_eval_assigned(mdl_value_t *form, mdl_value_t *args)
@@ -3885,7 +3887,7 @@ mdl_value_t *mdl_builtin_eval_gbound(mdl_value_t *form, mdl_value_t *args)
     if (atomval->pt != PRIMTYPE_ATOM)
             mdl_error("Type Mismatch, 1st arg to GBOUND? must be atom");
     mdl_value_t *result = mdl_global_symbol_lookup(atomval->v.a);
-    return mdl_boolean_value(result != NULL);
+    return mdl_boolean_value(result != nullptr);
 }
 
 mdl_value_t *mdl_builtin_eval_gassigned(mdl_value_t *form, mdl_value_t *args)
@@ -3913,7 +3915,7 @@ mdl_value_t *mdl_builtin_eval_gunassign(mdl_value_t *form, mdl_value_t *args)
     NOMOREARGS(args);
 
     if (atomval->pt != PRIMTYPE_ATOM)
-        return mdl_call_error("FIRST-ARG-WRONG-TYPE", "First arg to GUNASSIGN must be atom", NULL);
+        return mdl_call_error("FIRST-ARG-WRONG-TYPE", "First arg to GUNASSIGN must be atom", nullptr);
     mdl_set_gval(atomval->v.a, &mdl_value_unassigned);
     return atomval;
 }
@@ -3965,15 +3967,15 @@ mdl_value_t *mdl_builtin_eval_cond(mdl_value_t *form, mdl_value_t *args)
     ARGSETUP(args);
 
     mdl_value_t *cur_clause;
-    mdl_value_t *cur_eval = NULL;
+    mdl_value_t *cur_eval = nullptr;
 
     GETNEXTREQARG(cur_clause,args);
     while (cur_clause)
     {
         if (cur_clause->type != MDL_TYPE_LIST)
-            return mdl_call_error_ext("BAD-CLAUSE", "COND clauses must be LISTs", NULL);
+            return mdl_call_error_ext("BAD-CLAUSE", "COND clauses must be LISTs", nullptr);
         if (!LHASITEM(cur_clause, 0))
-            return mdl_call_error_ext("BAD-CLAUSE", "COND clauses must have at least one item", NULL);
+            return mdl_call_error_ext("BAD-CLAUSE", "COND clauses must have at least one item", nullptr);
         
         cur_eval = mdl_eval(LITEM(cur_clause, 0), false);
         if (mdl_is_true(cur_eval))
@@ -4077,9 +4079,9 @@ mdl_value_t *mdl_builtin_eval_newtype(mdl_value_t *form, mdl_value_t *args)
 /* SUBR */
 {
     ARGSETUP(args);
-    mdl_value_t *newtype = NULL;
-    mdl_value_t *oldtype = NULL;
-    mdl_value_t *desc = NULL;
+    mdl_value_t *newtype = nullptr;
+    mdl_value_t *oldtype = nullptr;
+    mdl_value_t *desc = nullptr;
     int oldtypenum, prevtypenum;
 
     GETNEXTARG(newtype, args);
@@ -4108,8 +4110,8 @@ mdl_value_t *mdl_builtin_eval_evaltype(mdl_value_t *form, mdl_value_t *args)
 /* SUBR */
 {
     ARGSETUP(args);
-    mdl_value_t *thetype = NULL;
-    mdl_value_t *how = NULL;
+    mdl_value_t *thetype = nullptr;
+    mdl_value_t *how = nullptr;
     mdl_value_t *result;
     int typenum;
 
@@ -4123,14 +4125,14 @@ mdl_value_t *mdl_builtin_eval_evaltype(mdl_value_t *form, mdl_value_t *args)
     if (!how) 
     {
         result = mdl_get_evaltype(typenum);
-        if (result == NULL) result = &mdl_value_false;
+        if (result == nullptr) result = &mdl_value_false;
     }
     else
     {
         
         result = thetype;
         if (mdl_value_double_equal(how, mdl_value_builtin_eval)) 
-            mdl_set_evaltype(typenum, NULL);
+            mdl_set_evaltype(typenum, nullptr);
         else
             mdl_set_evaltype(typenum, how);
     }
@@ -4141,8 +4143,8 @@ mdl_value_t *mdl_builtin_eval_applytype(mdl_value_t *form, mdl_value_t *args)
 /* SUBR */
 {
     ARGSETUP(args);
-    mdl_value_t *thetype = NULL;
-    mdl_value_t *how = NULL;
+    mdl_value_t *thetype = nullptr;
+    mdl_value_t *how = nullptr;
     mdl_value_t *result;
     int typenum;
 
@@ -4155,13 +4157,13 @@ mdl_value_t *mdl_builtin_eval_applytype(mdl_value_t *form, mdl_value_t *args)
     if (!how) 
     {
         result = mdl_get_applytype(typenum);
-        if (result == NULL) result = &mdl_value_false;
+        if (result == nullptr) result = &mdl_value_false;
     }
     else
     {
         result = thetype;
         if (mdl_value_double_equal(how, mdl_value_builtin_apply)) 
-            mdl_set_applytype(typenum, NULL);
+            mdl_set_applytype(typenum, nullptr);
         else
             mdl_set_applytype(typenum, how);
     }
@@ -4172,8 +4174,8 @@ mdl_value_t *mdl_builtin_eval_printtype(mdl_value_t *form, mdl_value_t *args)
 /* SUBR */
 {
     ARGSETUP(args);
-    mdl_value_t *thetype = NULL;
-    mdl_value_t *how = NULL;
+    mdl_value_t *thetype = nullptr;
+    mdl_value_t *how = nullptr;
     mdl_value_t *result;
     int typenum;
 
@@ -4186,13 +4188,13 @@ mdl_value_t *mdl_builtin_eval_printtype(mdl_value_t *form, mdl_value_t *args)
     if (!how) 
     {
         result = mdl_get_printtype(typenum);
-        if (result == NULL) result = &mdl_value_false;
+        if (result == nullptr) result = &mdl_value_false;
     }
     else
     {
         result = thetype;
         if (mdl_value_double_equal(how, mdl_value_builtin_print)) 
-            mdl_set_printtype(typenum, NULL);
+            mdl_set_printtype(typenum, nullptr);
         else
             mdl_set_printtype(typenum, how);
     }
@@ -4275,9 +4277,9 @@ mdl_value_t *mdl_builtin_eval_put(mdl_value_t *form, mdl_value_t *args)
     if (mdl_primtype_structured(arg->pt) &&
         (indexval->type == MDL_TYPE_FIX || indexval->type == MDL_TYPE_OFFSET))
     {
-        if (newitem == NULL)
+        if (newitem == nullptr)
         {
-            return mdl_call_error("TOO-FEW-ARGUMENTS-SUPPLIED", NULL);
+            return mdl_call_error("TOO-FEW-ARGUMENTS-SUPPLIED", nullptr);
         }
         return mdl_internal_eval_put(arg, indexval, newitem);
     }
@@ -4301,14 +4303,14 @@ mdl_value_t *mdl_builtin_eval_get(mdl_value_t *form, mdl_value_t *args)
     if (mdl_primtype_structured(arg->pt) &&
         (!indexval || indexval->type == MDL_TYPE_FIX || indexval->type == MDL_TYPE_OFFSET))
     {
-        if (exp != NULL) 
-            return mdl_call_error_ext("TOO-MANY-ARGUMENTS-SUPPLIED", "No EXP allowed for GET on structure", NULL);
+        if (exp != nullptr) 
+            return mdl_call_error_ext("TOO-MANY-ARGUMENTS-SUPPLIED", "No EXP allowed for GET on structure", nullptr);
         return mdl_internal_eval_nth_copy(arg, indexval);
     }
     else
     {
         mdl_value_t *result =  mdl_internal_eval_getprop(arg, indexval);
-        if (result == NULL)
+        if (result == nullptr)
         {
             if (exp) result =  mdl_eval(exp);
             else result = &mdl_value_false;
@@ -4335,18 +4337,18 @@ mdl_value_t *mdl_builtin_eval_substruc(mdl_value_t *form, mdl_value_t *args)
     NOMOREARGS(args);
     
     if (mdl_primtype_nonstructured(from->pt))
-        return mdl_call_error_ext("FIRST-ARG-WRONG-TYPE", "First arg to SUBSTRUC must be structured", NULL);
+        return mdl_call_error_ext("FIRST-ARG-WRONG-TYPE", "First arg to SUBSTRUC must be structured", nullptr);
     if (restval && restval->type != MDL_TYPE_FIX)
-        return mdl_call_error_ext("SECOND-ARG-WRONG-TYPE", "Second argument to SUBSTRUC must be a FIX", NULL);
+        return mdl_call_error_ext("SECOND-ARG-WRONG-TYPE", "Second argument to SUBSTRUC must be a FIX", nullptr);
     if (amountval && amountval->type != MDL_TYPE_FIX)
-        return mdl_call_error_ext("THIRD-ARG-WRONG-TYPE", "Third argument to SUBSTRUC must be a FIX", NULL);
+        return mdl_call_error_ext("THIRD-ARG-WRONG-TYPE", "Third argument to SUBSTRUC must be a FIX", nullptr);
     if (to && ((int)from->pt != to->type) && (from->pt != PRIMTYPE_TUPLE && to->type != PRIMTYPE_VECTOR))
     {
-        return mdl_call_error_ext("ARG-WRONG-TYPE", "Last arg to SUBSTRUC must be same type as primtype of first arg", NULL);
+        return mdl_call_error_ext("ARG-WRONG-TYPE", "Last arg to SUBSTRUC must be same type as primtype of first arg", nullptr);
     }
     if (amountval && amountval->v.w < 0)
     {
-        return mdl_call_error_ext("ARGUMENT-OUT-OF-RANGE", "SUBSTRUC amount cannot be negative", NULL);
+        return mdl_call_error_ext("ARGUMENT-OUT-OF-RANGE", "SUBSTRUC amount cannot be negative", nullptr);
     }
     int rest = 0;
     int amount = -1;
@@ -4356,7 +4358,7 @@ mdl_value_t *mdl_builtin_eval_substruc(mdl_value_t *form, mdl_value_t *args)
 
     if (rest < 0)
     {
-        return mdl_call_error_ext("ARGUMENT-OUT-OF-RANGE", "SUBSTRUC rest cannot be negative", NULL);
+        return mdl_call_error_ext("ARGUMENT-OUT-OF-RANGE", "SUBSTRUC rest cannot be negative", nullptr);
     }
 
     switch (from->pt)
@@ -4366,11 +4368,11 @@ mdl_value_t *mdl_builtin_eval_substruc(mdl_value_t *form, mdl_value_t *args)
         mdl_value_t *start = LREST(from, rest);
         if (start == (mdl_value_t *)-1)
         {
-            return mdl_call_error_ext("ARGUMENT-OUT-OF-RANGE", "SUBSTRUC rest too large", NULL);
+            return mdl_call_error_ext("ARGUMENT-OUT-OF-RANGE", "SUBSTRUC rest too large", nullptr);
         }
         if (!to)
         {
-            mdl_value_t *lastitem = NULL;
+            mdl_value_t *lastitem = nullptr;
             if (start && amount--)
             {
                 to = lastitem = mdl_newlist();
@@ -4390,37 +4392,37 @@ mdl_value_t *mdl_builtin_eval_substruc(mdl_value_t *form, mdl_value_t *args)
             while(start && amount--)
             {
                 if (!cursor)
-                    return mdl_call_error_ext("ARGUMENT-OUT-OF-RANGE", "SUBSTRUC destination too short", NULL);
+                    return mdl_call_error_ext("ARGUMENT-OUT-OF-RANGE", "SUBSTRUC destination too short", nullptr);
                 cursor->v.p.car = start->v.p.car;
                 cursor = cursor->v.p.cdr;
                 start = start->v.p.cdr;
             }
         }
         if (amount > 0)
-            return mdl_call_error_ext("ARGUMENT-OUT-OF-RANGE", "SUBSTRUC amount too big for source", NULL);
+            return mdl_call_error_ext("ARGUMENT-OUT-OF-RANGE", "SUBSTRUC amount too big for source", nullptr);
         break;
     }
     case PRIMTYPE_VECTOR:
         if (rest > VLENGTH(from))
-            return mdl_call_error_ext("ARGUMENT-OUT-OF-RANGE", "SUBSTRUC rest too large", NULL);
+            return mdl_call_error_ext("ARGUMENT-OUT-OF-RANGE", "SUBSTRUC rest too large", nullptr);
         if (amount < 0) amount = VLENGTH(from) - rest;
         if ((rest + amount) > VLENGTH(from))
-            return mdl_call_error_ext("ARGUMENT-OUT-OF-RANGE", "SUBSTRUC amount too big for source", NULL);
+            return mdl_call_error_ext("ARGUMENT-OUT-OF-RANGE", "SUBSTRUC amount too big for source", nullptr);
         if (to && (amount > VLENGTH(to)))
-            return mdl_call_error_ext("ARGUMENT-OUT-OF-RANGE", "SUBSTRUC destination too short", NULL);
+            return mdl_call_error_ext("ARGUMENT-OUT-OF-RANGE", "SUBSTRUC destination too short", nullptr);
         if (!to) to = mdl_new_empty_vector(amount, MDL_TYPE_VECTOR);
         std::memcpy(VREST(to,0), VREST(from, rest), amount * sizeof(mdl_value_t));
         break;
     case PRIMTYPE_UVECTOR:
         if (rest > UVLENGTH(from))
-            return mdl_call_error_ext("ARGUMENT-OUT-OF-RANGE", "SUBSTRUC rest too large", NULL);
+            return mdl_call_error_ext("ARGUMENT-OUT-OF-RANGE", "SUBSTRUC rest too large", nullptr);
         if (amount < 0) amount = UVLENGTH(from) - rest;
         if ((rest + amount) > UVLENGTH(from))
-            return mdl_call_error_ext("ARGUMENT-OUT-OF-RANGE", "SUBSTRUC amount too big for source", NULL);
+            return mdl_call_error_ext("ARGUMENT-OUT-OF-RANGE", "SUBSTRUC amount too big for source", nullptr);
         if (to && (amount > UVLENGTH(to)))
-            return mdl_call_error_ext("ARGUMENT-OUT-OF-RANGE", "SUBSTRUC destination too short", NULL);
+            return mdl_call_error_ext("ARGUMENT-OUT-OF-RANGE", "SUBSTRUC destination too short", nullptr);
         if (to && (UVTYPE(to) != UVTYPE(from)))
-            return mdl_call_error_ext("TYPES-DIFFER-IN-UNIFORM-VECTOR", "SUBSTRUC UVECTOR to and from must be same type", NULL);
+            return mdl_call_error_ext("TYPES-DIFFER-IN-UNIFORM-VECTOR", "SUBSTRUC UVECTOR to and from must be same type", nullptr);
         if (!to) 
         {
             to = mdl_new_empty_uvector(amount, MDL_TYPE_UVECTOR);
@@ -4430,12 +4432,12 @@ mdl_value_t *mdl_builtin_eval_substruc(mdl_value_t *form, mdl_value_t *args)
         break;
     case PRIMTYPE_TUPLE:
         if (rest > TPLENGTH(from))
-            return mdl_call_error_ext("ARGUMENT-OUT-OF-RANGE", "SUBSTRUC rest too large", NULL);
+            return mdl_call_error_ext("ARGUMENT-OUT-OF-RANGE", "SUBSTRUC rest too large", nullptr);
         if (amount < 0) amount = TPLENGTH(from) - rest;
         if ((rest + amount) > TPLENGTH(from))
-            return mdl_call_error_ext("ARGUMENT-OUT-OF-RANGE", "SUBSTRUC amount too big for source", NULL);
+            return mdl_call_error_ext("ARGUMENT-OUT-OF-RANGE", "SUBSTRUC amount too big for source", nullptr);
         if (to && (amount > mdl_internal_struct_length(to)))
-            return mdl_call_error_ext("ARGUMENT-OUT-OF-RANGE", "SUBSTRUC destination too short", NULL);
+            return mdl_call_error_ext("ARGUMENT-OUT-OF-RANGE", "SUBSTRUC destination too short", nullptr);
         if (!to) to = mdl_new_empty_vector(amount, MDL_TYPE_VECTOR);
         if (to->pt == PRIMTYPE_VECTOR)
             std::memcpy(VREST(to,0), TPREST(from, rest), amount * sizeof(mdl_value_t));
@@ -4444,12 +4446,12 @@ mdl_value_t *mdl_builtin_eval_substruc(mdl_value_t *form, mdl_value_t *args)
         break;
     case PRIMTYPE_STRING:
         if (rest > from->v.s.l)
-            return mdl_call_error_ext("ARGUMENT-OUT-OF-RANGE", "SUBSTRUC rest too large", NULL);
+            return mdl_call_error_ext("ARGUMENT-OUT-OF-RANGE", "SUBSTRUC rest too large", nullptr);
         if (amount < 0) amount = from->v.s.l - rest;
         if ((rest + amount) > from->v.s.l)
-            return mdl_call_error_ext("ARGUMENT-OUT-OF-RANGE", "SUBSTRUC amount too big for source", NULL);
+            return mdl_call_error_ext("ARGUMENT-OUT-OF-RANGE", "SUBSTRUC amount too big for source", nullptr);
         if (to && (amount > to->v.s.l))
-            return mdl_call_error_ext("ARGUMENT-OUT-OF-RANGE", "SUBSTRUC destination too short", NULL);
+            return mdl_call_error_ext("ARGUMENT-OUT-OF-RANGE", "SUBSTRUC destination too short", nullptr);
         if (to) std::memcpy(to->v.s.p, from->v.s.p + rest, amount);
         else to = mdl_new_string(amount, from->v.s.p + rest);
         break;
@@ -4520,7 +4522,7 @@ mdl_value_t *mdl_builtin_eval_string(mdl_value_t *form, mdl_value_t *args)
             length += cursor->v.p.car->v.s.l;
             break;
         default:
-            mdl_call_error_ext("ARG-WRONG-TYPE", "Arguments to STRING must be strings or characters", NULL);
+            mdl_call_error_ext("ARG-WRONG-TYPE", "Arguments to STRING must be strings or characters", nullptr);
         }
         cursor = cursor->v.p.cdr;
     }
@@ -4552,8 +4554,8 @@ mdl_value_t *mdl_builtin_eval_ilist(mdl_value_t *form, mdl_value_t *args)
     mdl_value_t *nelem;
     mdl_value_t *expr;
     int nelements;
-    mdl_value_t *lastelem = NULL;
-    mdl_value_t *firstelem = NULL;
+    mdl_value_t *lastelem = nullptr;
+    mdl_value_t *firstelem = nullptr;
     mdl_value_t *elem;
     mdl_value_t *tmp;
     
@@ -4807,7 +4809,7 @@ mdl_value_t *mdl_builtin_eval_top(mdl_value_t *form, mdl_value_t *args)
 template <class T, class R> R mdl_get_union(T);
 template <class T> counted_string_t * mdl_get_string(T)
 {
-    return NULL;
+    return nullptr;
 }
 
 template <> inline mdl_value_union *mdl_get_union<mdl_value_t *, mdl_value_union *>(mdl_value_t *v)
@@ -5171,11 +5173,11 @@ mdl_value_t *mdl_builtin_eval_parse(mdl_value_t *form, mdl_value_t *args)
 /* SUBR */
 {
     ARGSETUP(args);
-    mdl_value_t *parse_string = NULL;
-    mdl_value_t *radix = NULL;
-    mdl_value_t *lookup = NULL;
-    mdl_value_t *parse_table = NULL;
-    mdl_value_t *look_ahead = NULL;
+    mdl_value_t *parse_string = nullptr;
+    mdl_value_t *radix = nullptr;
+    mdl_value_t *lookup = nullptr;
+    mdl_value_t *parse_table = nullptr;
+    mdl_value_t *look_ahead = nullptr;
     mdl_value_t *result;
 
     GETNEXTARG(parse_string, args);
@@ -5207,12 +5209,12 @@ mdl_value_t *mdl_builtin_eval_parse(mdl_value_t *form, mdl_value_t *args)
     }
     if (parse_string)
     {
-        mdl_value_t *mdl_value_atom_parse_string = mdl_get_atom("PARSE-STRING!-", true, NULL);
+        mdl_value_t *mdl_value_atom_parse_string = mdl_get_atom("PARSE-STRING!-", true, nullptr);
         mdl_bind_local_symbol(mdl_value_atom_parse_string->v.a, parse_string, cur_frame, false);
     }
     if (parse_table)
     {
-        mdl_value_t *mdl_value_atom_parse_table = mdl_get_atom("PARSE-TABLE!-", true, NULL);
+        mdl_value_t *mdl_value_atom_parse_table = mdl_get_atom("PARSE-TABLE!-", true, nullptr);
         mdl_bind_local_symbol(mdl_value_atom_parse_table->v.a, parse_table, cur_frame, false);
     }
 
@@ -5226,8 +5228,8 @@ mdl_value_t *mdl_builtin_eval_unparse(mdl_value_t *form, mdl_value_t *args)
 /* SUBR */
 {
     ARGSETUP(args);
-    mdl_value_t *obj = NULL;
-    mdl_value_t *radix = NULL;
+    mdl_value_t *obj = nullptr;
+    mdl_value_t *radix = nullptr;
     mdl_value_t *chan;
     mdl_value_t *result;
     mdl_value_t *mdl_value_atom_outchan;
@@ -5245,11 +5247,11 @@ mdl_value_t *mdl_builtin_eval_unparse(mdl_value_t *form, mdl_value_t *args)
             mdl_error("Radix must be a FIX");
     }
 
-    chan = mdl_create_internal_output_channel(INTERNAL_BUFSIZE, 0, NULL);
-    mdl_value_atom_outchan = mdl_get_atom("OUTCHAN!-", true, NULL);
+    chan = mdl_create_internal_output_channel(INTERNAL_BUFSIZE, 0, nullptr);
+    mdl_value_atom_outchan = mdl_get_atom("OUTCHAN!-", true, nullptr);
     mdl_bind_local_symbol(mdl_value_atom_outchan->v.a, chan, cur_frame, false);
 
-    mdl_print_value_to_chan(chan, obj, false, false, NULL);
+    mdl_print_value_to_chan(chan, obj, false, false, nullptr);
     result = mdl_get_internal_output_channel_string(chan);
     return result;
 }
@@ -5262,7 +5264,7 @@ mdl_value_t *mdl_builtin_eval_define(mdl_value_t *form, mdl_value_t *args)
     if (!firstarg)
         mdl_error("DEFINE must have an argument");
     firstarg = mdl_eval(firstarg);
-    if (!firstarg) return NULL;
+    if (!firstarg) return nullptr;
     if (firstarg->type != MDL_TYPE_ATOM)
         mdl_error("First argument of DEFINE must be an atom");
 
@@ -5291,7 +5293,7 @@ mdl_value_t *mdl_builtin_eval_defmac(mdl_value_t *form, mdl_value_t *args)
     if (!firstarg)
         mdl_error("DEFMAC must have an argument");
     firstarg = mdl_eval(firstarg);
-    if (!firstarg) return NULL;
+    if (!firstarg) return nullptr;
     if (firstarg->type != MDL_TYPE_ATOM)
         mdl_error("First argument of DEFMAC must be an atom");
 
@@ -5644,7 +5646,7 @@ void *mdl_memmem(void *hp, int hl, void *np, int nl)
         }
         sp++;
     }
-    return NULL;
+    return nullptr;
 }
 
 mdl_value_t *mdl_builtin_eval_member(mdl_value_t *form, mdl_value_t *args)
@@ -6156,7 +6158,7 @@ mdl_value_t *mdl_builtin_eval_abs(mdl_value_t *form, mdl_value_t *args)
     {
         return mdl_new_fix((num->v.w<0)?(-num->v.w):num->v.w);
     }
-    return mdl_call_error("FIRST-ARG-WRONG-TYPE", NULL);
+    return mdl_call_error("FIRST-ARG-WRONG-TYPE", nullptr);
 }
 
 
@@ -6167,7 +6169,7 @@ mdl_value_t *mdl_builtin_eval_getprop(mdl_value_t *form, mdl_value_t *args)
     mdl_value_t *item = LITEM(args, 0);
     mdl_value_t *indicator = LITEM(args, 1);
     mdl_value_t *exp = LITEM(args, 2);
-    if (indicator == NULL)
+    if (indicator == nullptr)
     {
         mdl_error("Not enough ARGS in GETPROP");
     }
@@ -6176,7 +6178,7 @@ mdl_value_t *mdl_builtin_eval_getprop(mdl_value_t *form, mdl_value_t *args)
         mdl_error("Too many ARGS in GETPROP");
     }
     mdl_value_t *result =  mdl_internal_eval_getprop(item, indicator);
-    if (result == NULL)
+    if (result == nullptr)
     {
         if (exp) result =  mdl_eval(exp);
         else result = &mdl_value_false;
@@ -6190,7 +6192,7 @@ mdl_value_t *mdl_builtin_eval_putprop(mdl_value_t *form, mdl_value_t *args)
     mdl_value_t *item = LITEM(args, 0);
     mdl_value_t *indicator = LITEM(args, 1);
     mdl_value_t *value = LITEM(args, 2);
-    if (indicator == NULL)
+    if (indicator == nullptr)
     {
         mdl_error("Not enough ARGS in PUTPROP");
     }
@@ -6231,7 +6233,7 @@ mdl_value_t *mdl_builtin_eval_oblistp(mdl_value_t *form, mdl_value_t *args)
     if (LHASITEM(args, 1))
         mdl_error("Too many arguments to OBLIST?");
     if (a->type != MDL_TYPE_ATOM)
-        return mdl_call_error("FIRST-ARG-WRONG-TYPE", cur_frame->subr, a, NULL);
+        return mdl_call_error("FIRST-ARG-WRONG-TYPE", cur_frame->subr, a, nullptr);
     if (!a->v.a->oblist) return &mdl_value_false;
     return a->v.a->oblist;
 }
@@ -6302,7 +6304,7 @@ mdl_value_t *mdl_builtin_eval_insert(mdl_value_t *form, mdl_value_t *args)
 {
     mdl_value_t *str = LITEM(args, 0);
     mdl_value_t *oblist = LITEM(args, 1);
-    mdl_value_t *result = NULL;
+    mdl_value_t *result = nullptr;
 
     if (!oblist)
         mdl_error("Not enough arguments to INSERT");
@@ -6313,9 +6315,9 @@ mdl_value_t *mdl_builtin_eval_insert(mdl_value_t *form, mdl_value_t *args)
     if (str->type == MDL_TYPE_ATOM)
     {
         if (str->v.a->oblist)
-            return mdl_call_error_ext("ATOM-ALREADY-THERE", "Cannot INSERT, atom already on plist", str, mdl_internal_eval_getprop(oblist, mdl_value_oblist), NULL);
+            return mdl_call_error_ext("ATOM-ALREADY-THERE", "Cannot INSERT, atom already on plist", str, mdl_internal_eval_getprop(oblist, mdl_value_oblist), nullptr);
         if (mdl_get_atom_from_oblist(str->v.a->pname, oblist))
-            return mdl_call_error_ext("ATOM-ALREADY-THERE", "Cannot INSERT, atom with same pname exists on oblist", str, mdl_internal_eval_getprop(oblist, mdl_value_oblist), NULL);
+            return mdl_call_error_ext("ATOM-ALREADY-THERE", "Cannot INSERT, atom with same pname exists on oblist", str, mdl_internal_eval_getprop(oblist, mdl_value_oblist), nullptr);
         mdl_put_atom_in_oblist(str->v.a->pname, oblist, str);
         str->v.a->oblist = oblist;
         result = str;
@@ -6323,7 +6325,7 @@ mdl_value_t *mdl_builtin_eval_insert(mdl_value_t *form, mdl_value_t *args)
     else if (str->type == MDL_TYPE_STRING)
     {
         result = mdl_create_atom_on_oblist(str->v.s.p, oblist);
-        if (result == NULL)
+        if (result == nullptr)
             mdl_error("Cannot INSERT, atom with given pname exists on oblist");
     }
     else
@@ -6341,7 +6343,7 @@ mdl_value_t *mdl_builtin_eval_pname(mdl_value_t *form, mdl_value_t *args)
     if (!a)
         mdl_error("Not enough arguments to PNAME");
     if (a->type != MDL_TYPE_ATOM)
-        return mdl_call_error_ext("FIRST-ARG-WRONG-TYPE", "First argument to PNAME must be ATOM", NULL);
+        return mdl_call_error_ext("FIRST-ARG-WRONG-TYPE", "First argument to PNAME must be ATOM", nullptr);
     if (LHASITEM(args, 1))
         mdl_error("Too many arguments to PNAME");
     return mdl_new_string(a->v.a->pname);
@@ -6355,7 +6357,7 @@ mdl_value_t *mdl_builtin_eval_spname(mdl_value_t *form, mdl_value_t *args)
     if (!a)
         mdl_error("Not enough arguments to SPNAME");
     if (a->type != MDL_TYPE_ATOM)
-        mdl_call_error("FIRST-ARG-WRONG-TYPE", cur_frame->subr, a, NULL);
+        mdl_call_error("FIRST-ARG-WRONG-TYPE", cur_frame->subr, a, nullptr);
     if (LHASITEM(args, 1))
         mdl_error("Too many arguments to SPNAME");
     return mdl_make_string(a->v.a->pname);
@@ -6373,7 +6375,7 @@ mdl_value_t *mdl_builtin_eval_block(mdl_value_t *form, mdl_value_t *args)
 /* SUBR */
 {
     mdl_value_t *lookup = LITEM(args, 0);
-    if (lookup == NULL)
+    if (lookup == nullptr)
         mdl_error("Too few arguments to BLOCK");
     if (LHASITEM(args, 1))
         mdl_error("Too many arguments to BLOCK");
@@ -6471,7 +6473,7 @@ mdl_value_t *mdl_builtin_eval_typep(mdl_value_t *form, mdl_value_t *args)
     
     mdl_value_t *result = &mdl_value_false;
 
-    if (arg == NULL)
+    if (arg == nullptr)
         mdl_error("Not enough arguments to TYPE?");
     atom_t *mtype = mdl_get_type_name(arg->type);
     while (rest)
@@ -6527,7 +6529,10 @@ mdl_value_t *mdl_builtin_eval_emptyp(mdl_value_t *form, mdl_value_t *args)
     if (LHASITEM(args, 1))
         mdl_error("Too many args to EMPTY?");
     
-    if (mdl_primtype_nonstructured(arg->pt)) return mdl_call_error_ext("FIRST-ARG-WRONG_TYPE","First arg to EMPTY? must be structured",NULL);
+    if (mdl_primtype_nonstructured(arg->pt))
+    {
+        return mdl_call_error_ext("FIRST-ARG-WRONG_TYPE", "First arg to EMPTY? must be structured", nullptr);
+    }
 
     return mdl_boolean_value(mdl_internal_struct_is_empty(arg));
 }
@@ -6572,12 +6577,12 @@ mdl_value_t *mdl_builtin_eval_lengthp(mdl_value_t *form, mdl_value_t *args)
 // returns any arguments following the channel arguments
 mdl_value_t *mdl_get_check_channel_args(mdl_value_t *args, mdl_value_t **modep, mdl_value_t **name1p, mdl_value_t **name2p, mdl_value_t **devicep, mdl_value_t **dirp, mdl_value_t **funcp)
 {
-    mdl_value_t *mode = NULL;
-    mdl_value_t *name1 = NULL;
-    mdl_value_t *name2 = NULL;
-    mdl_value_t *device = NULL;
-    mdl_value_t *dir = NULL;
-    mdl_value_t *func = NULL;
+    mdl_value_t *mode = nullptr;
+    mdl_value_t *name1 = nullptr;
+    mdl_value_t *name2 = nullptr;
+    mdl_value_t *device = nullptr;
+    mdl_value_t *dir = nullptr;
+    mdl_value_t *func = nullptr;
     mdl_value_t *cursor = args->v.p.cdr;
 
     OARGSETUP(args, cursor);
@@ -6640,7 +6645,7 @@ mdl_value_t *mdl_builtin_eval_channel(mdl_value_t *form, mdl_value_t *args)
     if (mdl_string_equal_cstr(&mode->v.s, "READ") || 
         mdl_string_equal_cstr(&mode->v.s, "READB"))
     {
-        mdl_set_chan_eof_object(chan, NULL);
+        mdl_set_chan_eof_object(chan, nullptr);
     }
     return chan;
 }
@@ -6657,7 +6662,7 @@ mdl_value_t *mdl_builtin_eval_open(mdl_value_t *form, mdl_value_t *args)
 mdl_value_t *mdl_builtin_eval_file_existsp(mdl_value_t *form, mdl_value_t *args)
 /* SUBR FILE-EXISTS?*/
 {
-    mdl_value_t *argt[4] = {NULL, NULL, NULL, NULL};
+    mdl_value_t *argt[4] = {nullptr, nullptr, nullptr, nullptr};
     mdl_value_t *cursor = args->v.p.cdr;
     int nargs = 0;
     int err;
@@ -6679,7 +6684,7 @@ mdl_value_t *mdl_builtin_eval_file_existsp(mdl_value_t *form, mdl_value_t *args)
     err = stat(pathname, &stbuf);
 
     if (!err) return mdl_value_T;
-    errfalse = mdl_cons_internal(mdl_new_fix(errno), NULL);
+    errfalse = mdl_cons_internal(mdl_new_fix(errno), nullptr);
     errfalse = mdl_cons_internal(mdl_new_string(strerror(errno)), errfalse);
     errfalse = mdl_make_list(errfalse, MDL_TYPE_FALSE);
     return errfalse;
@@ -6743,7 +6748,7 @@ mdl_value_t *mdl_builtin_eval_access(mdl_value_t *form, mdl_value_t *args)
 // Conversion I/O
 void mdl_setup_frame_for_read(mdl_value_t **chanp, mdl_value_t *look_up, mdl_value_t *read_table)
 {
-    mdl_value_t *mdl_value_atom_inchan  = mdl_get_atom("INCHAN!-", true, NULL);
+    mdl_value_t *mdl_value_atom_inchan  = mdl_get_atom("INCHAN!-", true, nullptr);
     if (!*chanp)
     {
         *chanp = mdl_local_symbol_lookup_pname("INCHAN!-", cur_frame);
@@ -6765,7 +6770,7 @@ void mdl_setup_frame_for_read(mdl_value_t **chanp, mdl_value_t *look_up, mdl_val
 
     if (read_table)
     {
-        mdl_value_t *mdl_value_atom_read_table = mdl_get_atom("READ-TABLE!-", true, NULL);
+        mdl_value_t *mdl_value_atom_read_table = mdl_get_atom("READ-TABLE!-", true, nullptr);
         
         mdl_bind_local_symbol(mdl_value_atom_read_table->v.a, read_table, cur_frame, false);
     }
@@ -6802,7 +6807,7 @@ mdl_value_t *mdl_builtin_eval_readchr(mdl_value_t *form, mdl_value_t *args)
     mdl_value_t *eof_routine = LITEM(args, 1); // Sets EOF routine in channel
     mdl_value_t *result;
 
-    mdl_setup_frame_for_read(&chan, NULL, NULL);
+    mdl_setup_frame_for_read(&chan, nullptr, nullptr);
     if (!mdl_chan_mode_is_input(chan))
         mdl_error("Channel for READCHR must be input channel");
 
@@ -6824,7 +6829,7 @@ mdl_value_t *mdl_builtin_eval_nextchr(mdl_value_t *form, mdl_value_t *args)
         mdl_error("Channel for NEXTCHR must be input channel");
 
     if (LITEM(args, 2)) mdl_error("Too many args to nextchr");
-    mdl_setup_frame_for_read(&chan, NULL, NULL);
+    mdl_setup_frame_for_read(&chan, nullptr, nullptr);
     mdl_set_chan_eof_object(chan, eof_routine);
     result = mdl_next_character(chan);
     return result;
@@ -6832,7 +6837,7 @@ mdl_value_t *mdl_builtin_eval_nextchr(mdl_value_t *form, mdl_value_t *args)
 // Conversion output
 void mdl_setup_frame_for_print(mdl_value_t **chanp)
 {
-    mdl_value_t *mdl_value_atom_outchan  = mdl_get_atom("OUTCHAN!-", true, NULL);
+    mdl_value_t *mdl_value_atom_outchan  = mdl_get_atom("OUTCHAN!-", true, nullptr);
     if (!*chanp)
     {
         *chanp = mdl_local_symbol_lookup(mdl_value_atom_outchan->v.a, cur_frame);
@@ -6866,9 +6871,9 @@ mdl_value_t *mdl_builtin_eval_print(mdl_value_t *form, mdl_value_t *args)
     if (!binary && !mdl_chan_mode_is_output(chan))
         mdl_error("Channel for PRINT must be output channel");
 
-    mdl_print_newline_to_chan(chan, binary?MDL_PF_BINARY:MDL_PF_NONE, NULL);
-    mdl_print_value_to_chan(chan, obj, false, false, NULL);
-    mdl_print_char_to_chan(chan, ' ', binary?MDL_PF_BINARY:MDL_PF_NONE, NULL);
+    mdl_print_newline_to_chan(chan, binary?MDL_PF_BINARY:MDL_PF_NONE, nullptr);
+    mdl_print_value_to_chan(chan, obj, false, false, nullptr);
+    mdl_print_char_to_chan(chan, ' ', binary?MDL_PF_BINARY:MDL_PF_NONE, nullptr);
     return obj;
 }
 
@@ -6887,7 +6892,7 @@ mdl_value_t *mdl_builtin_eval_prin1(mdl_value_t *form, mdl_value_t *args)
     if (!mdl_chan_mode_is_output(chan))
         mdl_error("Channel for PRIN1 must be output channel");
 
-    mdl_print_value_to_chan(chan, obj, false, false, NULL);
+    mdl_print_value_to_chan(chan, obj, false, false, nullptr);
     std::fflush(stdout);
     return obj;
 }
@@ -6910,7 +6915,7 @@ mdl_value_t *mdl_builtin_eval_princ(mdl_value_t *form, mdl_value_t *args)
     if (!mdl_chan_mode_is_output(chan))
         mdl_error("Channel for PRINC must be output channel");
 
-    mdl_print_value_to_chan(chan, obj, true, false, NULL);
+    mdl_print_value_to_chan(chan, obj, true, false, nullptr);
     return obj;
 }
 
@@ -6931,15 +6936,15 @@ mdl_value_t *mdl_builtin_eval_terpri(mdl_value_t *form, mdl_value_t *args)
     if (!binary && !mdl_chan_mode_is_output(chan))
         mdl_error("Channel for TERPRI/CRLF must be output channel");
 
-    mdl_print_newline_to_chan(chan, binary?MDL_PF_BINARY:MDL_PF_NONE, NULL);
+    mdl_print_newline_to_chan(chan, binary?MDL_PF_BINARY:MDL_PF_NONE, nullptr);
     return &mdl_value_false;
 }
 
 mdl_value_t *mdl_builtin_eval_flatsize(mdl_value_t *form, mdl_value_t *args)
 /* SUBR */
 {
-    mdl_value_t *obj = NULL;
-    mdl_value_t *radix = NULL;
+    mdl_value_t *obj = nullptr;
+    mdl_value_t *radix = nullptr;
     mdl_frame_t *frame = mdl_new_frame();
     mdl_frame_t *prev_frame = cur_frame;
     mdl_value_t *chan;
@@ -6969,7 +6974,7 @@ mdl_value_t *mdl_builtin_eval_flatsize(mdl_value_t *form, mdl_value_t *args)
     mdl_push_frame(frame);
 
     chan = mdl_create_internal_output_channel(0, max->v.w, mdl_make_frame_value(frame));
-    mdl_value_atom_outchan = mdl_get_atom("OUTCHAN!-", true, NULL);
+    mdl_value_atom_outchan = mdl_get_atom("OUTCHAN!-", true, nullptr);
     mdl_bind_local_symbol(mdl_value_atom_outchan->v.a, chan, frame, false);
 
     if ((jumpval = mdl_setjmp(frame->interp_frame)) != 0)
@@ -6985,7 +6990,7 @@ mdl_value_t *mdl_builtin_eval_flatsize(mdl_value_t *form, mdl_value_t *args)
         }
     }
 
-    mdl_print_value_to_chan(chan, obj, false, false, NULL);
+    mdl_print_value_to_chan(chan, obj, false, false, nullptr);
     result = mdl_new_fix(mdl_get_internal_output_channel_length(chan));
     mdl_pop_frame(prev_frame);
     return result;
@@ -7006,8 +7011,8 @@ mdl_value_t *mdl_builtin_eval_readb(mdl_value_t *form, mdl_value_t *args)
     mdl_value_t *eof_routine = LITEM(args, 2); // Sets EOF routine in channel
     mdl_value_t *result;
 
-    mdl_setup_frame_for_read(&chan, NULL, NULL);
-    if (buffer == NULL) mdl_error("Not enough arguments to READB");
+    mdl_setup_frame_for_read(&chan, nullptr, nullptr);
+    if (buffer == nullptr) mdl_error("Not enough arguments to READB");
     if (LITEM(args, 3)) mdl_error("Too many args to READB");
     
     if (!mdl_chan_mode_is_read_binary(chan))
@@ -7027,8 +7032,8 @@ mdl_value_t *mdl_builtin_eval_readstring(mdl_value_t *form, mdl_value_t *args)
     mdl_value_t *eof_routine = LITEM(args, 3); // Sets EOF routine in channel
     mdl_value_t *result;
 
-    mdl_setup_frame_for_read(&chan, NULL, NULL);
-    if (buffer == NULL) mdl_error("Not enough arguments to READSTRING");
+    mdl_setup_frame_for_read(&chan, nullptr, nullptr);
+    if (buffer == nullptr) mdl_error("Not enough arguments to READSTRING");
     if (LITEM(args, 4)) mdl_error("Too many args to READSTRING");
     
     if (!mdl_chan_mode_is_input(chan))
@@ -7116,9 +7121,9 @@ mdl_value_t *mdl_builtin_eval_image(mdl_value_t *form, mdl_value_t *args)
     NOMOREARGS(args);
 
     if (ch->type != MDL_TYPE_FIX)
-        return mdl_call_error("FIRST-ARG-WRONG-TYPE", NULL);
+        return mdl_call_error("FIRST-ARG-WRONG-TYPE", nullptr);
     mdl_setup_frame_for_print(&chan);
-    mdl_print_char_to_chan(chan, (int)ch->v.w, MDL_PF_NOADVANCE, NULL);
+    mdl_print_char_to_chan(chan, (int)ch->v.w, MDL_PF_NOADVANCE, nullptr);
     return ch;
 }
 // Other IO (LOAD/FLOAD)
@@ -7131,12 +7136,12 @@ mdl_value_t *mdl_builtin_eval_load(mdl_value_t *form, mdl_value_t *args)
     if (LHASITEM(args, 2))
         mdl_error("Too many args to LOAD");
 
-    mdl_setup_frame_for_read(&chan, look_up, NULL);
+    mdl_setup_frame_for_read(&chan, look_up, nullptr);
 
     if (!mdl_chan_mode_is_input(chan))
         mdl_error("Channel for LOAD must be input channel");
         
-    mdl_set_chan_eof_object(chan, NULL);
+    mdl_set_chan_eof_object(chan, nullptr);
 
     mdl_load_file_from_chan(chan);
     mdl_internal_close_channel(chan);
@@ -7156,7 +7161,7 @@ mdl_value_t *mdl_builtin_eval_fload(mdl_value_t *form, mdl_value_t *args)
     mdl_value_t *close_form;
     int jumpval;
     
-    look_up = mdl_get_check_channel_args(args, NULL, &name1, &name2, &device, &dir, NULL);
+    look_up = mdl_get_check_channel_args(args, nullptr, &name1, &name2, &device, &dir, nullptr);
     if (look_up)
     {
         if (look_up->v.p.cdr)
@@ -7173,7 +7178,7 @@ mdl_value_t *mdl_builtin_eval_fload(mdl_value_t *form, mdl_value_t *args)
     *VITEM(chan,CHANNEL_SLOT_FNARG2) = *name2;
     *VITEM(chan,CHANNEL_SLOT_DEVNARG) = *device;
     *VITEM(chan,CHANNEL_SLOT_DIRNARG) = *dir;
-    mdl_set_chan_eof_object(chan, NULL);
+    mdl_set_chan_eof_object(chan, nullptr);
     if (!mdl_is_true(mdl_internal_open_channel(chan)))
         mdl_error("Couldn't open file in FLOAD"); // FIXME by passing FALSE to ERROR
 
@@ -7182,11 +7187,11 @@ mdl_value_t *mdl_builtin_eval_fload(mdl_value_t *form, mdl_value_t *args)
     mdl_push_frame(mdl_new_frame());
     cur_frame->subr = prev_frame->subr;
     cur_frame->prev_frame = prev_frame;
-    mdl_setup_frame_for_read(&chan, look_up, NULL);
+    mdl_setup_frame_for_read(&chan, look_up, nullptr);
     cur_frame->args = mdl_new_empty_tuple(2, MDL_TYPE_TUPLE);
     cur_frame->frame_flags = MDL_FRAME_FLAGS_UNWIND;
 
-    close_form = mdl_cons_internal(chan, NULL);
+    close_form = mdl_cons_internal(chan, nullptr);
     close_form = mdl_cons_internal(mdl_get_atom_from_oblist("CLOSE", mdl_value_root_oblist), close_form);
     close_form = mdl_make_list(close_form, MDL_TYPE_FORM);
     *TPREST(cur_frame->args,1) = *close_form;
@@ -7213,7 +7218,7 @@ mdl_value_t *mdl_builtin_eval_sname(mdl_value_t *form, mdl_value_t *args)
 
     if (!sname)
     {
-        sname = mdl_global_symbol_lookup(mdl_get_atom("SNM", true, NULL)->v.a);
+        sname = mdl_global_symbol_lookup(mdl_get_atom("SNM", true, nullptr)->v.a);
         if (!sname)
         {
             char *cwdp = mdl_getcwd();
@@ -7225,7 +7230,7 @@ mdl_value_t *mdl_builtin_eval_sname(mdl_value_t *form, mdl_value_t *args)
     }
     else
     {
-        return mdl_set_gval(mdl_get_atom("SNM", true, NULL)->v.a, sname);
+        return mdl_set_gval(mdl_get_atom("SNM", true, nullptr)->v.a, sname);
     }
 }
 
@@ -7251,8 +7256,8 @@ mdl_value_t *mdl_builtin_eval_save(mdl_value_t *form, mdl_value_t *args)
     NOMOREARGS(args);
     
     // NM1, NM2 -- root or current?
-    nm1 = mdl_get_atom("NM1", true, NULL);
-    nm2 = mdl_get_atom("NM2", true, NULL);
+    nm1 = mdl_get_atom("NM1", true, nullptr);
+    nm2 = mdl_get_atom("NM2", true, nullptr);
     mdl_bind_local_symbol(nm1->v.a, mdl_new_string(6, "MUDDLE"), cur_frame, false);
     mdl_bind_local_symbol(nm2->v.a, mdl_new_string(4, "SAVE"), cur_frame, false);
 
@@ -7262,7 +7267,7 @@ mdl_value_t *mdl_builtin_eval_save(mdl_value_t *form, mdl_value_t *args)
     std::FILE *f = std::fopen(pathname, "wb");
     if (f)
     {
-        mdl_write_image(f, NULL);
+        mdl_write_image(f, nullptr);
         std::fclose(f);
         return mdl_new_string(5, "SAVED");
     }
@@ -7293,8 +7298,8 @@ mdl_value_t *mdl_builtin_eval_save_eval(mdl_value_t *form, mdl_value_t *args)
     NOMOREARGS(args);
     
     // NM1, NM2 -- root or current?
-    nm1 = mdl_get_atom("NM1", true, NULL);
-    nm2 = mdl_get_atom("NM2", true, NULL);
+    nm1 = mdl_get_atom("NM1", true, nullptr);
+    nm2 = mdl_get_atom("NM2", true, nullptr);
     mdl_bind_local_symbol(nm1->v.a, mdl_new_string(6, "MUDDLE"), cur_frame, false);
     mdl_bind_local_symbol(nm2->v.a, mdl_new_string(4, "SAVE"), cur_frame, false);
 
@@ -7330,8 +7335,8 @@ mdl_value_t *mdl_builtin_eval_restore(mdl_value_t *form, mdl_value_t *args)
     NOMOREARGS(args);
     
     // NM1, NM2 -- root or current?
-    nm1 = mdl_get_atom("NM1", true, NULL);
-    nm2 = mdl_get_atom("NM2", true, NULL);
+    nm1 = mdl_get_atom("NM1", true, nullptr);
+    nm2 = mdl_get_atom("NM2", true, nullptr);
     mdl_bind_local_symbol(nm1->v.a, mdl_new_string(6, "MUDDLE"), cur_frame, false);
     mdl_bind_local_symbol(nm2->v.a, mdl_new_string(4, "SAVE"), cur_frame, false);
 
@@ -7359,17 +7364,17 @@ mdl_value_t *mdl_builtin_eval_file_length(mdl_value_t *form, mdl_value_t *args)
     NOMOREARGS(args);
     
     if (!mdl_chan_mode_is_input(chan))
-        return mdl_call_error("WRONG-DIRECTION-CHANNEL", NULL);
+        return mdl_call_error("WRONG-DIRECTION-CHANNEL", nullptr);
     int channum = mdl_get_chan_channum(chan);
     if (!channum)
-        return mdl_call_error("CHANNEL-CLOSED", NULL); // or maybe internal.
+        return mdl_call_error("CHANNEL-CLOSED", nullptr); // or maybe internal.
     std::FILE *f = mdl_get_channum_file(channum);
     if (!f) 
-        return mdl_call_error_ext("CHANNEL-CLOSED", "Channel closed but nonzero", NULL); // shouldn't happen
+        return mdl_call_error_ext("CHANNEL-CLOSED", "Channel closed but nonzero", nullptr); // shouldn't happen
     if (std::fgetpos(f, &savepos) == -1) 
-        return mdl_call_error("FILE-LENGTH-UNAVAILABLE", NULL); // not an original MDL error
+        return mdl_call_error("FILE-LENGTH-UNAVAILABLE", nullptr); // not an original MDL error
     if (std::fseek(f, SEEK_END, 0) == -1)
-        return mdl_call_error("FILE-LENGTH-UNAVAILABLE", NULL); // not an original MDL error
+        return mdl_call_error("FILE-LENGTH-UNAVAILABLE", nullptr); // not an original MDL error
     off_t endpos = ftello(f);
     std::fsetpos(f, &savepos);
     if (mdl_chan_mode_is_read_binary(chan))
@@ -7556,15 +7561,15 @@ mdl_value_t *mdl_builtin_eval_rep(mdl_value_t *form, mdl_value_t *args)
     mdl_value_atom_read = mdl_get_atom_from_oblist("READ", mdl_value_root_oblist);
     mdl_value_atom_terpri = mdl_get_atom_from_oblist("TERPRI", mdl_value_root_oblist);
     mdl_value_atom_print = mdl_get_atom_from_oblist("PRINT", mdl_value_root_oblist);
-    readform = mdl_make_list(mdl_cons_internal(mdl_value_atom_read, NULL));
-    terpriform = mdl_make_list(mdl_cons_internal(mdl_value_atom_terpri, NULL));
-    noargs = mdl_make_list(NULL);
-    printform = mdl_cons_internal(dummy, NULL);
+    readform = mdl_make_list(mdl_cons_internal(mdl_value_atom_read, nullptr));
+    terpriform = mdl_make_list(mdl_cons_internal(mdl_value_atom_terpri, nullptr));
+    noargs = mdl_make_list(nullptr);
+    printform = mdl_cons_internal(dummy, nullptr);
     printform = mdl_cons_internal(mdl_value_atom_print, printform);
     printform = mdl_make_list(printform);
-    printargs = mdl_cons_internal(dummy, NULL);
+    printargs = mdl_cons_internal(dummy, nullptr);
     printargs = mdl_make_list(printargs);
-    atom_last_out = mdl_get_atom("LAST-OUT!-", true, NULL)->v.a;
+    atom_last_out = mdl_get_atom("LAST-OUT!-", true, nullptr)->v.a;
 
 // ZORK's behavior implies this while loop is not here,
 // though the documentation suggests it is
@@ -7829,7 +7834,7 @@ mdl_value_t *mdl_builtin_eval_gettimeofday(mdl_value_t *form, mdl_value_t *args)
     uvector_element_t *elem;
     
     if (args->v.p.cdr) mdl_error("Too many args to gettimeofday");
-    gettimeofday(&now, NULL);
+    gettimeofday(&now, nullptr);
     result = mdl_new_empty_uvector(2, MDL_TYPE_UVECTOR);
     UVTYPE(result) = MDL_TYPE_FIX;
     elem = UVREST(result, 0);
@@ -7872,7 +7877,7 @@ mdl_value_t *mdl_builtin_eval_gettimedate(mdl_value_t *form, mdl_value_t *args)
 
     if (!timeuv || !mdl_is_true(timeuv))
     {
-        gettimeofday(&tv, NULL);
+        gettimeofday(&tv, nullptr);
     }
     else if (timeuv->type == MDL_TYPE_FIX)
     {
@@ -8012,7 +8017,7 @@ mdl_value_t *mdl_builtin_eval_int_level(mdl_value_t *form, mdl_value_t *args)
     if (arg && arg->type != MDL_TYPE_FIX)
         mdl_error("INT-LEVEL argument must be FIX");
 
-    atom_intlevel = mdl_get_atom("INT-LEVEL!-INTERRUPTS!-", true, NULL);
+    atom_intlevel = mdl_get_atom("INT-LEVEL!-INTERRUPTS!-", true, nullptr);
     result = mdl_global_symbol_lookup(atom_intlevel->v.a);
     if (!result) result = mdl_new_fix(0);
     if (arg) mdl_set_gval(atom_intlevel->v.a, arg);
@@ -8030,10 +8035,10 @@ mdl_value_t *mdl_builtin_eval_sleep(mdl_value_t *form, mdl_value_t *args)
     NOMOREARGS(args);
 
     if (fix->type != MDL_TYPE_FIX)
-        return mdl_call_error("FIRST-ARG-WRONG-TYPE", NULL);
+        return mdl_call_error("FIRST-ARG-WRONG-TYPE", nullptr);
 
     if (fix->v.w < 0)
-        return mdl_call_error_ext("ARGUMENT-OUT-OF-RANGE", "SLEEP time negative", NULL);
+        return mdl_call_error_ext("ARGUMENT-OUT-OF-RANGE", "SLEEP time negative", nullptr);
     std::fflush(stdout); // let the user see while we rest
     sleep(fix->v.w);
 
@@ -8045,13 +8050,13 @@ mdl_value_t *mdl_builtin_eval_warranty(mdl_value_t *form, mdl_value_t *args)
 /* SUBR */
 {
     extern const char no_warranty[];
-    mdl_value_t *chan = NULL;
+    mdl_value_t *chan = nullptr;
     ARGSETUP(args);
     NOMOREARGS(args);
 
     mdl_setup_frame_for_print(&chan);
     mdl_print_string_to_chan(chan, no_warranty, std::strlen(no_warranty), 0, false, false);
-    mdl_print_newline_to_chan(chan, false, NULL);
+    mdl_print_newline_to_chan(chan, false, nullptr);
     return &mdl_value_false;
 }
 
@@ -8059,13 +8064,13 @@ mdl_value_t *mdl_builtin_eval_license(mdl_value_t *form, mdl_value_t *args)
 /* SUBR */
 {
     extern const char license[];
-    mdl_value_t *chan = NULL;
+    mdl_value_t *chan = nullptr;
     ARGSETUP(args);
     NOMOREARGS(args);
 
     mdl_setup_frame_for_print(&chan);
     mdl_print_string_to_chan(chan, license, std::strlen(license), 0, false, false);
-    mdl_print_newline_to_chan(chan, false, NULL);
+    mdl_print_newline_to_chan(chan, false, nullptr);
     return mdl_value_T;
 }
 

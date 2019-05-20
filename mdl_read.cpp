@@ -935,9 +935,9 @@ mdl_value_t *mdl_advance_readstate(mdl_value_t *chan, readstate_t **rdstatep, MD
             case READSTATE_INATOM_OCTAL_FIX2:
             {
 #ifdef MDL32
-                MDL_INT oct = std::strtol(rdstate->buf + 1, NULL, 8);
+                MDL_INT oct = std::strtol(rdstate->buf + 1, nullptr, 8);
 #else
-                MDL_INT oct = std::strtoll(rdstate->buf + 1, NULL, 8);
+                MDL_INT oct = std::strtoll(rdstate->buf + 1, nullptr, 8);
 #endif
                 obj = mdl_new_fix(oct);
                 break;
@@ -1071,8 +1071,8 @@ mdl_value_t *mdl_advance_readstate(mdl_value_t *chan, readstate_t **rdstatep, MD
         }
         else if (obj)
         {
-            if (rdstate->objects == NULL)
-                rdstate->objects = mdl_additem(NULL, obj, &rdstate->lastitem);
+            if (rdstate->objects == nullptr)
+                rdstate->objects = mdl_additem(nullptr, obj, &rdstate->lastitem);
             else
                 mdl_additem(rdstate->lastitem, obj, &rdstate->lastitem);
         }
@@ -1133,7 +1133,7 @@ mdl_value_t *mdl_advance_readstate(mdl_value_t *chan, readstate_t **rdstatep, MD
                     case READSTATE_TYPECODE:
                         rdstate->prev->typecode = mdl_get_typenum(rdstate->objects);
                         if (rdstate->prev->typecode == MDL_TYPE_NOTATYPE)
-                            mdl_call_error("#ATOM does not name a type", rdstate->objects, NULL);
+                            mdl_call_error("#ATOM does not name a type", rdstate->objects, nullptr);
                         break;
                     case READSTATE_COMMENT:
                         // print comments to aid debugging
@@ -1163,11 +1163,11 @@ mdl_value_t *mdl_advance_readstate(mdl_value_t *chan, readstate_t **rdstatep, MD
                 {
                     mdl_internal_eval_putprop(mdl_make_list(rdstate->lastitem), mdl_get_atom_from_oblist("COMMENT", mdl_value_root_oblist), obj);
                 }
-                else if ((rdstate->seqtype == SEQTYPE_SINGLE) && (rdstate->prev == NULL))
+                else if ((rdstate->seqtype == SEQTYPE_SINGLE) && (rdstate->prev == nullptr))
                 {
                     mdl_internal_eval_putprop(chan, mdl_get_atom_from_oblist("COMMENT", mdl_value_root_oblist), obj);
                 }
-                obj = NULL;
+                obj = nullptr;
             }
             if (rdstate->statenum == READSTATE_TYPECODE ||
                 rdstate->statenum == READSTATE_COMMENT )

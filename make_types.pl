@@ -62,7 +62,7 @@ while(<>)
         $atom_strings[$#atom_strings + 1] = $atom_string;
         $pt_names[$#pt_names + 1] = $ptname;
         $atom_names[$#atom_names + 1] = $atom_name;
-        $btt .= "$indent"."{ PRIMTYPE_$ptname, NULL, NULL, NULL, NULL },\n";
+        $btt .= "$indent"."{ PRIMTYPE_$ptname, nullptr, nullptr, nullptr, nullptr },\n";
     }
     if (/(?:^| )MDL_TYPE_(\w+)(?: = \w+)?,/)
     {
@@ -76,7 +76,7 @@ while(<>)
         $atom_strings[$#atom_strings + 1] = $atom_string;
         $pt_names[$#pt_names + 1] = $ptname;
         $atom_names[$#atom_names + 1] = $atom_name;
-        $btt .= "$indent"."{ PRIMTYPE_$ptname, NULL, NULL, NULL, NULL },\n";
+        $btt .= "$indent"."{ PRIMTYPE_$ptname, nullptr, nullptr, nullptr, nullptr },\n";
     }
 }
 print HEADER "void mdl_init_built_in_types();\n" if $headerout;

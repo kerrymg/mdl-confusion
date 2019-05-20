@@ -23,7 +23,7 @@
 #define DECL_ERROR(MSG)                         \
         do { \
             *error = true; \
-            return mdl_call_error(MSG, NULL); \
+            return mdl_call_error(MSG, nullptr); \
         } while (0)
 
 static mdl_value_t *

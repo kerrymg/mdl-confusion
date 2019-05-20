@@ -271,7 +271,7 @@ extern mdl_value_t *mdl_static_block_stack;
 
 #define LITEM(l, skip) mdl_internal_list_nth(l, skip)
 #define LREST(l, skip) mdl_internal_list_rest(l, skip)
-#define LHASITEM(l, skip) (LITEM(l,skip) != NULL)
+#define LHASITEM(l, skip) (LITEM(l,skip) != nullptr)
 
 #define VITEM(l, skip) mdl_internal_vector_rest(l, skip)
 #define VREST(l, skip) mdl_internal_vector_rest(l, skip)
@@ -412,7 +412,7 @@ uvector_element_t *mdl_internal_uvector_rest(const mdl_value_t *, int);
 mdl_value_t *mdl_internal_tuple_rest(const mdl_value_t *, int);
 // vectors and tuples do not have an internal nth, because
 // it would be the same as rest, a pointer to the given item
-mdl_value_t *mdl_uvector_element_to_value(const mdl_value_t *uv, const uvector_element_t *elem, mdl_value_t *to = NULL);
+mdl_value_t *mdl_uvector_element_to_value(const mdl_value_t *uv, const uvector_element_t *elem, mdl_value_t *to = nullptr);
 uvector_element_t *mdl_uvector_value_to_element(const mdl_value_t *newval, uvector_element_t *elem);
 mdl_value_t *mdl_internal_eval_rest(mdl_value_t *arg, mdl_value_t index);
 mdl_value_t *mdl_internal_eval_rest_i(mdl_value_t *arg, int index);
@@ -463,7 +463,6 @@ bool mdl_chan_mode_is_print_binary(mdl_value_t *chan);
 bool mdl_chan_mode_is_read_binary(mdl_value_t *chan);
 bool mdl_chan_mode_is_input(mdl_value_t *chan);
 bool mdl_chan_mode_is_output(mdl_value_t *chan);
-mdl_charclass_t mdl_get_charclass(MDL_INT ch);
 void mdl_get_charinfo(MDL_INT ch, charinfo_t *info);
 mdl_value_t *mdl_new_string(int, const char *);
 mdl_value_t *mdl_new_string(int);
@@ -484,8 +483,8 @@ void mdl_print_string_to_chan(mdl_value_t *chan,
                               bool addspacebefore // add a space if no break
                               );
 
-void mdl_internal_erret(mdl_value_t *result, mdl_value_t *frame)  __attribute__((noreturn));
-void mdl_longjmp_to(mdl_frame_t *frame, int value) __attribute__((noreturn));
+[[noreturn]] void mdl_internal_erret(mdl_value_t *result, mdl_value_t *frame);
+[[noreturn]] void mdl_longjmp_to(mdl_frame_t *frame, int value);
 
 void mdl_write_image(std::FILE *f, mdl_value_t *save_arg);
 bool mdl_read_image(std::FILE *f);

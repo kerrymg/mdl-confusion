@@ -45,7 +45,7 @@ enum outbuf_items_t
 mdl_value_t *mdl_get_default_outchan()
 {
     mdl_frame_t *frame = cur_frame;
-    if (cur_frame == NULL) frame = cur_process_initial_frame;
+    if (cur_frame == nullptr) frame = cur_process_initial_frame;
     return mdl_local_symbol_lookup_pname("OUTCHAN!-", frame);
 }
 
@@ -89,7 +89,7 @@ mdl_value_t *mdl_create_internal_output_channel(int bufsize, int maxlen, mdl_val
         devdep = mdl_new_empty_vector(OUTBUF_VLENGTH, MDL_TYPE_VECTOR);
         dp = VITEM(devdep, 0);
         buf = mdl_new_string(bufsize);
-        bufs = mdl_cons_internal(buf, NULL);
+        bufs = mdl_cons_internal(buf, nullptr);
         dp[OUTBUF_BUFSIZE] = *mdl_new_fix(bufsize);
         dp[OUTBUF_TOTLEN] = *zerofix;
         dp[OUTBUF_NBUFS] = *zerofix;
@@ -180,7 +180,7 @@ void mdl_print_newline_to_transcript_channels(mdl_value_t *chan, int printflags)
                 else printflags &= ~MDL_PF_BINARY;
                 if (!mdl_chan_mode_is_output(tchan))
                     mdl_error("INPUT channel in transcript list");
-                mdl_print_newline_to_chan(tchan, printflags, NULL);
+                mdl_print_newline_to_chan(tchan, printflags, nullptr);
             }
             else
                 mdl_error("Non-channel in transcript list");
@@ -207,7 +207,7 @@ void mdl_print_char_to_transcript_channels(mdl_value_t *chan, int ch, int printf
                 else printflags &= ~MDL_PF_BINARY;
                 if (!mdl_chan_mode_is_output(tchan))
                     mdl_error("INPUT channel in transcript list");
-                mdl_print_char_to_chan(tchan, ch, printflags, NULL);
+                mdl_print_char_to_chan(tchan, ch, printflags, nullptr);
             }
             else
                 mdl_error("Non-channel in transcript list");
@@ -241,8 +241,8 @@ void mdl_print_newline_to_chan(mdl_value_t *chan, int printflags, std::FILE *f)
     }
     else
     {
-        mdl_print_char_to_chan(chan, '\r', printflags | MDL_PF_NOSCRIPT | MDL_PF_NOADVANCE, NULL);
-        mdl_print_char_to_chan(chan, '\n', printflags | MDL_PF_NOSCRIPT | MDL_PF_NOADVANCE, NULL);
+        mdl_print_char_to_chan(chan, '\r', printflags | MDL_PF_NOSCRIPT | MDL_PF_NOADVANCE, nullptr);
+        mdl_print_char_to_chan(chan, '\n', printflags | MDL_PF_NOSCRIPT | MDL_PF_NOADVANCE, nullptr);
     }
     mdl_print_newline_to_transcript_channels(chan, printflags);
 }
@@ -609,7 +609,7 @@ void mdl_print_nonstructured_to_chan(mdl_value_t *chan, const mdl_value_t *a, in
 {
     if (print_as_type == MDL_TYPE_NOTATYPE)
         print_as_type = a->type;
-    if (a == NULL)
+    if (a == nullptr)
     {
         mdl_print_string_to_chan(chan, "nil!", 4, 0, true, prespace);
          // this should never happen
@@ -967,7 +967,7 @@ void mdl_print_value_to_chan(mdl_value_t *chan, mdl_value_t *v, bool princ,
     int print_as_type = MDL_TYPE_NOTATYPE;
     mdl_value_t *printtype;
 
-    if (v == NULL) 
+    if (v == nullptr)
     {
     // this should never happen
         mdl_print_string_to_chan(chan, "nil", 3, 0, true, prespace);
@@ -977,7 +977,7 @@ void mdl_print_value_to_chan(mdl_value_t *chan, mdl_value_t *v, bool princ,
     printtype = mdl_get_printtype(v->type);
     if (printtype && printtype->type != MDL_TYPE_ATOM)
     {
-        mdl_value_t *arglist = mdl_cons_internal(v, NULL);
+        mdl_value_t *arglist = mdl_cons_internal(v, nullptr);
         arglist = mdl_cons_internal(printtype, arglist);
         arglist = mdl_make_list(arglist);
         if (prespace)
@@ -1022,5 +1022,5 @@ void mdl_print_value(std::FILE *f, mdl_value_t *v)
 {
     // FIXME : remove
     mdl_value_t *chan = mdl_get_default_outchan();
-    mdl_print_value_to_chan(chan, v, false, false, NULL);
+    mdl_print_value_to_chan(chan, v, false, false, nullptr);
 }

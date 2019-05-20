@@ -15,7 +15,7 @@
 
 $indent="    ";
 $nomoreprims = 0;
-open(OLDBI, "<", "mdl_builtins.h") || die "mdl_builtins.h not found";
+open(OLDBI, "<", "src/mdl_builtins.h") || die "src/mdl_builtins.h not found";
 while (<OLDBI>)
 {
     if (/\*mdl_value_builtin_([a-zA-Z_0-9]*)/)

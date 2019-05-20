@@ -1,6 +1,13 @@
 # Prerequisites
 *.d
 
+# Generated Files
+copying.c
+mdl_builtin_types.cpp
+mdl_builtin_types.h
+mdl_builtins.cpp
+mdl_builtins.h
+
 # Compiled Object files
 *.slo
 *.lo
@@ -30,3 +37,4 @@
 *.exe
 *.out
 *.app
+mdli

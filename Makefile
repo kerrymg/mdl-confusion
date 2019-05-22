@@ -17,54 +17,69 @@ CDEBUGFLAGS = -g -DGC_DEBUG
 COPTFLAGS = -O2
 CWARNFLAGS =  -Wall -Wno-switch
 LIBS = -lgc -lgccpp
-CFLAGS = -Isrc $(CDEBUGFLAGS) $(COPTFLAGS) $(CWARNFLAGS)
-CXXFLAGS = -std=c++11 -Isrc $(CDEBUGFLAGS) $(COPTFLAGS) $(CWARNFLAGS)
+CFLAGS = -Isrc -Ibuild $(CDEBUGFLAGS) $(COPTFLAGS) $(CWARNFLAGS)
+CXXFLAGS = -std=c++11 -Isrc -Ibuild $(CDEBUGFLAGS) $(COPTFLAGS) $(CWARNFLAGS)
 
 PERL = perl
 
 PROGRAMS = mdli
 
-TMPSRCS = src/mdl_builtins.cpp src/mdl_builtin_types.cpp src/mdl_builtin_types.h src/mdl_builtins.h src/license.c
+TMPSRCS = build/mdl_builtins.cpp \
+	build/mdl_builtin_types.cpp \
+	build/mdl_builtin_types.h \
+	build/mdl_builtins.h \
+	build/license.c
 
 CXXSRCS = src/macros.cpp \
-src/mdli.cpp \
-src/mdl_builtins.cpp \
-src/mdl_builtin_types.cpp \
-src/mdl_read.cpp \
-src/mdl_output.cpp \
-src/mdl_binary_io.cpp \
-src/mdl_decl.cpp \
-src/mdl_assoc.cpp
+	src/mdli.cpp \
+	build/mdl_builtins.cpp \
+	build/mdl_builtin_types.cpp \
+	src/mdl_read.cpp \
+	src/mdl_output.cpp \
+	src/mdl_binary_io.cpp \
+	src/mdl_decl.cpp \
+	src/mdl_assoc.cpp
 
-CSRCS = src/mdl_strbuf.c src/license.c
+CSRCS = src/mdl_strbuf.c build/license.c
 
-OBJS = $(CXXSRCS:.cpp=.o) $(CSRCS:.c=.o)
+# There's probably a better way of doing this...
+BUILDCXX = $(patsubst src/%.cpp,build/%.cpp,$(CXXSRCS))
+BUILDC = $(patsubst src/%.c,build/%.c,$(CSRCS))
+OBJS = $(BUILDCXX:.cpp=.o) $(BUILDC:.c=.o)
 
 mdli: $(OBJS)
 	$(CXX) $(CXXFLAGS) -o $@ $^ $(LIBS)
 
-src/license.c: LICENSE
-	awk 'BEGIN { print "const char license [] = " } /END OF TERMS AND CONDITIONS/ { nextfile } { gsub("\"", "\\\"", $$0); print "\"" $$0 "\\n\""  } END { print ";" }'  < LICENSE > src/license.c
+build/license.c: LICENSE
+	awk 'BEGIN { print "const char license [] = " } /END OF TERMS AND CONDITIONS/ { nextfile } { gsub("\"", "\\\"", $$0); print "\"" $$0 "\\n\""  } END { print ";" }'  < LICENSE > $@
 
-src/mdl_builtins.o: src/mdl_builtins.h
+build/mdl_builtins.o: build/mdl_builtins.h
 
-src/mdl_builtins.cpp: src/macros.cpp
+build/mdl_builtins.cpp: src/macros.cpp
+	@mkdir -p build
 	$(PERL) scripts/find_builtins.pl $(@:.cpp=.h) < $< > $@	
 
-src/mdl_builtin_types.o: src/mdl_builtin_types.h
-src/mdl_builtin_types.h: src/mdl_builtin_types.cpp ;
-src/mdl_builtins.h: src/mdl_builtins.cpp ;
+build/mdl_builtin_types.o: build/mdl_builtin_types.h
+build/mdl_builtin_types.h: build/mdl_builtin_types.cpp ;
+build/mdl_builtins.h: build/mdl_builtins.cpp ;
 
-src/mdl_builtin_types.cpp: src/macros.hpp src/mdl_builtins.h
+build/mdl_builtin_types.cpp: src/macros.hpp build/mdl_builtins.h
+	@mkdir -p build
 	$(PERL) scripts/make_types.pl $(@:.cpp=.h) < $< > $@	
 
-src/macros.o: src/mdl_builtin_types.h src/mdl_builtins.h src/mdl_internal_defs.h
-src/mdl_output.o: src/mdl_builtin_types.h src/mdl_builtins.h src/mdl_internal_defs.h
-src/mdl_read.o: src/mdl_builtin_types.h src/mdl_builtins.h src/mdl_internal_defs.h
-src/mdl_binary_io.o: src/mdl_builtin_types.h src/mdl_builtins.h src/mdl_internal_defs.h
+build/macros.o: build/mdl_builtin_types.h build/mdl_builtins.h src/mdl_internal_defs.h
+build/mdl_output.o: build/mdl_builtin_types.h build/mdl_builtins.h src/mdl_internal_defs.h
+build/mdl_read.o: build/mdl_builtin_types.h build/mdl_builtins.h src/mdl_internal_defs.h
+build/mdl_binary_io.o: build/mdl_builtin_types.h build/mdl_builtins.h src/mdl_internal_defs.h
+
+build/%.o: src/%.cpp
+	$(CXX) $(CXXFLAGS) -c -o $@ $<
+
+build/%.o: src/%.c
+	$(CC) $(CFLAGS) -c -o $@ $<
 
 clean: 
-	rm -f src/*.o *~ $(PROGRAMS)
+	rm -f build/*.o *~ $(PROGRAMS)
 
 extraclean: clean
-	rm -f $(TMPSRCS)
+	rm -rf build

@@ -2,11 +2,7 @@
 *.d
 
 # Generated Files
-license.c
-mdl_builtin_types.cpp
-mdl_builtin_types.h
-mdl_builtins.cpp
-mdl_builtins.h
+build/
 
 # Compiled Object files
 *.slo
@@ -17,6 +13,7 @@ mdl_builtins.h
 # Precompiled Headers
 *.gch
 *.pch
+ipch/
 
 # Compiled Dynamic libraries
 *.so

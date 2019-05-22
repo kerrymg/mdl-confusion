@@ -6068,12 +6068,17 @@ mdl_value_t *mdl_builtin_eval_divide(mdl_value_t *form, mdl_value_t *args)
 mdl_value_t *mdl_builtin_eval_min(mdl_value_t *form, mdl_value_t *args)
 /* SUBR */
 {
+    mdl_value_t *argp = LREST(args, 0);
+    if (!argp)
+    {
+        return mdl_new_float(MDL_FLOAT_MAX);
+    }
+
     MDL_INT accum = MDL_INT_MAX;
     MDL_FLOAT faccum = MDL_FLOAT_MAX;;
     bool floating = false;
     bool firstarg = true;
 
-    mdl_value_t *argp = LREST(args, 0);
     while (argp)
     {
         mdl_value_t *arg = argp->v.p.car;
@@ -6113,12 +6118,17 @@ mdl_value_t *mdl_builtin_eval_min(mdl_value_t *form, mdl_value_t *args)
 mdl_value_t *mdl_builtin_eval_max(mdl_value_t *form, mdl_value_t *args)
 /* SUBR */
 {
+    mdl_value_t *argp = LREST(args, 0);
+    if (!argp)
+    {
+        return mdl_new_float(-MDL_FLOAT_MAX);
+    }
+
     MDL_INT accum = MDL_INT_MIN;
     MDL_FLOAT faccum = MDL_FLOAT_MIN;
     bool floating = false;
     bool firstarg = true;
 
-    mdl_value_t *argp = LREST(args, 0);
     while (argp)
     {
         mdl_value_t *arg = argp->v.p.car;

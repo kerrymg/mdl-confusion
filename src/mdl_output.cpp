@@ -644,7 +644,7 @@ void mdl_print_nonstructured_to_chan(mdl_value_t *chan, const mdl_value_t *a, in
                 {
                     buf[0] = '!';
                     buf[1] = '\\';
-                    if (isprint(a->v.w))
+                    if (std::isprint(a->v.w))
                     {
                         buf[2] = (char)a->v.w;
                         buf[3] = '\0';
@@ -659,7 +659,7 @@ void mdl_print_nonstructured_to_chan(mdl_value_t *chan, const mdl_value_t *a, in
                     {
                     }
                 }
-                mdl_print_string_to_chan(chan,buf, std::strlen(buf), 0, true, prespace);
+                mdl_print_string_to_chan(chan, buf, std::strlen(buf), 0, true, prespace);
             }
             break;
             case MDL_TYPE_FIX:
@@ -667,14 +667,14 @@ void mdl_print_nonstructured_to_chan(mdl_value_t *chan, const mdl_value_t *a, in
                 char buf[(sizeof(MDL_INT) << 3) + 1]; // # bits + 1
                 int radix = mdl_get_chan_radix(chan);
                 mdl_int_to_string(a->v.w, buf, sizeof(buf), radix);
-                mdl_print_string_to_chan(chan,buf, std::strlen(buf), 0, true, prespace);
+                mdl_print_string_to_chan(chan, buf, std::strlen(buf), 0, true, prespace);
             }
             break;
             case MDL_TYPE_FLOAT:
             {
-                char buf[10];
-                std::sprintf(buf, "%.7f", a->v.fl);
-                mdl_print_string_to_chan(chan,buf, std::strlen(buf), 0, true, prespace);
+                char buf[32];
+                auto len = std::snprintf(buf, sizeof buf, "%.7g", a->v.fl);
+                mdl_print_string_to_chan(chan, buf, len, 0, true, prespace);
             }
             break;
             default:
@@ -682,11 +682,11 @@ void mdl_print_nonstructured_to_chan(mdl_value_t *chan, const mdl_value_t *a, in
                 char buf[(((sizeof(MDL_INT) << 3) + 2) / 3) + 3]; // size of octal representation plus stars
                 mdl_print_hashtype(chan, a->type, princ, prespace, oblists);
 #ifdef MDL32
-                std::sprintf(buf, "*%011o*", a->v.w);
+                auto len = std::snprintf(buf, "*%011o*", a->v.w);
 #else
-                std::sprintf(buf, "*%022llo*", a->v.w);
+                auto len = std::snprintf(buf, sizeof buf, "*%022llo*", a->v.w);
 #endif
-                mdl_print_string_to_chan(chan,buf, std::strlen(buf), 0, true, true);
+                mdl_print_string_to_chan(chan,buf, len, 0, true, true);
                 break;
             }
             }

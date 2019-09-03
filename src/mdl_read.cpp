@@ -88,7 +88,7 @@ mdl_charclass_t mdl_get_charclass(MDL_INT ch)
     {
         switch (STRIPBANG(ch))
         {
-        case '\\': 
+        case '\\':
             return MDL_C_BANGBACK;
         case ',':
             return MDL_C_BANGCOMMA;
@@ -157,7 +157,7 @@ mdl_charclass_t mdl_get_charclass(MDL_INT ch)
         return MDL_C_SEMI;
     case '-':
         return MDL_C_MINUS;
-    case '!': 
+    case '!':
         return MDL_C_BANG;
     case -1:
         return MDL_C_EOF;
@@ -275,7 +275,9 @@ mdl_value_t *mdl_exec_chan_eof_object(mdl_value_t *chan)
 
     mdl_internal_close_channel(chan);
     if (eofobj->type == MDL_TYPE_LOSE)
+    {
         mdl_error("Error: Unexpected EOF");
+    }
     return mdl_eval(eofobj);
 }
 
@@ -334,9 +336,10 @@ inline
 MDL_INT mdl_get_chan_lookahead(mdl_value_t *chan)
 {
     if (mdl_chan_flags_are_set(chan, ICHANNEL_HAS_LOOKAHEAD))
+    {
         return FASTVITEM(chan, CHANNEL_SLOT_LOOKAHEAD)->v.w;
-    else
-        return -1;
+    }
+    return -1;
 }
 
 void mdl_set_chan_lookahead(mdl_value_t *chan, MDL_INT ch)
@@ -352,7 +355,10 @@ int mdl_read_1_char(std::FILE *f)
     if (ch == '!')
     {
         int ch2 = std::getc(f);
-        if (ch2 == -1) return ch;
+        if (ch2 == -1)
+        {
+            return ch;
+        }
         ch = BANGCHAR(ch2);
     }
     return ch;
@@ -360,13 +366,19 @@ int mdl_read_1_char(std::FILE *f)
 
 int mdl_read_1_char_cs(counted_string_t *s)
 {
-    if (s->l <= 0) return -1;
+    if (s->l <= 0)
+    {
+        return -1;
+    }
     int ch = *(s->p++);
     s->l--;
 
     if (ch == '!')
     {
-        if (s->l <= 0) return -1;
+        if (s->l <= 0)
+        {
+            return -1;
+        }
         int ch2 = *(s->p++);
         s->l--;
         ch = BANGCHAR(ch2);
@@ -383,7 +395,9 @@ int mdl_read_word_from_chan(mdl_value_t *chan, MDL_INT *buf)
         std::FILE *f = mdl_get_chan_file(chan);
         int nwords = std::fread((void *)buf, sizeof(MDL_INT), 1, f);
         if (nwords == 1)
+        {
             result = 0;
+        }
     }
     else
     {
@@ -460,7 +474,7 @@ int mdl_read_chan_lookahead(mdl_value_t *chan)
     else
     {
         result = mdl_read_from_chan(chan);
-        if (result >= 0) 
+        if (result >= 0)
         {
             mdl_set_chan_lookahead(chan, result);
         }
@@ -471,7 +485,10 @@ int mdl_read_chan_lookahead(mdl_value_t *chan)
 mdl_value_t *mdl_get_default_inchan()
 {
     mdl_frame_t *frame = cur_frame;
-    if (!cur_frame) frame = cur_process_initial_frame;
+    if (!cur_frame)
+    {
+        frame = cur_process_initial_frame;
+    }
     return mdl_local_symbol_lookup_pname("INCHAN!-", frame);
 }
 
@@ -483,9 +500,13 @@ mdl_value_t *mdl_create_default_inchan()
     *FASTVITEM(chan, CHANNEL_SLOT_CHNUM) = *mdl_new_fix(chnum);
 
     if (!isatty(fileno(stdin)))
+    {
         *FASTVITEM(chan, CHANNEL_SLOT_DEVN) = *(mdl_new_string(3, "DSK"));
+    }
     else
+    {
         *FASTVITEM(chan, CHANNEL_SLOT_DEVN) = *(mdl_new_string(3, "TTY"));
+    }
     mdl_set_chan_eof_object(chan, nullptr);
     return chan;
 }
@@ -494,12 +515,24 @@ mdl_value_t *mdl_create_default_inchan()
 // no binary channels and no internal channels
 bool mdl_inchan_is_reasonable(mdl_value_t *chan)
 {
+    if (!chan || chan->type != MDL_TYPE_CHANNEL)
+    {
+        return false;
+    }
+    if (!mdl_string_equal_cstr(&mdl_get_chan_mode(chan)->v.s, "READ"))
+    {
+        return false;
+    }
     int channum;
-    if (!chan || chan->type != MDL_TYPE_CHANNEL) return false;
-    if (!mdl_string_equal_cstr(&mdl_get_chan_mode(chan)->v.s, "READ")) return false;
-    if ((channum = mdl_get_chan_channum(chan)) <= 0) return false;
+    if ((channum = mdl_get_chan_channum(chan)) <= 0)
+    {
+        return false;
+    }
     // FIXME -- demanding inchan be stdin probably isn't right
-    if (mdl_get_channum_file(channum) != stdin) return false;
+    if (mdl_get_channum_file(channum) != stdin)
+    {
+        return false;
+    }
     return true;
 }
 
@@ -614,11 +647,13 @@ mdl_value_t *mdl_advance_readstate(mdl_value_t *chan, readstate_t **rdstatep, MD
         case MDL_C_PERCENT:
             lookahead = mdl_read_chan_lookahead(chan);
             if (lookahead == '%')
+            {
                 mdl_error("Read %% macros not supported");
+            }
             rdstate->statenum = READSTATE_READMACRO;
             rdstate = *rdstatep = mdl_new_readstate(rdstate, SEQTYPE_SINGLE);
             break;
-            
+
         case MDL_C_OPENLIST:
             rdstate = *rdstatep = mdl_new_readstate(rdstate, SEQTYPE_LIST);
             break;
@@ -637,36 +672,46 @@ mdl_value_t *mdl_advance_readstate(mdl_value_t *chan, readstate_t **rdstatep, MD
         case MDL_C_OPENUVECTOR:
             rdstate = *rdstatep = mdl_new_readstate(rdstate, SEQTYPE_UVECTOR);
             break;
-            
+
         case MDL_C_CLOSELIST:
             if (rdstate->seqtype != SEQTYPE_LIST)
+            {
                 mdl_error("Unexpected ) in input");
+            }
             rdstate->statenum = READSTATE_FINAL;
             break;
 
         case MDL_C_CLOSESEGMENT:
             if (rdstate->seqtype != SEQTYPE_SEGMENT)
+            {
                 mdl_error("Unexpected !> in input");
+            }
             rdstate->statenum = READSTATE_FINAL;
             break;
 
         case MDL_C_CLOSEFORM:
             if (rdstate->seqtype != SEQTYPE_FORM &&
                 rdstate->seqtype != SEQTYPE_SEGMENT)
+            {
                 mdl_error("Unexpected > in input");
+            }
             rdstate->statenum = READSTATE_FINAL;
             break;
 
         case MDL_C_CLOSEVECTOR:
             if (rdstate->seqtype != SEQTYPE_VECTOR &&
                 rdstate->seqtype != SEQTYPE_UVECTOR)
+            {
                 mdl_error("Unexpected ] in input");
+            }
             rdstate->statenum = READSTATE_FINAL;
             break;
 
         case MDL_C_CLOSEUVECTOR:
             if (rdstate->seqtype != SEQTYPE_UVECTOR)
+            {
                 mdl_error("Unexpected !] in input");
+            }
             rdstate->statenum = READSTATE_FINAL;
             break;
 
@@ -715,9 +760,13 @@ mdl_value_t *mdl_advance_readstate(mdl_value_t *chan, readstate_t **rdstatep, MD
     case READSTATE_INCHAR_LIT:
         obj = mdl_new_word(ch, MDL_TYPE_CHARACTER);
         if (rdstate->seqtype == SEQTYPE_SINGLE)
+        {
             rdstate->statenum = READSTATE_FINAL;
+        }
         else
+        {
             rdstate->statenum = READSTATE_INITIAL;
+        }
         break;
     case READSTATE_INSTRING_LIT:
         if (IS_BANGCHAR(ch) && (STRIPBANG(ch) == '\"'))
@@ -730,9 +779,13 @@ mdl_value_t *mdl_advance_readstate(mdl_value_t *chan, readstate_t **rdstatep, MD
             obj = mdl_new_string(rdstate->buflen, rdstate->buf);
             mdl_readstate_buf_clear(rdstate);
             if (rdstate->seqtype == SEQTYPE_SINGLE)
+            {
                 rdstate->statenum = READSTATE_FINAL;
+            }
             else
+            {
                 rdstate->statenum = READSTATE_INITIAL;
+            }
             break;
         }
         else
@@ -747,9 +800,13 @@ mdl_value_t *mdl_advance_readstate(mdl_value_t *chan, readstate_t **rdstatep, MD
             obj = mdl_new_string(rdstate->buflen, rdstate->buf);
             mdl_readstate_buf_clear(rdstate);
             if (rdstate->seqtype == SEQTYPE_SINGLE)
+            {
                 rdstate->statenum = READSTATE_FINAL;
+            }
             else
+            {
                 rdstate->statenum = READSTATE_INITIAL;
+            }
             break;
         }
         mdl_readstate_buf_append(rdstate, ch);
@@ -759,16 +816,24 @@ mdl_value_t *mdl_advance_readstate(mdl_value_t *chan, readstate_t **rdstatep, MD
     case READSTATE_INATOM_OCTAL_FIX:
         mdl_readstate_buf_append(rdstate, ch);
         if (ch < '0'  || ch > '7')
+        {
             rdstate->statenum = READSTATE_INATOM;
+        }
         else
+        {
             rdstate->statenum = READSTATE_INATOM_OCTAL_FIX1;
+        }
         break;
     case READSTATE_INATOM_OCTAL_FIX1:
         mdl_readstate_buf_append(rdstate, ch);
         if (ch == '*')
+        {
             rdstate->statenum = READSTATE_INATOM_OCTAL_FIX2;
+        }
         else if (ch < '0'  || ch > '7')
+        {
             rdstate->statenum = READSTATE_INATOM;
+        }
         break;
     case READSTATE_INATOM_OCTAL_FIX2:
         mdl_readstate_buf_append(rdstate, ch);
@@ -780,60 +845,96 @@ mdl_value_t *mdl_advance_readstate(mdl_value_t *chan, readstate_t **rdstatep, MD
         // -. is not permitted in a FLOAT or FIX.  I don't know
         // if it was in the original
         if (cinfo.charclass == MDL_C_DIGIT)
+        {
             rdstate->statenum = READSTATE_INATOM_FIX_FLOAT;
+        }
         else
+        {
             rdstate->statenum = READSTATE_INATOM;
+        }
         break;
     case READSTATE_INATOM_FIX_FLOAT:
         mdl_readstate_buf_append(rdstate, ch);
         // FIXME -- radix > 10?
         if (cinfo.charclass == MDL_C_DOT)
+        {
             rdstate->statenum = READSTATE_INATOM_FIXDOT_FLOAT;
+        }
         else if (ch == 'E' || ch == 'e')
+        {
             rdstate->statenum = READSTATE_INATOM_SCIFLOAT;
+        }
         else if (cinfo.charclass != MDL_C_DIGIT)
+        {
             rdstate->statenum = READSTATE_INATOM;
+        }
         break;
     case READSTATE_INATOM_FIXDOT_FLOAT:
         mdl_readstate_buf_append(rdstate, ch);
         if (cinfo.charclass == MDL_C_DIGIT)
+        {
             rdstate->statenum = READSTATE_INATOM_FLOAT;
+        }
         else if (ch == 'E' || ch == 'e')
+        {
             rdstate->statenum = READSTATE_INATOM_SCIFLOAT;
+        }
         else
+        {
             rdstate->statenum = READSTATE_INATOM;
+        }
         break;
     case READSTATE_INATOM_FLOAT:
         mdl_readstate_buf_append(rdstate, ch);
         if (cinfo.charclass == MDL_C_DIGIT)
+        {
             rdstate->statenum = READSTATE_INATOM_FLOAT;
+        }
         else if (ch == 'E' || ch == 'e')
+        {
             rdstate->statenum = READSTATE_INATOM_SCIFLOAT;
+        }
         else
+        {
             rdstate->statenum = READSTATE_INATOM;
+        }
         break;
     case READSTATE_INATOM_SCIFLOAT:
         mdl_readstate_buf_append(rdstate, ch);
         if (cinfo.charclass == MDL_C_MINUS)
+        {
             rdstate->statenum = READSTATE_INATOM_SCIFLOAT_MINUS;
+        }
         else if (cinfo.charclass == MDL_C_DIGIT)
+        {
             rdstate->statenum = READSTATE_INATOM_SCIFLOAT_E1;
+        }
         else
+        {
             rdstate->statenum = READSTATE_INATOM;
+        }
         break;
     case READSTATE_INATOM_SCIFLOAT_MINUS:
         mdl_readstate_buf_append(rdstate, ch);
         if (cinfo.charclass == MDL_C_DIGIT)
+        {
             rdstate->statenum = READSTATE_INATOM_SCIFLOAT_E1;
+        }
         else
+        {
             rdstate->statenum = READSTATE_INATOM;
+        }
         break;
     case READSTATE_INATOM_SCIFLOAT_E1:
         mdl_readstate_buf_append(rdstate, ch);
         if (cinfo.charclass == MDL_C_DIGIT)
+        {
             rdstate->statenum = READSTATE_INATOM_SCIFLOAT_E2;
+        }
         else
+        {
             rdstate->statenum = READSTATE_INATOM;
+        }
         break;
     case READSTATE_INATOM_SCIFLOAT_E2:
         mdl_readstate_buf_append(rdstate, ch);
@@ -847,35 +948,55 @@ mdl_value_t *mdl_advance_readstate(mdl_value_t *chan, readstate_t **rdstatep, MD
     case READSTATE_INLVALATOM_FLOAT:
         mdl_readstate_buf_append(rdstate, ch);
         if (cinfo.charclass == MDL_C_DIGIT)
+        {
             rdstate->statenum = READSTATE_INLVALATOM_FLOAT;
+        }
         else if (ch == 'E' || ch == 'e')
+        {
             rdstate->statenum = READSTATE_INLVALATOM_SCIFLOAT;
+        }
         else
+        {
             rdstate->statenum = READSTATE_INLVALATOM;
+        }
         break;
 
     case READSTATE_INLVALATOM_SCIFLOAT:
         mdl_readstate_buf_append(rdstate, ch);
         if (cinfo.charclass == MDL_C_MINUS)
+        {
             rdstate->statenum = READSTATE_INLVALATOM_SCIFLOAT_MINUS;
+        }
         else if (cinfo.charclass == MDL_C_DIGIT)
+        {
             rdstate->statenum = READSTATE_INLVALATOM_SCIFLOAT_E1;
+        }
         else
+        {
             rdstate->statenum = READSTATE_INLVALATOM;
+        }
         break;
     case READSTATE_INLVALATOM_SCIFLOAT_MINUS:
         mdl_readstate_buf_append(rdstate, ch);
         if (cinfo.charclass == MDL_C_DIGIT)
+        {
             rdstate->statenum = READSTATE_INLVALATOM_SCIFLOAT_E1;
+        }
         else
+        {
             rdstate->statenum = READSTATE_INLVALATOM;
+        }
         break;
     case READSTATE_INLVALATOM_SCIFLOAT_E1:
         mdl_readstate_buf_append(rdstate, ch);
         if (cinfo.charclass == MDL_C_DIGIT)
+        {
             rdstate->statenum = READSTATE_INLVALATOM_SCIFLOAT_E2;
+        }
         else
+        {
             rdstate->statenum = READSTATE_INLVALATOM;
+        }
         break;
     case READSTATE_INLVALATOM_SCIFLOAT_E2:
         mdl_readstate_buf_append(rdstate, ch);
@@ -889,7 +1010,7 @@ mdl_value_t *mdl_advance_readstate(mdl_value_t *chan, readstate_t **rdstatep, MD
         break;
     }
 
-    
+
     if ((rdstate->statenum >= READSTATE_INATOM_OCTAL_FIX &&
          rdstate->statenum <= READSTATE_INATOM) ||
         (rdstate->statenum >= READSTATE_INLVALATOM_FLOAT &&
@@ -900,7 +1021,10 @@ mdl_value_t *mdl_advance_readstate(mdl_value_t *chan, readstate_t **rdstatep, MD
         {
             lookahead = STRIPBANG(ch);
             mdl_get_charinfo(lookahead, &cinfolook);
-            if (cinfolook.separator) rdstate->buflen--;
+            if (cinfolook.separator)
+            {
+                rdstate->buflen--;
+            }
             else
             {
                 lookahead = mdl_read_chan_lookahead(chan);
@@ -932,7 +1056,7 @@ mdl_value_t *mdl_advance_readstate(mdl_value_t *chan, readstate_t **rdstatep, MD
                 // all these states are invalid numbers, so must be atoms
                 obj = mdl_create_or_get_atom(rdstate->buf);
                 break;
-                
+
             case READSTATE_INATOM_OCTAL_FIX2:
             {
 #ifdef MDL32
@@ -981,7 +1105,6 @@ mdl_value_t *mdl_advance_readstate(mdl_value_t *chan, readstate_t **rdstatep, MD
             case READSTATE_INATOM_SCIFLOAT_E1:
             case READSTATE_INATOM_SCIFLOAT_E2:
             {
-                char *exp;
                 char *dot = std::strchr(rdstate->buf, '.');
                 MDL_FLOAT fl;
 #ifdef MDL32
@@ -990,21 +1113,29 @@ mdl_value_t *mdl_advance_readstate(mdl_value_t *chan, readstate_t **rdstatep, MD
                 MDL_INT mantissa;
 #endif
                 MDL_INT oldmantissa;
-                int exponent;
                 bool notfix = false;
-                
-                if (dot) notfix = true;
+
+                if (dot)
+                {
+                    notfix = true;
+                }
 #ifdef MDL32
                 fl = std::strtof(rdstate->buf, nullptr);
 #else
                 fl = std::strtod(rdstate->buf, nullptr);
 #endif
-                
+
                 if (!notfix)
                 {
-                    exp = std::strchr(rdstate->buf, 'e');
-                    if (!exp) exp = std::strchr(rdstate->buf, 'E');
-                    if (!exp) mdl_error("SCI without E should never happen");
+                    char *exp = std::strchr(rdstate->buf, 'e');
+                    if (!exp)
+                    {
+                        exp = std::strchr(rdstate->buf, 'E');
+                    }
+                    if (!exp)
+                    {
+                        mdl_error("SCI without E should never happen");
+                    }
                     *exp++ = 0;
                     errno = 0;
 #ifdef MDL32
@@ -1012,9 +1143,15 @@ mdl_value_t *mdl_advance_readstate(mdl_value_t *chan, readstate_t **rdstatep, MD
 #else
                     mantissa = std::strtoll(rdstate->buf, nullptr, 0);
 #endif
-                    if (errno == ERANGE) notfix = true;
-                    exponent = std::strtol(exp, nullptr, 10);
-                    if (exponent < 0) notfix = true;
+                    if (errno == ERANGE)
+                    {
+                        notfix = true;
+                    }
+                    int exponent = std::strtol(exp, nullptr, 10);
+                    if (exponent < 0)
+                    {
+                        notfix = true;
+                    }
                     while (exponent-- && !notfix)
                     {
                         oldmantissa = mantissa;
@@ -1030,14 +1167,7 @@ mdl_value_t *mdl_advance_readstate(mdl_value_t *chan, readstate_t **rdstatep, MD
                         notfix = true;
 #endif
                 }
-                if (!notfix)
-                {
-                    obj = mdl_new_fix(mantissa);
-                }
-                else
-                {
-                    obj = mdl_new_float(fl);
-                }
+                obj = (notfix) ? mdl_new_float(fl) : mdl_new_fix(mantissa);
             }
             break;
 
@@ -1052,9 +1182,13 @@ mdl_value_t *mdl_advance_readstate(mdl_value_t *chan, readstate_t **rdstatep, MD
             }
             mdl_readstate_buf_clear(rdstate);
             if (rdstate->seqtype == SEQTYPE_SINGLE)
+            {
                 rdstate->statenum = READSTATE_FINAL;
+            }
             else
+            {
                 rdstate->statenum = READSTATE_INITIAL;
+            }
         }
     }
 
@@ -1073,9 +1207,13 @@ mdl_value_t *mdl_advance_readstate(mdl_value_t *chan, readstate_t **rdstatep, MD
         else if (obj)
         {
             if (rdstate->objects == nullptr)
+            {
                 rdstate->objects = mdl_additem(nullptr, obj, &rdstate->lastitem);
+            }
             else
+            {
                 mdl_additem(rdstate->lastitem, obj, &rdstate->lastitem);
+            }
         }
         obj = nullptr;
 
@@ -1146,7 +1284,7 @@ mdl_value_t *mdl_advance_readstate(mdl_value_t *chan, readstate_t **rdstatep, MD
 //                        mdl_print_value(stderr, rdstate->objects);
                         obj = rdstate->objects;
                         break;
-                        
+
                     case READSTATE_READMACRO:
                         obj = mdl_eval(rdstate->objects);
                         if (obj->type == MDL_TYPE_SPLICE)
@@ -1204,7 +1342,9 @@ mdl_value_t *mdl_read_object(mdl_value_t *chan)
     {
         result = mdl_advance_readstate(chan, &readstate, curchar);
         if (!result && !mdl_chan_flags_are_set(chan, ICHANNEL_AT_EOF))
+        {
             curchar = mdl_read_from_chan(chan);
+        }
     }
     if (!result && mdl_chan_flags_are_set(chan, ICHANNEL_AT_EOF))
     {
@@ -1243,27 +1383,30 @@ mdl_value_t *mdl_next_character(mdl_value_t *chan)
 
 mdl_value_t *mdl_read_binary(mdl_value_t *chan, mdl_value_t *buffer)
 {
-    uvector_element_t *elem, *first;
-
     // only call the EOF if we've already hit EOF on a previous read
     if (mdl_chan_flags_are_set(chan, ICHANNEL_AT_EOF))
     {
         return mdl_exec_chan_eof_object(chan);
     }
+
     if (mdl_type_primtype(buffer->v.uv.p->type) != PRIMTYPE_WORD)
     {
         mdl_error("UVECTOR for read must be of type WORD");
     }
+
     int nelem = UVLENGTH(buffer);
+    uvector_element_t *elem, *first;
     first = elem = UVREST(buffer, 0);
     while (nelem--)
     {
         MDL_INT w;
-
         int status = mdl_read_word_from_chan(chan, &w);
-        if (status < 0) break;
+        if (status < 0)
+        {
+            break;
+        }
         elem++->w = w;
-        
+
     }
     return mdl_new_fix(elem - first);
 }
@@ -1287,7 +1430,10 @@ mdl_value_t *mdl_read_string(mdl_value_t *chan, mdl_value_t *buffer, mdl_value_t
     int ntoread = buffer->v.s.l;
     if (stop)
     {
-        if (stop->type == MDL_TYPE_FIX) ntoread = stop->v.w;
+        if (stop->type == MDL_TYPE_FIX)
+        {
+            ntoread = stop->v.w;
+        }
         else if (stop->type == MDL_TYPE_STRING)
         {
             stopstr = stop->v.s.p;
@@ -1298,8 +1444,14 @@ mdl_value_t *mdl_read_string(mdl_value_t *chan, mdl_value_t *buffer, mdl_value_t
     while (ntoread--)
     {
         int ch = mdl_read_from_chan(chan);
-        if (ch < 0) break;
-        if (stoplen && memchr(stopstr, ch, stoplen)) break;
+        if (ch < 0)
+        {
+            break;
+        }
+        if (stoplen && memchr(stopstr, ch, stoplen))
+        {
+            break;
+        }
         *buf++ = ch;
     }
     return mdl_new_fix(buf - buffer->v.s.p);

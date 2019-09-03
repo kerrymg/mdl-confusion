@@ -24,6 +24,7 @@
 mdl_strbuf_t *mdl_new_strbuf(int isize)
 {
     mdl_strbuf_t *result;
+
     result = (mdl_strbuf_t *)GC_MALLOC_ATOMIC(sizeof(mdl_strbuf_t) + isize - 1);
     result->stringlen = 0;
     result->bufsize = isize;
@@ -36,8 +37,11 @@ mdl_strbuf_t *mdl_strbuf_grow(mdl_strbuf_t *buf, int minsize)
     int newsize = buf->bufsize;
 
     while (newsize > 0 && newsize < minsize)
+    {
         newsize <<= 1;
-    assert (newsize > 0);
+    }
+    assert(newsize > 0);
+
     buf = (mdl_strbuf_t *)GC_REALLOC(buf, sizeof(mdl_strbuf_t) + newsize - 1);
     buf->bufsize = newsize;
     return buf;
@@ -80,9 +84,11 @@ mdl_strbuf_t *mdl_strbuf_prepend_cstr_len(const char *cs, int clen, mdl_strbuf_t
 
         newsize = buf->bufsize;
         while (newsize > 0 && newsize < (clen + buf->stringlen + 1))
+        {
             newsize <<= 1;
+        }
         assert(newsize > 0);
-        
+
         nbuf = mdl_new_strbuf(newsize);
         nbuf->stringlen = (clen + buf->stringlen + 1);
         memcpy(nbuf->buf, cs, clen);
@@ -108,7 +114,7 @@ const char *mdl_strbuf_to_const_cstr(mdl_strbuf_t *buf)
 
 char *mdl_strbuf_to_new_cstr(mdl_strbuf_t *buf)
 {
-    char * result = (char *)GC_MALLOC_ATOMIC(buf->stringlen + 1);
+    char *result = (char *)GC_MALLOC_ATOMIC(buf->stringlen + 1);
     memcpy(result, buf->buf, buf->stringlen + 1);
     return result;
 }

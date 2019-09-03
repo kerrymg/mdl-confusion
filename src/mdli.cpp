@@ -41,15 +41,16 @@ extern const char no_warranty[] = "THERE IS NO WARRANTY FOR THIS PROGRAM, TO THE
  "IS WITH YOU.  SHOULD THE PROGRAM PROVE DEFECTIVE, YOU ASSUME THE COST OF\n"
  "ALL NECESSARY SERVICING, REPAIR OR CORRECTION.";
 
+const char *optstring = "r:";
+
 int main(int argc, char *argv[])
 {
-    static const char *optstring = "r:";
-    int optchar;
     std::FILE *restorefile = nullptr;
 
     GC_INIT();
     mdl_interp_init();
 
+    int optchar;
     while ((optchar = getopt(argc, argv, optstring)) != -1)
     {
         switch (optchar)

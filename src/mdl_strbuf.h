@@ -4,14 +4,17 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
 typedef struct mdl_strbuf_t
 {
     int stringlen;
     int bufsize;
     char buf[1];
-} mdl_strbuf_t;
+}
+mdl_strbuf_t;
 
 #define mdl_strbuf_len(b) ((b)->stringlen)
+
 mdl_strbuf_t *mdl_new_strbuf(int isize);
 mdl_strbuf_t *mdl_strbuf_grow(mdl_strbuf_t *buf, int minsize);
 mdl_strbuf_t *mdl_strbuf_prepend_cstr(const char *cs, mdl_strbuf_t *buf);

@@ -35,6 +35,7 @@ enum outbuf_items_t
     OUTBUF_LASTBUFLIST,
     OUTBUF_VLENGTH
 };
+
 // for flatsize
 // BUFSIZE is BUFSIZE
 // TOTLEN is TOTLEN
@@ -45,7 +46,10 @@ enum outbuf_items_t
 mdl_value_t *mdl_get_default_outchan()
 {
     mdl_frame_t *frame = cur_frame;
-    if (cur_frame == nullptr) frame = cur_process_initial_frame;
+    if (cur_frame == nullptr)
+    {
+        frame = cur_process_initial_frame;
+    }
     return mdl_local_symbol_lookup_pname("OUTCHAN!-", frame);
 }
 
@@ -54,23 +58,36 @@ mdl_value_t *mdl_create_default_outchan()
     mdl_value_t *chan = mdl_internal_create_channel();
     int chnum = mdl_new_chan_num(stdout);
     mdl_set_chan_mode(chan, "PRINT");
-    *VITEM(chan,CHANNEL_SLOT_CHNUM) = *mdl_new_fix(chnum);
+    *VITEM(chan, CHANNEL_SLOT_CHNUM) = *mdl_new_fix(chnum);
 
     if (!isatty(fileno(stdout)))
+    {
         *VITEM(chan,CHANNEL_SLOT_DEVN) = *(mdl_new_string(3, "DSK"));
+    }
     else
+    {
         *VITEM(chan,CHANNEL_SLOT_DEVN) = *(mdl_new_string(3, "TTY"));
+    }
     return chan;
 }
-        
+
 // "Reasonable" here means reasonable for terminal output
 // (should binary channels be allowed?)
 bool mdl_outchan_is_reasonable(mdl_value_t *chan)
 {
-    if (!chan || chan->type != MDL_TYPE_CHANNEL) return false;
+    if (!chan || chan->type != MDL_TYPE_CHANNEL)
+    {
+        return false;
+    }
 //    if (!mdl_string_equal_cstr(&mdl_get_chan_mode(chan)->v.s, "WRITE")) return false;
-    if (!mdl_chan_mode_is_output(chan)) return false;
-    if (mdl_get_chan_channum(chan) <= 0) return false;
+    if (!mdl_chan_mode_is_output(chan))
+    {
+        return false;
+    }
+    if (mdl_get_chan_channum(chan) <= 0)
+    {
+        return false;
+    }
     return true;
 }
 
@@ -82,27 +99,21 @@ mdl_value_t *mdl_create_internal_output_channel(int bufsize, int maxlen, mdl_val
     mdl_set_chan_mode(chan, "PRINT");
     if (bufsize)
     {
-        mdl_value_t *dp;
-        mdl_value_t *buf;
-        mdl_value_t *bufs;
-
         devdep = mdl_new_empty_vector(OUTBUF_VLENGTH, MDL_TYPE_VECTOR);
-        dp = VITEM(devdep, 0);
-        buf = mdl_new_string(bufsize);
-        bufs = mdl_cons_internal(buf, nullptr);
+        mdl_value_t *dp = VITEM(devdep, 0);
+        mdl_value_t *buf = mdl_new_string(bufsize);
+        mdl_value_t *bufs = mdl_cons_internal(buf, nullptr);
         dp[OUTBUF_BUFSIZE] = *mdl_new_fix(bufsize);
         dp[OUTBUF_TOTLEN] = *zerofix;
         dp[OUTBUF_NBUFS] = *zerofix;
         dp[OUTBUF_LASTBUFLEN] = *zerofix;
         dp[OUTBUF_BUFCHAIN] = *mdl_make_list(bufs);
         dp[OUTBUF_LASTBUFLIST] = dp[OUTBUF_BUFCHAIN];
-
     }
     else
     {
-        mdl_value_t *dp;
         devdep = mdl_new_empty_vector(OUTBUF_FL_VLENGTH, MDL_TYPE_VECTOR);
-        dp = VITEM(devdep, 0);
+        mdl_value_t *dp = VITEM(devdep, 0);
         dp[OUTBUF_BUFSIZE] = *zerofix;
         dp[OUTBUF_TOTLEN] = *zerofix;
         dp[OUTBUF_MAXLEN] = *mdl_new_fix(maxlen);
@@ -115,11 +126,12 @@ mdl_value_t *mdl_create_internal_output_channel(int bufsize, int maxlen, mdl_val
 MDL_INT mdl_get_internal_output_channel_length(mdl_value_t *chan)
 {
     mdl_value_t *devdep = VITEM(chan, CHANNEL_SLOT_DEVDEP);
-    MDL_INT totlen;
 
     if (devdep->type != MDL_TYPE_VECTOR)
+    {
         mdl_error("Cannot obtain length from channel");
-    totlen = VITEM(devdep, OUTBUF_TOTLEN)->v.w;
+    }
+    MDL_INT totlen = VITEM(devdep, OUTBUF_TOTLEN)->v.w;
     return totlen;
 }
 
@@ -128,7 +140,9 @@ mdl_value_t *mdl_get_internal_output_channel_string(mdl_value_t *chan)
     mdl_value_t *devdep = VITEM(chan, CHANNEL_SLOT_DEVDEP);
 
     if (devdep->type != MDL_TYPE_VECTOR || VLENGTH(devdep) != OUTBUF_VLENGTH)
+    {
         mdl_error("Cannot obtain string from channel");
+    }
     int totlen = VITEM(devdep, OUTBUF_TOTLEN)->v.w;
     int bufsize = VITEM(devdep, OUTBUF_BUFSIZE)->v.w;
     mdl_value_t *result = mdl_new_string(totlen);
@@ -143,7 +157,10 @@ mdl_value_t *mdl_get_internal_output_channel_string(mdl_value_t *chan)
         len -= cplen;
         cursor = cursor->v.p.cdr;
     }
-    if (len != 0) mdl_error("Internal error in output buffer reading");
+    if (len != 0)
+    {
+        mdl_error("Internal error in output buffer reading");
+    }
     return result;
 }
 
@@ -151,11 +168,11 @@ bool mdl_need_line_break(int len, int extrawidth,
 
                          // extrawidth is for characters which will be
                          // added only if there is no line break
-                         int linewidth, MDL_INT *linepos)
+                         int linewidth, const MDL_INT linepos)
 {
     // never break if linewidth is 0 (unlimited)
     // never break if *linepos is 0 (can't do any better)
-    if (linewidth && *linepos && ((len + extrawidth) > (linewidth - *linepos)))
+    if (linewidth && linepos && ((len + extrawidth) > (linewidth - linepos)))
     {
         return true;
     }
@@ -166,8 +183,7 @@ void mdl_print_newline_to_transcript_channels(mdl_value_t *chan, int printflags)
 {
     mdl_value_t *transcript_chan_list = VITEM(chan, CHANNEL_SLOT_TRANSCRIPT);
 
-    if (transcript_chan_list &&
-        transcript_chan_list->type == MDL_TYPE_LIST)
+    if (transcript_chan_list && transcript_chan_list->type == MDL_TYPE_LIST)
     {
         mdl_value_t *cursor = transcript_chan_list->v.p.cdr;
         while (cursor)
@@ -176,14 +192,24 @@ void mdl_print_newline_to_transcript_channels(mdl_value_t *chan, int printflags)
             if (tchan->type == MDL_TYPE_CHANNEL)
             {
                 bool binary = mdl_chan_mode_is_print_binary(tchan);
-                if (binary) printflags |= MDL_PF_BINARY;
-                else printflags &= ~MDL_PF_BINARY;
+                if (binary)
+                {
+                    printflags |= MDL_PF_BINARY;
+                }
+                else
+                {
+                    printflags &= ~MDL_PF_BINARY;
+                }
                 if (!mdl_chan_mode_is_output(tchan))
+                {
                     mdl_error("INPUT channel in transcript list");
+                }
                 mdl_print_newline_to_chan(tchan, printflags, nullptr);
             }
             else
+            {
                 mdl_error("Non-channel in transcript list");
+            }
             cursor = cursor->v.p.cdr;
         }
     }
@@ -193,8 +219,7 @@ void mdl_print_char_to_transcript_channels(mdl_value_t *chan, int ch, int printf
  {
     mdl_value_t *transcript_chan_list = VITEM(chan, CHANNEL_SLOT_TRANSCRIPT);
 
-    if (transcript_chan_list &&
-        transcript_chan_list->type == MDL_TYPE_LIST)
+    if (transcript_chan_list && transcript_chan_list->type == MDL_TYPE_LIST)
     {
         mdl_value_t *cursor = transcript_chan_list->v.p.cdr;
         while (cursor)
@@ -203,14 +228,24 @@ void mdl_print_char_to_transcript_channels(mdl_value_t *chan, int ch, int printf
             if (tchan->type == MDL_TYPE_CHANNEL)
             {
                 bool binary = mdl_chan_mode_is_print_binary(tchan);
-                if (binary) printflags |= MDL_PF_BINARY;
-                else printflags &= ~MDL_PF_BINARY;
+                if (binary)
+                {
+                    printflags |= MDL_PF_BINARY;
+                }
+                else
+                {
+                    printflags &= ~MDL_PF_BINARY;
+                }
                 if (!mdl_chan_mode_is_output(tchan))
+                {
                     mdl_error("INPUT channel in transcript list");
+                }
                 mdl_print_char_to_chan(tchan, ch, printflags, nullptr);
             }
             else
+            {
                 mdl_error("Non-channel in transcript list");
+            }
             cursor = cursor->v.p.cdr;
         }
     }
@@ -219,25 +254,40 @@ void mdl_print_char_to_transcript_channels(mdl_value_t *chan, int ch, int printf
 void mdl_print_newline_to_chan(mdl_value_t *chan, int printflags, std::FILE *f)
 {
     int linewidth = VITEM(chan, CHANNEL_SLOT_LINEWIDTH)->v.w;
-    MDL_INT *linepos = &(VITEM(chan, CHANNEL_SLOT_CPOS)->v.w);
+    MDL_INT &linepos = VITEM(chan, CHANNEL_SLOT_CPOS)->v.w;
     int pageheight = VITEM(chan, CHANNEL_SLOT_PAGEHEIGHT)->v.w;
-    MDL_INT *pagepos = &(VITEM(chan, CHANNEL_SLOT_LINENO)->v.w);
+    MDL_INT &pagepos = VITEM(chan, CHANNEL_SLOT_LINENO)->v.w;
     int chnum = VITEM(chan, CHANNEL_SLOT_CHNUM)->v.w;
-    bool binary = (printflags & MDL_PF_BINARY) != 0;
 
-    if (linewidth) *linepos = 0;
-    if (pageheight) 
+    if (linewidth)
     {
-        if (++*pagepos == pageheight) *pagepos = 0;
+        linepos = 0;
+    }
+    if (pageheight)
+    {
+        if (++pagepos == pageheight)
+        {
+            pagepos = 0;
+        }
     }
     if (chnum)
     {
-        if (!f) f = mdl_get_chan_file(chan);
-        if (!f) mdl_error("No file for channel");
-        if (binary)
+        if (!f)
+        {
+            f = mdl_get_chan_file(chan);
+        }
+        if (!f)
+        {
+            mdl_error("No file for channel");
+        }
+        if (printflags & MDL_PF_BINARY)
+        {
             std::fputs("\r\n", f);
+        }
         else
+        {
             std::fputc('\n', f);
+        }
     }
     else
     {
@@ -250,30 +300,41 @@ void mdl_print_newline_to_chan(mdl_value_t *chan, int printflags, std::FILE *f)
 void mdl_print_char_to_chan(mdl_value_t *chan, int ch, int printflags, FILE *f)
 {
     int pageheight = VITEM(chan, CHANNEL_SLOT_PAGEHEIGHT)->v.w;
-    MDL_INT *pagepos = &(VITEM(chan, CHANNEL_SLOT_LINENO)->v.w);
+    MDL_INT &pagepos = VITEM(chan, CHANNEL_SLOT_LINENO)->v.w;
     int linewidth = VITEM(chan, CHANNEL_SLOT_LINEWIDTH)->v.w;
-    MDL_INT *linepos = &(VITEM(chan, CHANNEL_SLOT_CPOS)->v.w);
+    MDL_INT &linepos = VITEM(chan, CHANNEL_SLOT_CPOS)->v.w;
     int chnum = VITEM(chan, CHANNEL_SLOT_CHNUM)->v.w;
     bool noadvance = (printflags & MDL_PF_NOADVANCE) != 0;
-    
+
     if (!noadvance)
     {
         if (pageheight && (ch == '\n'))
         {
-            if (++*pagepos == pageheight) *pagepos = 0;
+            if (++pagepos == pageheight)
+            {
+                pagepos = 0;
+            }
         }
-        if (linewidth) 
+        if (linewidth)
         {
-            (*linepos)++;
+            ++linepos;
             if (ch == '\r' ||
                 ((printflags & MDL_PF_BINARY) && (ch == '\n')))
-                (*linepos) = 0;
+            {
+                linepos = 0;
+            }
         }
     }
     if (chnum)
     {
-        if (!f) f = mdl_get_chan_file(chan);
-        if (!f) mdl_error("No file for channel");
+        if (!f)
+        {
+            f = mdl_get_chan_file(chan);
+        }
+        if (!f)
+        {
+            mdl_error("No file for channel");
+        }
         std::putc(ch, f);
     }
     else
@@ -306,18 +367,25 @@ void mdl_print_char_to_chan(mdl_value_t *chan, int ch, int printflags, FILE *f)
             else if (VLENGTH(devdep) == OUTBUF_FL_VLENGTH)
             {
                 if (VITEM(devdep, OUTBUF_TOTLEN)->v.w++ >= VITEM(devdep, OUTBUF_MAXLEN)->v.w)
+                {
                     mdl_longjmp_to(VITEM(devdep, OUTBUF_FRAME)->v.f,
-                            LONGJMP_FLATSIZE_EXCEEDED);
+                        LONGJMP_FLATSIZE_EXCEEDED
+                    );
+                }
             }
         }
         else
+        {
             mdl_error("Attempt to write to closed channel");
+        }
     }
     if (!(printflags & MDL_PF_NOSCRIPT))
+    {
         mdl_print_char_to_transcript_channels(chan, ch, printflags);
+    }
 }
 
-void mdl_print_string_to_chan(mdl_value_t *chan, 
+void mdl_print_string_to_chan(mdl_value_t *chan,
                               const char *str,
                               int len,
                               int extralen, // space to reserve, not including the addspacebefore value
@@ -326,7 +394,7 @@ void mdl_print_string_to_chan(mdl_value_t *chan,
     )
 {
     int linewidth = VITEM(chan, CHANNEL_SLOT_LINEWIDTH)->v.w;
-    MDL_INT *linepos = &(VITEM(chan, CHANNEL_SLOT_CPOS)->v.w);
+    MDL_INT &linepos = VITEM(chan, CHANNEL_SLOT_CPOS)->v.w;
     bool broke = false;
     const char *s;
     int tlen;
@@ -340,36 +408,46 @@ void mdl_print_string_to_chan(mdl_value_t *chan,
     {
         tlen = olen;
         s = str;
-        
+
         while (tlen--)
         {
             char ch = *s++;
-            if (!isspace(ch) && !iscntrl(ch)) len++;
+            if (!std::isspace(ch) && !std::iscntrl(ch))
+            {
+                len++;
+            }
         }
     }
     else if (!mdl_chan_mode_is_output(chan))
+    {
         mdl_error("Tried to print to an input channel!");
+    }
 
     std::FILE *f = mdl_get_chan_file(chan);
-    if (addspacebefore) extralen++;
+    if (addspacebefore)
+    {
+        extralen++;
+    }
     if (canbreakbefore && !binary)
     {
-        
         broke =  mdl_need_line_break(len, extralen,
                                      // added only if there is no line break
                                      linewidth, linepos);
-        if (broke) mdl_print_newline_to_chan(chan, MDL_PF_NOSCRIPT, f);
+        if (broke)
+        {
+            mdl_print_newline_to_chan(chan, MDL_PF_NOSCRIPT, f);
+        }
     }
     if (!broke && addspacebefore)
     {
-        mdl_print_char_to_chan(chan, ' ', binary?MDL_PF_BINARY:MDL_PF_NONE, f);
+        mdl_print_char_to_chan(chan, ' ', binary ? MDL_PF_BINARY : MDL_PF_NONE, f);
     }
     s = str;
     tlen = olen;
     while (tlen--)
     {
         char ch = *s++;
-        if (!binary && !isspace(ch) && iscntrl(ch))
+        if (!binary && !std::isspace(ch) && std::iscntrl(ch))
         {
             mdl_print_char_to_chan(chan, '^', MDL_PF_NONE, f);
             ch = ch + 0x40;
@@ -381,16 +459,21 @@ void mdl_print_string_to_chan(mdl_value_t *chan,
 void mdl_print_binary(mdl_value_t *chan, mdl_value_t *buffer)
 {
     std::FILE *f = mdl_get_chan_file(chan);
-    if (!f) mdl_error("Attempt to write to closed binary channel");
+    if (!f)
+    {
+        mdl_error("Attempt to write to closed binary channel");
+    }
 
     int len = UVLENGTH(buffer);
     uvector_element_t *elem = UVREST(buffer, 0);
 
     while (len--)
     {
-        int nitems = fwrite(&elem->w, sizeof(MDL_INT), 1, f);
+        int nitems = std::fwrite(&elem->w, sizeof(MDL_INT), 1, f);
         if (nitems != 1)
+        {
             mdl_error("Error on binary write");
+        }
         elem++;
     }
 }
@@ -407,7 +490,6 @@ const char *mdl_quote_atomname(const char *name, bool *nonnump)
     bool gotedigit = false;
     bool goteminus = false;
     bool doneoctal = false;
-    char ch;
 
     int newlen = 0;
     if (*s == '.' || *s == '!')
@@ -416,21 +498,26 @@ const char *mdl_quote_atomname(const char *name, bool *nonnump)
         nonnum = true;
         s++;
     }
-    else if (*s == '-') 
+    else if (*s == '-')
     {
         newlen++;
         s++;
     }
-    else if (*s == '*') 
+    else if (*s == '*')
     {
         newlen++;
         s++;
         octal = true;
     }
+
+    char ch;
     while ((ch = *s++))
     {
         newlen++;
-        if (doneoctal) nonnum = true;
+        if (doneoctal)
+        {
+            nonnum = true;
+        }
         mdl_get_charinfo(ch, &cinfo);
         if (cinfo.separator || cinfo.charclass == MDL_C_BACKSLASH)
         {
@@ -439,27 +526,42 @@ const char *mdl_quote_atomname(const char *name, bool *nonnump)
         }
         else if (ch == 'E' || ch == 'e')
         {
-            if (gote || octal || !gotdigit) nonnum = true;
+            if (gote || octal || !gotdigit)
+            {
+                nonnum = true;
+            }
             gote = true;
         }
         else if (ch == '.')
         {
-            if (gote || gotdot || octal) nonnum = true;
+            if (gote || gotdot || octal)
+            {
+                nonnum = true;
+            }
             gotdot = true;
         }
         else if (ch == '-')
         {
-            if (!gote || gotedigit || goteminus) nonnum = true;
+            if (!gote || gotedigit || goteminus)
+            {
+                nonnum = true;
+            }
             goteminus = true;
         }
         else if (ch == '*')
         {
-            if (!octal || !gotdigit) nonnum = true;
+            if (!octal || !gotdigit)
+            {
+                nonnum = true;
+            }
             doneoctal = true;
         }
         else if (isdigit(ch))
         {
-            if (gote) gotedigit = true;
+            if (gote)
+            {
+                gotedigit = true;
+            }
             gotdigit = true;
         }
         else // not a digit or other special category
@@ -467,12 +569,15 @@ const char *mdl_quote_atomname(const char *name, bool *nonnump)
             nonnum = true;
         }
     }
-    if (!gotdigit || (gote && !gotedigit)) nonnum = true;
+    if (!gotdigit || (gote && !gotedigit))
+    {
+        nonnum = true;
+    }
     *nonnump = *nonnump || nonnum;
     if (nonnum)
     {
-        char *dbuf, *d;
-        d = dbuf = (char *)GC_MALLOC_ATOMIC(newlen + 1);
+        char *dbuf;
+        char *d = dbuf = (char *)GC_MALLOC_ATOMIC(newlen + 1);
         s = name;
         if (*s == '.' || *s == '!')
         {
@@ -491,7 +596,8 @@ const char *mdl_quote_atomname(const char *name, bool *nonnump)
         *d = '\0';
         return dbuf;
     }
-    else return name;
+
+    return name;
 }
 
 mdl_strbuf_t *mdl_unparse_atom(const atom_t *a, bool princ, bool nonnum, bool *breakable, mdl_value_t *oblists)
@@ -513,7 +619,7 @@ mdl_strbuf_t *mdl_unparse_atom(const atom_t *a, bool princ, bool nonnum, bool *b
         r = mdl_strbuf_append_cstr(r, mdl_quote_atomname(a->pname, &nonnum));
     }
 
-    if (!a->oblist) 
+    if (!a->oblist)
     {
         r = mdl_strbuf_append_cstr_len(r, "!-#FALSE ()", 11);
         *breakable = true;
@@ -532,7 +638,9 @@ mdl_strbuf_t *mdl_unparse_atom(const atom_t *a, bool princ, bool nonnum, bool *b
                     *breakable = true;
                 }
                 else
+                {
                     r = mdl_strbuf_append_strbuf(r, mdl_unparse_atom(oname, princ, true, breakable, oblists));
+                }
             }
         }
         else if (!nonnum)
@@ -572,18 +680,30 @@ int mdl_int_to_string(MDL_INT mi, char *buf, int buflen, int radix)
         buflen--;
         mi = -mi;
     }
-    if (buflen < 2) return -1;
+    if (buflen < 2)
+    {
+        return -1;
+    }
     do
     {
         int d = mi % radix;
-        if (d < 10) d += '0';
-        else d = d - 10 + 'A';
+        if (d < 10)
+        {
+            d += '0';
+        }
+        else
+        {
+            d = d - 10 + 'A';
+        }
         *p++ = d;
         mi /= radix;
     }
     while (mi && --buflen);
 
-    if (!buflen) return -1;
+    if (!buflen)
+    {
+        return -1;
+    }
     *p-- = '\0';
     while (p2 < p)
     {
@@ -660,23 +780,23 @@ void mdl_print_nonstructured_to_chan(mdl_value_t *chan, const mdl_value_t *a, in
                     }
                 }
                 mdl_print_string_to_chan(chan, buf, std::strlen(buf), 0, true, prespace);
+                break;
             }
-            break;
             case MDL_TYPE_FIX:
             {
                 char buf[(sizeof(MDL_INT) << 3) + 1]; // # bits + 1
                 int radix = mdl_get_chan_radix(chan);
                 mdl_int_to_string(a->v.w, buf, sizeof(buf), radix);
                 mdl_print_string_to_chan(chan, buf, std::strlen(buf), 0, true, prespace);
+                break;
             }
-            break;
             case MDL_TYPE_FLOAT:
             {
                 char buf[32];
                 auto len = std::snprintf(buf, sizeof buf, "%.7g", a->v.fl);
                 mdl_print_string_to_chan(chan, buf, len, 0, true, prespace);
+                break;
             }
-            break;
             default:
             {
                 char buf[(((sizeof(MDL_INT) << 3) + 2) / 3) + 3]; // size of octal representation plus stars
@@ -711,6 +831,7 @@ void mdl_print_nonstructured_to_chan(mdl_value_t *chan, const mdl_value_t *a, in
             // again, a->type, not print_as_type
             mdl_print_hashtype(chan, a->type, princ, prespace, oblists);
             mdl_print_string_to_chan(chan, "UNPRINTABLE", 11, 0, true, true);
+            break;
         }
     }
 }
@@ -722,15 +843,16 @@ void mdl_print_list_to_chan(mdl_value_t *chan, const mdl_value_t *v, int print_a
     const char *startstr;
     const char *endstr;
     bool specialform = false;
-    mdl_value_t *mdl_value_atom_lval;
-    mdl_value_t *mdl_value_atom_gval;
-    mdl_value_t *mdl_value_atom_quote;
-    
-    mdl_value_atom_lval = mdl_get_atom_from_oblist("LVAL", mdl_value_root_oblist);
-    mdl_value_atom_gval = mdl_get_atom_from_oblist("GVAL", mdl_value_root_oblist);
-    mdl_value_atom_quote = mdl_get_atom_from_oblist("QUOTE", mdl_value_root_oblist);
-    
-    if (print_as_type == MDL_TYPE_NOTATYPE) print_as_type = v->type;
+
+    mdl_value_t *mdl_value_atom_lval = mdl_get_atom_from_oblist("LVAL", mdl_value_root_oblist);
+    mdl_value_t *mdl_value_atom_gval = mdl_get_atom_from_oblist("GVAL", mdl_value_root_oblist);
+    mdl_value_t *mdl_value_atom_quote = mdl_get_atom_from_oblist("QUOTE", mdl_value_root_oblist);
+
+    if (print_as_type == MDL_TYPE_NOTATYPE)
+    {
+        print_as_type = v->type;
+    }
+
     switch (print_as_type)
     {
     case MDL_TYPE_LIST:
@@ -804,7 +926,7 @@ void mdl_print_list_to_chan(mdl_value_t *chan, const mdl_value_t *v, int print_a
         mdl_print_value_to_chan(chan, v->v.p.cdr->v.p.cdr->v.p.car, princ, false, oblists);
         return;
     }
-    
+
     mdl_value_t *c = v->v.p.cdr;
     if (!c)
     {
@@ -830,7 +952,10 @@ void mdl_print_vector_to_chan(mdl_value_t *chan, const mdl_value_t *v, int print
 {
     int vsize = VLENGTH(v);
 
-    if (print_as_type == MDL_TYPE_NOTATYPE) print_as_type = v->type;
+    if (print_as_type == MDL_TYPE_NOTATYPE)
+    {
+        print_as_type = v->type;
+    }
 
     if (print_as_type != MDL_TYPE_VECTOR)
     {
@@ -859,7 +984,10 @@ void mdl_print_uvector_to_chan(mdl_value_t *chan, const mdl_value_t *v, int prin
 {
     int uvsize = UVLENGTH(v);
 
-    if (print_as_type == MDL_TYPE_NOTATYPE) print_as_type = v->type;
+    if (print_as_type == MDL_TYPE_NOTATYPE)
+    {
+        print_as_type = v->type;
+    }
 
     if (print_as_type != MDL_TYPE_UVECTOR)
     {
@@ -892,7 +1020,10 @@ void mdl_print_tuple_to_chan(mdl_value_t *chan, const mdl_value_t *v, int print_
 {
     int vsize = TPLENGTH(v);
 
-    if (print_as_type == MDL_TYPE_NOTATYPE) print_as_type = v->type;
+    if (print_as_type == MDL_TYPE_NOTATYPE)
+    {
+        print_as_type = v->type;
+    }
 
     if (print_as_type != MDL_TYPE_TUPLE)
     {
@@ -929,7 +1060,7 @@ void mdl_quote_string(counted_string_t *d, const counted_string_t *s)
     *d = *s;
     for (i = 0, sp = s->p; i < s->l; i++, sp++)
     {
-        if (*sp == '"' || *sp == '\\') 
+        if (*sp == '"' || *sp == '\\')
         {
             needsquote = true;
             d->l++;
@@ -941,7 +1072,10 @@ void mdl_quote_string(counted_string_t *d, const counted_string_t *s)
         d->p = (char *)GC_MALLOC_ATOMIC(d->l + 1);
         for (i = 0, sp = s->p, dp = d->p; i < s->l; i++, sp++, dp++)
         {
-            if (*sp == '"' || *sp == '\\') *dp++ = '\\';
+            if (*sp == '"' || *sp == '\\')
+            {
+                *dp++ = '\\';
+            }
             *dp = *sp;
         }
         *dp = 0;
@@ -973,7 +1107,7 @@ void mdl_print_stringval_to_chan(mdl_value_t *chan, const mdl_value_t *v, int pr
     }
 }
 
-void mdl_print_value_to_chan(mdl_value_t *chan, mdl_value_t *v, bool princ, 
+void mdl_print_value_to_chan(mdl_value_t *chan, mdl_value_t *v, bool princ,
                              bool prespace, mdl_value_t *oblists)
 {
     int print_as_type = MDL_TYPE_NOTATYPE;
@@ -1003,31 +1137,30 @@ void mdl_print_value_to_chan(mdl_value_t *chan, mdl_value_t *v, bool princ,
     if (mdl_primtype_nonstructured(v->pt))
     {
         mdl_print_nonstructured_to_chan(chan, v, print_as_type, princ, prespace, oblists);
+        return;
     }
-    else
+
+    switch (v->pt)
     {
-        switch (v->pt)
-        {
-        case PRIMTYPE_LIST:
-            mdl_print_list_to_chan(chan, v, print_as_type, princ, prespace, oblists);
-            break;
-        case PRIMTYPE_VECTOR:
-            mdl_print_vector_to_chan(chan, v, print_as_type, princ, prespace, oblists);
-            break;
-        case PRIMTYPE_UVECTOR:
-            mdl_print_uvector_to_chan(chan, v, print_as_type, princ, prespace, oblists);
-            break;
-        case PRIMTYPE_TUPLE:
-            mdl_print_tuple_to_chan(chan, v, print_as_type, princ, prespace, oblists);
-            break;
-        case PRIMTYPE_STRING:
-            mdl_print_stringval_to_chan(chan, v, print_as_type, princ, prespace, oblists);
-            break;
-        default:
-            mdl_print_hashtype(chan, v->type, princ, prespace, oblists);
-            mdl_print_string_to_chan(chan, "UNPRINTABLE", 11, 0, true, true);
-            break;
-        }
+    case PRIMTYPE_LIST:
+        mdl_print_list_to_chan(chan, v, print_as_type, princ, prespace, oblists);
+        break;
+    case PRIMTYPE_VECTOR:
+        mdl_print_vector_to_chan(chan, v, print_as_type, princ, prespace, oblists);
+        break;
+    case PRIMTYPE_UVECTOR:
+        mdl_print_uvector_to_chan(chan, v, print_as_type, princ, prespace, oblists);
+        break;
+    case PRIMTYPE_TUPLE:
+        mdl_print_tuple_to_chan(chan, v, print_as_type, princ, prespace, oblists);
+        break;
+    case PRIMTYPE_STRING:
+        mdl_print_stringval_to_chan(chan, v, print_as_type, princ, prespace, oblists);
+        break;
+    default:
+        mdl_print_hashtype(chan, v->type, princ, prespace, oblists);
+        mdl_print_string_to_chan(chan, "UNPRINTABLE", 11, 0, true, true);
+        break;
     }
 }
 

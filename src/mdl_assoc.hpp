@@ -56,13 +56,19 @@ mdl_assoc_iterator_at_end(const mdl_assoc_iterator_t *iter)
 
 inline const mdl_assoc_key_t *mdl_assoc_iterator_get_key(mdl_assoc_iterator_t *iter)
 {
-    if (!iter->assoc) return nullptr;
+    if (!iter->assoc)
+    {
+        return nullptr;
+    }
     return (const mdl_assoc_key_t *)iter->assoc->key;
 }
 
 inline mdl_value_t *mdl_assoc_iterator_get_value(mdl_assoc_iterator_t *iter)
 {
-    if (!iter->assoc) return nullptr;
+    if (!iter->assoc)
+    {
+        return nullptr;
+    }
     return iter->assoc->value;
 }
 

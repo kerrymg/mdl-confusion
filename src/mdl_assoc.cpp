@@ -32,7 +32,7 @@
 //#define MDL_ASSOC_NBUCKETS 101 // same as what SGI uses as STL default (first prime >= 100)
 #define MDL_ASSOC_NBUCKETS 293
 
-static inline
+inline
 bool mdl_assoc_key_equals(const mdl_assoc_key_t &a, const mdl_assoc_key_t &b)
 {
     return mdl_value_double_equal(a.item, b.item) &&
@@ -61,39 +61,49 @@ mdl_create_assoc_table()
 void mdl_clear_assoc_table(mdl_assoc_table_t *table)
 {
     // Garbage collection does make some things easier...
-    memset(table->buckets, 0, sizeof(table->buckets[0]) * table->nbuckets);
+    std::memset(table->buckets, 0, sizeof(table->buckets[0]) * table->nbuckets);
     table->last_clean = GC_get_gc_no();
     table->size = 0;
 }
 
 int mdl_swap_assoc_table(mdl_assoc_table_t *t1, mdl_assoc_table_t *t2)
 {
-    if (t1->nbuckets != t2->nbuckets) return -1;
+    if (t1->nbuckets != t2->nbuckets)
+    {
+        return -1;
+    }
 
     mdl_assoc_t **t1p = t1->buckets;
     mdl_assoc_t **t2p = t2->buckets;
+
+    using std::swap;
     for (int i = 0; i < t1->nbuckets; i++)
     {
-        std::swap(*t2p, *t1p);
+        swap(*t2p, *t1p);
         ++t1p;
         ++t2p;
     }
 
-    std::swap(t2->size, t1->size);
-    std::swap(t2->last_clean, t1->last_clean);
+    swap(t2->size, t1->size);
+    swap(t2->last_clean, t1->last_clean);
 
     return 0;
 }
 
 static mdl_assoc_t *mdl_find_assoc(mdl_assoc_table_t *table, const mdl_assoc_key_t &inkey)
 {
-    if (table->last_clean != GC_get_gc_no()) mdl_assoc_clean(table);
+    if (table->last_clean != GC_get_gc_no())
+    {
+        mdl_assoc_clean(table);
+    }
     int bucketnum = mdl_hash_assoc_key(inkey) % table->nbuckets;
     mdl_assoc_t *cursor = table->buckets[bucketnum];
     while (cursor)
     {
         if (mdl_assoc_key_equals(*cursor->key, inkey))
+        {
             return cursor;
+        }
         cursor = cursor->next;
     }
     return nullptr;
@@ -102,16 +112,21 @@ static mdl_assoc_t *mdl_find_assoc(mdl_assoc_table_t *table, const mdl_assoc_key
 mdl_value_t *mdl_assoc_find_value(mdl_assoc_table_t *table, const mdl_assoc_key_t &inkey)
 {
     mdl_assoc_t *assoc = mdl_find_assoc(table, inkey);
-    if (!assoc) return nullptr;
-    return assoc->value;
+    return (assoc) ? assoc->value : nullptr;
 }
 
 mdl_value_t *mdl_delete_assoc(mdl_assoc_table_t *table, const mdl_assoc_key_t &inkey)
 {
-    if (table->last_clean != GC_get_gc_no()) mdl_assoc_clean(table);
+    if (table->last_clean != GC_get_gc_no())
+    {
+        mdl_assoc_clean(table);
+    }
     int bucketnum = mdl_hash_assoc_key(inkey) % table->nbuckets;
     mdl_assoc_t *cursor = table->buckets[bucketnum];
-    if (!cursor) return nullptr; // no bucket means there was no such association
+    if (!cursor)
+    {
+        return nullptr; // no bucket means there was no such association
+    }
     // 1st item is special
     if (mdl_assoc_key_equals(*cursor->key, inkey))
     {
@@ -205,7 +220,10 @@ mdl_assoc_iterator_t *mdl_assoc_iterator_first(mdl_assoc_table_t *table)
 
 bool mdl_assoc_iterator_increment(mdl_assoc_iterator_t *iter)
 {
-    if (iter->assoc == nullptr) return false; // iter's already dead, dude
+    if (iter->assoc == nullptr)
+    {
+        return false; // iter's already dead, dude
+    }
     iter->assoc = iter->assoc->next;
     while (iter->assoc == nullptr && (++iter->bucket < iter->table->nbuckets))
     {
@@ -219,17 +237,19 @@ bool mdl_assoc_iterator_increment(mdl_assoc_iterator_t *iter)
 // have been GCed.
 bool mdl_assoc_iterator_delete(mdl_assoc_iterator_t *iter)
 {
+    if (iter->assoc == nullptr)
+    {
+        return false; // iter's already dead, dude
+    }
+
     bool result = false;
-
-    if (iter->assoc == nullptr) return false; // iter's already dead, dude
-
     mdl_assoc_t *cursor = iter->table->buckets[iter->bucket];
     // 1st item is special
     if (cursor == iter->assoc)
     {
         iter->table->buckets[iter->bucket] = cursor->next;
-        result = true;
         iter->table->size--;
+        result = true;
     }
     else
     {

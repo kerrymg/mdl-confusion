@@ -20,45 +20,53 @@
 // MDL DECL checking... work in progress
 // some errors are wrongly generic at the moment
 #define RATOM(X) mdl_get_atom_from_oblist(#X, mdl_value_root_oblist)
-#define DECL_ERROR(MSG)                         \
-        do { \
-            *error = true; \
-            return mdl_call_error(MSG, nullptr); \
-        } while (0)
+
+#define DECL_ERROR(MSG)                      \
+    do {                                     \
+        *error = true;                       \
+        return mdl_call_error(MSG, nullptr); \
+    } while (0)
 
 static mdl_value_t *
 mdl_check_struct_decl(mdl_value_t *val, mdl_value_t *decl, bool *error);
 
 mdl_value_t *mdl_check_decl(mdl_value_t *val, mdl_value_t *decl, bool *error)
 {
+    *error = false;
+
     mdl_value_t *result;
-    mdl_value_t *type;
     bool standin;
     int typenum;
 
-    *error = false;
     do
     {
         standin = false;
         if (decl->type == MDL_TYPE_ATOM)
         {
             if (mdl_value_equal(decl, RATOM(ANY)))
+            {
                 return mdl_value_T;
+            }
             if (mdl_value_equal(decl, RATOM(STRUCTURED)))
+            {
                 return mdl_boolean_value(mdl_primtype_structured(decl->pt));
+            }
             if (mdl_value_equal(decl, RATOM(LOCATIVE)))
+            {
                 return mdl_boolean_value(decl->pt >= PRIMTYPE_LOCA &&
                                          decl->pt <= PRIMTYPE_LOCV);
+            }
             if (mdl_value_equal(decl, RATOM(APPLICABLE)))
+            {
                 return mdl_boolean_value(mdl_type_is_applicable(mdl_apply_type(decl->type)));
+            }
             typenum = mdl_get_typenum(decl);
             if (typenum != MDL_TYPE_NOTATYPE)
             {
                 if (val->type != typenum)
                 {
                     // FIXME: no fancy falses
-                    mdl_value_t *f;
-                    f = mdl_cons_internal(decl, nullptr);
+                    mdl_value_t *f = mdl_cons_internal(decl, nullptr);
                     f = mdl_cons_internal(val, f);
                     return mdl_make_list(f, MDL_TYPE_FALSE);
                 }
@@ -66,7 +74,9 @@ mdl_value_t *mdl_check_decl(mdl_value_t *val, mdl_value_t *decl, bool *error)
             }
             decl = mdl_internal_eval_getprop(decl, RATOM(DECL));
             if (!decl)
+            {
                 DECL_ERROR("BAD-TYPE-SPECIFICATION1");
+            }
             standin = true;
         }
     }
@@ -76,44 +86,58 @@ mdl_value_t *mdl_check_decl(mdl_value_t *val, mdl_value_t *decl, bool *error)
     {
         mdl_value_t *firstitem = LITEM(decl, 0);
         if (firstitem == nullptr)
+        {
             DECL_ERROR("BAD-TYPE-SPECIFICATION2");
+        }
 
         // quoted value
         if (mdl_value_equal(firstitem, RATOM(QUOTE)))
         {
-            type = LITEM(decl, 1);
+            mdl_value_t *type = LITEM(decl, 1);
             if (!type || LHASITEM(decl, 2))
+            {
                 DECL_ERROR("BAD-TYPE-SPECIFICATION3");
+            }
             return mdl_boolean_value(mdl_value_equal(val, type));
         }
 
         // primtype
         if (mdl_value_equal(firstitem, RATOM(PRIMTYPE)))
         {
-            int typenum; 
-
-            type = LITEM(decl, 1);
+            mdl_value_t *type = LITEM(decl, 1);
             if (!type)
+            {
                 DECL_ERROR("EMPTY-OR/PRIMTYPE_FORM");
+            }
             if (LHASITEM(decl, 2))
+            {
                 DECL_ERROR("TOO-MANY-ARGS-TO-PRIMTYPE-DECL");
+            }
 
+            int typenum;
             if ((typenum = mdl_get_typenum(type)) == MDL_TYPE_NOTATYPE)
+            {
                 DECL_ERROR("NON-TYPE-FOR-PRIMTYPE-ARG");
+            }
 
             return mdl_boolean_value(val->pt == mdl_type_primtype(typenum));
         }
+
         // OR
         if (mdl_value_equal(firstitem, RATOM(OR)))
         {
             mdl_value_t *typecursor = LREST(decl, 1);
             if (!typecursor)
+            {
                 DECL_ERROR("EMPTY-OR/PRIMTYPE_FORM");
+            }
             do
             {
                 result = mdl_check_decl(val, typecursor->v.p.car, error);
                 if (*error || mdl_is_true(result))
+                {
                     return result;
+                }
                 typecursor = typecursor->v.p.cdr;
             }
             while (typecursor);
@@ -123,9 +147,11 @@ mdl_value_t *mdl_check_decl(mdl_value_t *val, mdl_value_t *decl, bool *error)
             (typenum = mdl_get_typenum(firstitem)) != MDL_TYPE_NOTATYPE &&
             mdl_primtype_structured(mdl_type_primtype(typenum)))
         {
-            if (val->type != typenum) 
+            if (val->type != typenum)
+            {
                 return &mdl_value_false;
-            
+            }
+
             result = mdl_check_struct_decl(val, decl, error);
             return result;
         }
@@ -138,8 +164,11 @@ mdl_value_t *mdl_check_decl(mdl_value_t *val, mdl_value_t *decl, bool *error)
             (typenum = mdl_get_typenum(firstitem)) != MDL_TYPE_NOTATYPE &&
             mdl_primtype_structured(mdl_type_primtype(typenum)))
         {
-            if (val->type != typenum) return &mdl_value_false;
-            
+            if (val->type != typenum)
+            {
+                return &mdl_value_false;
+            }
+
             result = mdl_check_struct_decl(val, decl, error);
             return result;
         }
@@ -150,39 +179,45 @@ mdl_value_t *mdl_check_decl(mdl_value_t *val, mdl_value_t *decl, bool *error)
 mdl_value_t *
 mdl_check_struct_decl(mdl_value_t *val, mdl_value_t *decl, bool *error)
 {
-    // at this point it is assumed DECL is a FORM or a SEGMENT and 
+    // at this point it is assumed DECL is a FORM or a SEGMENT and
     // the overall type matches
-    mdl_value_t *declcursor = LREST(decl, 1);
     mdl_value_t *valcursor = val;
     mdl_value_t *curval;
-    mdl_value_t *curdecl;
-    mdl_value_t *curidecl;
     mdl_value_t *result = mdl_value_T;
-    mdl_value_t *firstitem;
     bool optfound = false;
 
+    mdl_value_t *declcursor = LREST(decl, 1);
     while (declcursor)
     {
-        curdecl = declcursor->v.p.car;
+        mdl_value_t *curdecl = declcursor->v.p.car;
         if (curdecl->type == MDL_TYPE_VECTOR)
         {
             if (VLENGTH(curdecl) < 2)
+            {
                 DECL_ERROR("VECTOR-LESS-THAN-2-ELEMENTS");
-            firstitem = VITEM(curdecl, 0);
+            }
+            mdl_value_t *firstitem = VITEM(curdecl, 0);
             if (firstitem->type == MDL_TYPE_FIX)
             {
                 if (optfound || firstitem->v.w <= 0)
+                {
                     DECL_ERROR("BAD-TYPE-SPECIFICATION4");
+                }
                 for (int i = 0; i < firstitem->v.w; i++)
                 {
-                    curidecl = VITEM(curdecl, 1);
+                    mdl_value_t *curidecl = VITEM(curdecl, 1);
                     for (int j = 1; j < VLENGTH(curdecl); j++)
                     {
                         if (mdl_internal_struct_is_empty(valcursor))
+                        {
                             return &mdl_value_false;
+                        }
                         curval = mdl_internal_eval_nth(valcursor, nullptr);
                         result = mdl_check_decl(curval, curidecl, error);
-                        if (*error || mdl_is_false(result)) return result;
+                        if (*error || mdl_is_false(result))
+                        {
+                            return result;
+                        }
                         valcursor = mdl_internal_eval_rest_i(valcursor, 1);
                         curidecl++;
                     }
@@ -191,17 +226,24 @@ mdl_check_struct_decl(mdl_value_t *val, mdl_value_t *decl, bool *error)
             else if (mdl_value_equal(firstitem, RATOM(REST)))
             {
                 if (declcursor->v.p.cdr)
+                {
                     DECL_ERROR("BAD-TYPE-SPECIFICATION5");
+                }
                 while (1)
                 {
-                    curidecl = VITEM(curdecl, 1);
+                    mdl_value_t *curidecl = VITEM(curdecl, 1);
                     for (int j = 1; j < VLENGTH(curdecl); j++)
                     {
                         if (mdl_internal_struct_is_empty(valcursor))
+                        {
                             return result;
+                        }
                         curval = mdl_internal_eval_nth(valcursor, nullptr);
                         result = mdl_check_decl(curval, curidecl, error);
-                        if (*error || mdl_is_false(result)) return result;
+                        if (*error || mdl_is_false(result))
+                        {
+                            return result;
+                        }
                         valcursor = mdl_internal_eval_rest_i(valcursor, 1);
                         curidecl++;
                     }
@@ -210,19 +252,26 @@ mdl_check_struct_decl(mdl_value_t *val, mdl_value_t *decl, bool *error)
             else if (mdl_value_equal(firstitem, RATOM(OPT)))
             {
                 if (optfound)
+                {
                     DECL_ERROR("BAD-TYPE-SPECIFICATION6");
+                }
 
                 optfound = true;
-                curidecl = VITEM(curdecl, 1);
+                mdl_value_t *curidecl = VITEM(curdecl, 1);
                 std::fprintf(stderr, "O1\n");
                 for (int j = 1; j < VLENGTH(curdecl); j++)
                 {
                     if (mdl_internal_struct_is_empty(valcursor))
+                    {
                         break;
+                    }
                     std::fprintf(stderr, "O2 %d\n", j);
                     curval = mdl_internal_eval_nth(valcursor, nullptr);
                     result = mdl_check_decl(curval, curidecl, error);
-                    if (*error || mdl_is_false(result)) return result;
+                    if (*error || mdl_is_false(result))
+                    {
+                        return result;
+                    }
                     valcursor = mdl_internal_eval_rest_i(valcursor, 1);
                     curidecl++;
                 }
@@ -231,17 +280,26 @@ mdl_check_struct_decl(mdl_value_t *val, mdl_value_t *decl, bool *error)
         else
         {
             if (mdl_internal_struct_is_empty(valcursor))
+            {
                 return &mdl_value_false;
+            }
             curval = mdl_internal_eval_nth(valcursor, nullptr); // nth(1) by default
             if (optfound)
+            {
                 DECL_ERROR("BAD-TYPE-SPECIFICATION7");
+            }
             result = mdl_check_decl(curval, curdecl, error);
-            if (*error || mdl_is_false(result)) return result;
+            if (*error || mdl_is_false(result))
+            {
+                return result;
+            }
             valcursor = mdl_internal_eval_rest_i(valcursor, 1);
         }
         declcursor = declcursor->v.p.cdr;
     }
     if ((decl->type == MDL_TYPE_SEGMENT) && !mdl_internal_struct_is_empty(valcursor))
+    {
         result = &mdl_value_false;
+    }
     return result;
 }

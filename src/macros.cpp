@@ -19,6 +19,7 @@
 #include <cstring>
 #include <cerrno>
 #include <cmath>
+#include <ctime>
 
 #include <sys/stat.h>
 #include <sys/time.h>
@@ -8423,7 +8424,7 @@ mdl_value_t *mdl_builtin_eval_printstring(mdl_value_t *form, mdl_value_t *args)
         len = count->v.w;
     }
     mdl_print_string_to_chan(chan, buffer->v.s.p, len, 0, false, false);
-    return buffer;
+    return mdl_new_fix(len);
 }
 
 mdl_value_t *mdl_builtin_eval_image(mdl_value_t *form, mdl_value_t *args)
